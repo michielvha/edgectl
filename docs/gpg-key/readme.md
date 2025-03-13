@@ -1,3 +1,5 @@
+**TODO: REFACTOR -We need a GPG key in our pipeline to sign the binary. Setup can be found here**
+
 You can generate a **PGP private key** using **GnuPG (GPG)**, which is the most common tool for managing OpenPGP keys. Here's how to do it:
 
 ---

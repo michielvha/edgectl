@@ -52,10 +52,14 @@ jobs:
 
       # Step 5: Install GoReleaser (if cache is not restored)
       - name: Install GoReleaser
-        if: steps.goreleaser-cache.outputs.cache-hit != 'true'
-        run: |
-          curl -sL https://install.goreleaser.com/github-action/release/goreleaser-latest-linux-amd64.tar.gz | tar xz -C ~/.goreleaser
-          echo "$HOME/.goreleaser" >> $GITHUB_PATH
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          install-only: true
+      # For not relying on 3rd party action:
+#      - name: Install GoReleaser
+#        run: |
+#          curl -sL https://github.com/goreleaser/goreleaser/releases/latest/download/goreleaser_Linux_x86_64.tar.gz | tar xz -C /usr/local/bin
 
       # Step 6: Import PGP Key for signing (if required)
       - name: Import PGP Key
