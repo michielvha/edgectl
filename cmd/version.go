@@ -13,18 +13,20 @@ import (
 // Version is now set in `main.go`
 var Version string
 
-// versionCmd represents the version command
+// versionCmd represents the version command, which displays the CLI version
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Prints the current binary version",
+	Long: `Displays the current version of the edge-cli tool.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+This command is useful for verifying which version of edge-cli is installed.
+The version is set dynamically during build time using GitVersion & GoReleaser.
+
+Example usage:
+  edge-cli version
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("edge-cli version: %s\n", Version)
+		fmt.Printf("\n🔧 Client Version: %s\n", Version)
 	},
 }
 
