@@ -1,0 +1,73 @@
+name: Build and Release Binary
+
+permissions:
+  id-token: write
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:  # Ignore certain paths from triggering the pipeline
+      - 'docs/**'
+      - 'readme.md'
+      - '.gitignore'
+#      - '.github/**'
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history to use GitVersion
+          persist-credentials: true
+
+      # Step 2: Call our custom `GitVersion action` to tag the repo
+      - name: Tag with GitVersion
+        id: gitversion
+        uses: michielvha/gitversion-tag-action@v3
+        with:
+          configFilePath: gitversion.yml  # Path to your GitVersion config file
+
+
+      # Step 3: Build and release binaries using GoReleaser, maybe move to seperate workflow
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'  # Specify the Go version
+
+      # Step 4: Cache GoReleaser installation
+      - name: Cache GoReleaser
+        id: goreleaser-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.goreleaser
+          key: goreleaser-${{ runner.os }}-latest
+          restore-keys: goreleaser-${{ runner.os }}-
+
+      # Step 5: Install GoReleaser (if cache is not restored)
+      - name: Install GoReleaser
+        if: steps.goreleaser-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -sL https://install.goreleaser.com/github-action/release/goreleaser-latest-linux-amd64.tar.gz | tar xz -C ~/.goreleaser
+          echo "$HOME/.goreleaser" >> $GITHUB_PATH
+
+      # Step 6: Import PGP Key for signing (if required)
+      - name: Import PGP Key
+        run: |
+          echo "${{ secrets.PGP_PRIVATE_KEY }}" | gpg --import
+        env:
+          GPG_TTY: $(tty)
+          GPG_FINGERPRINT: ${{ secrets.GPG_FINGERPRINT }}
+
+      # Step 7: Run GoReleaser to build and release binaries
+      - name: Run GoReleaser
+        run: |
+          goreleaser release --rm-dist --debug
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
