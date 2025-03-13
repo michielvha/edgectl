@@ -13,7 +13,7 @@ in the repository root run
 
 2. Create a new Go project:
    ```bash
-   go mod init github.com/michielvha/edge-cli
+   go mod init github.com/michielvha/edgectl
    ```
 
 3. Initialize Cobra:
@@ -39,5 +39,5 @@ in the repository root run
 
 7. On a remote host you can now run:
    ```bash
-   go install github.com/michielvha/edge-cli@latest
+   go install github.com/michielvha/edgectl@latest
    ```
