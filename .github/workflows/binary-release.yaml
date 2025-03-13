@@ -61,6 +61,14 @@ jobs:
         env:
           GPG_TTY: /dev/null
 
+      - name: Extract and Set GPG Fingerprint
+        run: |
+          echo "🔹 Extracting GPG Fingerprint..."
+          export GPG_FINGERPRINT=$(gpg --list-secret-keys --keyid-format=long | grep sec | awk '{print $2}' | awk -F'/' '{print $2}')
+          echo "GPG_FINGERPRINT=${GPG_FINGERPRINT}" >> $GITHUB_ENV
+          echo "Using fingerprint: $GPG_FINGERPRINT"
+
+
       # 6: Run GoReleaser to build and release binaries
       # https://github.com/goreleaser/goreleaser-actionw
       - name: Run GoReleaser
@@ -70,4 +78,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GPG_FINGERPRINT: ${{ secrets.GPG_FINGERPRINT }}
+          GPG_FINGERPRINT: ${{ env.GPG_FINGERPRINT }}
