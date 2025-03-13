@@ -20,14 +20,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
+      # 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch all history to use GitVersion
           persist-credentials: true
 
-      # Step 2: Call our custom `GitVersion action` to tag the repo
+      # 2: Call our custom `GitVersion action` to tag the repo
       - name: Tag with GitVersion
         id: gitversion
         uses: michielvha/gitversion-tag-action@v3
@@ -35,13 +35,13 @@ jobs:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
 
-      # Step 3: Build and release binaries using GoReleaser, maybe move to seperate workflow
+      # 3: Build and release binaries using GoReleaser, maybe move to seperate workflow
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.23'  # Specify the Go version
 
-      # Step 4: Cache GoReleaser installation
+      # 4: Cache GoReleaser installation
       - name: Cache GoReleaser
         id: goreleaser-cache
         uses: actions/cache@v3
@@ -49,17 +49,6 @@ jobs:
           path: ~/.goreleaser
           key: goreleaser-${{ runner.os }}-latest
           restore-keys: goreleaser-${{ runner.os }}-
-
-      # Step 5: Install GoReleaser (if cache is not restored)
-      - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          version: latest
-          install-only: true
-      # For not relying on 3rd party action:
-#      - name: Install GoReleaser
-#        run: |
-#          curl -sL https://github.com/goreleaser/goreleaser/releases/latest/download/goreleaser_Linux_x86_64.tar.gz | tar xz -C /usr/local/bin
 
       # Step 6: Import PGP Key for signing (if required)
 #      - name: Import PGP Key
@@ -84,9 +73,12 @@ jobs:
           KEY_ID=$(gpg --list-secret-keys --keyid-format=long | grep "rsa4096/" | awk -F'/' '{print $2}' | awk '{print $1}')
           echo -e "trust\n5\ny\nsave\n" | gpg --batch --command-fd 0 --edit-key $KEY_ID
 
-      # Step 7: Run GoReleaser to build and release binaries
+      # 7: Run GoReleaser to build and release binaries
+      # https://github.com/goreleaser/goreleaser-actionw
       - name: Run GoReleaser
-        run: |
-          goreleaser release --rm-dist --debug
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
