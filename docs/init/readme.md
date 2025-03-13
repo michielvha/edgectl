@@ -37,8 +37,7 @@ in the repository root run
    ./edgectl.exe version
    ```
 
-At this point, you should have a working CLI that prints the version. Once this is set up, we can move on to:
-- Adding commands to call Bash scripts for admin tasks
-- Integrating HashiCorp Vault
-- Fetching kubeconfig automatically
-- Bootstrapping ArgoCD
+7. On a remote host you can now run:
+   ```bash
+   go install github.com/michielvha/edge-cli@latest
+   ```
