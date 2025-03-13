@@ -50,14 +50,7 @@ jobs:
           key: goreleaser-${{ runner.os }}-latest
           restore-keys: goreleaser-${{ runner.os }}-
 
-      # Step 6: Import PGP Key for signing (if required)
-#      - name: Import PGP Key
-#        run: |
-#          echo "${{ secrets.PGP_PRIVATE_KEY }}" | gpg --import
-#        env:
-#          GPG_TTY: $(tty)
-
-
+      # 5: Import PGP Key for signing (if required)
       - name: Import PGP Private Key
         run: |
           mkdir -p ~/.gnupg
@@ -68,12 +61,7 @@ jobs:
           GPG_TTY: $(tty)
           GPG_FINGERPRINT: ${{ secrets.GPG_FINGERPRINT }}
 
-      - name: Trust GPG Key
-        run: |
-          KEY_ID=$(gpg --list-secret-keys --keyid-format=long | grep "rsa4096/" | awk -F'/' '{print $2}' | awk '{print $1}')
-          echo -e "trust\n5\ny\nsave\n" | gpg --batch --command-fd 0 --edit-key $KEY_ID
-
-      # 7: Run GoReleaser to build and release binaries
+      # 6: Run GoReleaser to build and release binaries
       # https://github.com/goreleaser/goreleaser-actionw
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
