@@ -59,7 +59,8 @@ jobs:
           gpg --list-secret-keys --keyid-format=long
         env:
           GPG_TTY: $(tty)
-          GPG_FINGERPRINT: ${{ secrets.GPG_FINGERPRINT }}
+          PGP_PRIVATE_KEY: ${{ secrets.PGP_PRIVATE_KEY }}
+
 
       # 6: Run GoReleaser to build and release binaries
       # https://github.com/goreleaser/goreleaser-actionw
@@ -70,3 +71,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ secrets.GPG_FINGERPRINT }}
