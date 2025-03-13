@@ -62,12 +62,27 @@ jobs:
 #          curl -sL https://github.com/goreleaser/goreleaser/releases/latest/download/goreleaser_Linux_x86_64.tar.gz | tar xz -C /usr/local/bin
 
       # Step 6: Import PGP Key for signing (if required)
-      - name: Import PGP Key
+#      - name: Import PGP Key
+#        run: |
+#          echo "${{ secrets.PGP_PRIVATE_KEY }}" | gpg --import
+#        env:
+#          GPG_TTY: $(tty)
+
+
+      - name: Import PGP Private Key
         run: |
-          echo "${{ secrets.PGP_PRIVATE_KEY }}" | gpg --import
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+          echo "${{ secrets.PGP_PRIVATE_KEY }}" | gpg --batch --import
+          gpg --list-secret-keys --keyid-format=long
         env:
           GPG_TTY: $(tty)
           GPG_FINGERPRINT: ${{ secrets.GPG_FINGERPRINT }}
+
+      - name: Trust GPG Key
+        run: |
+          KEY_ID=$(gpg --list-secret-keys --keyid-format=long | grep "rsa4096/" | awk -F'/' '{print $2}' | awk '{print $1}')
+          echo -e "trust\n5\ny\nsave\n" | gpg --batch --command-fd 0 --edit-key $KEY_ID
 
       # Step 7: Run GoReleaser to build and release binaries
       - name: Run GoReleaser
