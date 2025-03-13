@@ -1,4 +1,4 @@
-name: Build and Release Binary
+name: Build and Release Go Binary
 
 permissions:
   id-token: write
@@ -49,7 +49,7 @@ jobs:
           key: goreleaser-${{ runner.os }}-latest
           restore-keys: goreleaser-${{ runner.os }}-
 
-      # 5: Import PGP Key for signing (if required)
+      # 5: Import PGP Key for signing
       - name: Import PGP Private Key
         run: |
           mkdir -p ~/.gnupg
@@ -60,7 +60,7 @@ jobs:
           gpg --list-secret-keys --keyid-format=long
         env:
           GPG_TTY: /dev/null
-
+      # 6: Extract PGP Fingerprint
       - name: Extract and Set GPG Fingerprint
         run: |
           echo "🔹 Extracting GPG Fingerprint..."
@@ -68,8 +68,7 @@ jobs:
           echo "GPG_FINGERPRINT=${GPG_FINGERPRINT}" >> $GITHUB_ENV
           echo "Using fingerprint: $GPG_FINGERPRINT"
 
-
-      # 6: Run GoReleaser to build and release binaries
+      # 7: Run GoReleaser to build and release binaries
       # https://github.com/goreleaser/goreleaser-actionw
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
