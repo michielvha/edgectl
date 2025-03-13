@@ -10,5 +10,6 @@ import "github.com/michielvha/edge-cli/cmd"
 var Version = "dev"
 
 func main() {
+    cmd.Version = Version
 	cmd.Execute()
 }
