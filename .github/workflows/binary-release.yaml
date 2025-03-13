@@ -55,12 +55,12 @@ jobs:
         run: |
           mkdir -p ~/.gnupg
           chmod 700 ~/.gnupg
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          gpgconf --reload gpg-agent
           echo "${{ secrets.PGP_PRIVATE_KEY }}" | gpg --batch --import
           gpg --list-secret-keys --keyid-format=long
         env:
-          GPG_TTY: $(tty)
-          PGP_PRIVATE_KEY: ${{ secrets.PGP_PRIVATE_KEY }}
-
+          GPG_TTY: /dev/null
 
       # 6: Run GoReleaser to build and release binaries
       # https://github.com/goreleaser/goreleaser-actionw
