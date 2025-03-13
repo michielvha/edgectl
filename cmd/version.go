@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Version is set dynamically during build time, we should integrate GitVersion with a pipeline here to set the version automatically.
-var Version = "dev"
+// Version is now set in `main.go`
+var Version string
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{

@@ -1,4 +1,4 @@
-**TODO: Create detailed pipeline documentation
+**TODO: Create detailed pipeline documentation**
 
 - Workflow
 - Dependent files
