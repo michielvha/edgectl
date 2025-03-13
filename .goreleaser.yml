@@ -59,10 +59,13 @@ changelog:
   sort: asc # Sort commits chronologically (oldest to newest)
   groups:   # organize your changelog into categories using regular expressions, start commit with feat: or fix:
     - title: "🚀 Features"
-      regex: "^feat"
+      regexp: "^.*?feat(\\([\\w]+\\))?!?:.+$"
+      order: 0
     - title: "🐛 Bug Fixes"
-      regex: "^fix"
+      regexp: "^.*?fix(\\([\\w]+\\))?!?:.+$"
+      order: 1
     - title: "🛠 Maintenance"
-      regex: "^chore"
+      regexp: "^.*?chore(\\([\\w]+\\))?!?:.+$"
+      order: 2
 # To check deprecations:
 # https://goreleaser.com/deprecations/
