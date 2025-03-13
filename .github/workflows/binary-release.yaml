@@ -34,7 +34,6 @@ jobs:
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
-
       # 3: Build and release binaries using GoReleaser, maybe move to seperate workflow
       - name: Set up Go
         uses: actions/setup-go@v4
