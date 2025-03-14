@@ -248,11 +248,15 @@ configure_ufw_rke2_agent() {
 # 🗑️ purge rke2 install from the current system
 purge_rke2() {
   # Remove everything related to RKE2
-  # TODO: check here what is running
-  sudo systemctl stop rke2-server
-  sudo systemctl disable rke2-server
-  sudo systemctl stop rke2-agent
-  sudo systemctl disable rke2-agent
+  if systemctl is-active --quiet rke2-server; then
+    sudo systemctl stop rke2-server
+    sudo systemctl disable rke2-server
+  elif systemctl is-active --quiet rke2-agent; then
+    sudo systemctl stop rke2-agent
+    sudo systemctl disable rke2-agent
+  else
+    echo "Neither rke2-server nor rke2-agent are running."
+  fi
   # remove binary
   sudo rm -rf /usr/local/bin/rke2* /var/lib/rancher/rke2
   # remove systemd unit files
@@ -268,5 +272,11 @@ purge_rke2() {
 
 rke2_status() {
   # Check the status of RKE2 services
-  sudo systemctl status rke2-server || sudo systemctl status rke2-agent
+  if systemctl is-active --quiet rke2-server; then
+    sudo systemctl status rke2-server
+  elif systemctl is-active --quiet rke2-agent; then
+    sudo systemctl status rke2-agent
+  else
+    echo "Neither rke2-server nor rke2-agent are running."
+  fi
 }
