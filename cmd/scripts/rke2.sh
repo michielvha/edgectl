@@ -268,5 +268,5 @@ purge_rke2() {
 
 rke2_status() {
   # Check the status of RKE2 services
-  systemctl status rke2-server || systemctl status rke2-agent
+  sudo systemctl status rke2-server || sudo systemctl status rke2-agent
 }
