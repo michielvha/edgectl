@@ -33,7 +33,7 @@ in the repository root run
 
 6. Build and run:
    ```bash
-   go build -ldflags "-X main.Version=0.0.1" -o edgectl.exe
+   go build -ldflags "-X main.Version=1.2.3 -X main.Commit=abcd1234" -o edgectl.exe
    ./edgectl.exe version
    ```
 

@@ -68,6 +68,9 @@ jobs:
           echo "GPG_FINGERPRINT=${GPG_FINGERPRINT}" >> $GITHUB_ENV
           echo "Using fingerprint: $GPG_FINGERPRINT"
 
+#      - name: Debug Environment Variables
+#        run: env | sort
+
       # 7: Run GoReleaser to build and release binaries
       # https://github.com/goreleaser/goreleaser-actionw
       - name: Run GoReleaser
