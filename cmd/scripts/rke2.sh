@@ -1,7 +1,7 @@
 # RKE2 module for RKE2 installation and configuration
 # purpose: bootstrap RKE2 nodes.
 # usage: quickly source this module with the following command:
-# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/rke2.sh) ` 
+# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/edge-cli/main/cmd/scripts/rke2.sh) `
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
 # TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality. We could check for the existance of these folders /etc/rancher /var/lib/kubelet /var/lib/etcd
