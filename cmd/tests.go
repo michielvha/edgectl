@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/michiel/edgectl/pkg/vault"
+	"github.com/michielvha/edgectl/pkg/vault"
 )
 
 var (
