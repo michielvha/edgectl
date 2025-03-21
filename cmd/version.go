@@ -23,7 +23,7 @@ This command is useful for verifying which version of edge-cli is installed.
 The version is set dynamically during build time using GitVersion & GoReleaser.
 
 Example usage:
-  edge-cli version
+  edgectl version
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("\n🔧 Client Version: %s\n", Version)

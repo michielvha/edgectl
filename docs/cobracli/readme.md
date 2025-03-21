@@ -1,6 +1,6 @@
 ### **🔹 Understanding Cobra CLI in Your Project**
 
-Cobra is a powerful CLI framework for Go that helps create well-structured command-line applications. Your generated files **`version.go`** and **`root.go`** define how your CLI tool (`edge-cli`) behaves.
+Cobra is a powerful CLI framework for Go that helps create well-structured command-line applications. Your generated files **`version.go`** and **`root.go`** define how your CLI tool (`edgectl`) behaves.
 
 ---
 
@@ -23,15 +23,15 @@ var versionCmd = &cobra.Command{
 	Long: `A longer description that spans multiple lines
 and contains examples and usage of using your command.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("edge-cli version: %s\n", Version)
+		fmt.Printf("edgectl version: %s\n", Version)
 	},
 }
 ```
 ✅ `versionCmd` is a **Cobra command struct**:
-- **`Use: "version"`** → Defines the **command name** (`edge-cli version`).
-- **`Short:`** → Brief description (shown in `edge-cli help`).
+- **`Use: "version"`** → Defines the **command name** (`edgectl version`).
+- **`Short:`** → Brief description (shown in `edgectl help`).
 - **`Long:`** → More detailed explanation.
-- **`Run:`** → Defines the function that runs when you type `edge-cli version`.
+- **`Run:`** → Defines the function that runs when you type `edgectl version`.
 
 ---
 
@@ -41,23 +41,23 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 }
 ```
-✅ Adds `versionCmd` as a **subcommand of `rootCmd`** so that `edge-cli version` works.
+✅ Adds `versionCmd` as a **subcommand of `rootCmd`** so that `edgectl version` works.
 
 ---
 
 ## **📌 Breakdown of `root.go`**
-This file defines the **root command (`edge-cli`)**.
+This file defines the **root command (`edgectl`)**.
 
 ```go
 var rootCmd = &cobra.Command{
-	Use:   "edge-cli", // CLI name
+	Use:   "edgectl", // CLI name
 	Short: "A brief description of your application",
 	Long: `A longer description that spans multiple lines and contains examples.`,
 }
 ```
 ✅ The `rootCmd` is the **base command**:
-- **`Use: "edge-cli"`** → Defines the command name.
-- **`Short:`** → Short summary (`edge-cli help`).
+- **`Use: "edgectl"`** → Defines the command name.
+- **`Short:`** → Short summary (`edgectl help`).
 - **`Long:`** → Extended details.
 
 ---
@@ -81,7 +81,7 @@ func Execute() {
 ```go
 func init() {
 	// Define global (persistent) flags for the CLI
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.edge-cli.yaml)")
+	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.edgectl.yaml)")
 
 	// Define local flags (specific to root command)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
@@ -89,16 +89,16 @@ func init() {
 ```
 ✅ **Persistent flags** (global flags for all commands):
 ```go
-rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.edge-cli.yaml)")
+rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.edgectl.yaml)")
 ```
-✅ **Local flags** (only for `edge-cli`):
+✅ **Local flags** (only for `edgectl`):
 ```go
 rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 ```
 Now you can run:
 ```sh
-edge-cli --config=myfile.yaml
-edge-cli --toggle
+edgectl --config=myfile.yaml
+edgectl --toggle
 ```
 
 ---
@@ -109,11 +109,11 @@ edge-cli --toggle
 3️⃣ `version.go` **adds a subcommand** to `rootCmd`.  
 4️⃣ Running:
    ```sh
-   edge-cli version
+   edgectl version
    ```
    prints:
    ```
-   edge-cli version: dev
+   edgectl version: dev
    ```
 
 ---
@@ -122,8 +122,8 @@ edge-cli --toggle
 - **Set `Version` dynamically** during build time using GitVersion.
 - **Add more commands**, e.g.:
   ```sh
-  edge-cli init
-  edge-cli deploy
+  edgectl init
+  edgectl deploy
   ```
 - **Use flags** (`--verbose`, `--config=path`).
 
