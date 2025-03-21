@@ -32,7 +32,7 @@ func NewClient() (*Client, error) {
 
 // StoreJoinToken saves the RKE2 join token to a Vault path
 func (c *Client) StoreJoinToken(clusterID, token string) error {
-	path := fmt.Sprintf("secret/data/rke2/%s", clusterID)
+	path := fmt.Sprintf("kv/data/rke2/%s", clusterID)
 
 	_, err := c.VaultClient.Logical().Write(path, map[string]interface{}{
 		"data": map[string]interface{}{
@@ -50,7 +50,7 @@ func (c *Client) StoreJoinToken(clusterID, token string) error {
 
 // RetrieveJoinToken fetches the join token from Vault for a given cluster ID
 func (c *Client) RetrieveJoinToken(clusterID string) (string, error) {
-	path := fmt.Sprintf("secret/data/rke2/%s", clusterID)
+	path := fmt.Sprintf("kv/data/rke2/%s", clusterID)
 
 	secret, err := c.VaultClient.Logical().Read(path)
 	if err != nil {

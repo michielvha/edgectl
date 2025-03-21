@@ -8,15 +8,16 @@ import (
 )
 
 var (
-	testClusterID string
-	testToken     string
+	ClusterID string
+	Token     string
 )
 
+// TODO: Rework to more objective functionality of storing a token in Vault, current use is for testing rke2 functionality
 var vaultUploadCmd = &cobra.Command{
 	Use:   "upload",
-	Short: "Upload a test join token to Vault",
+	Short: "Upload a join token to Vault",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("🔐 Uploading test token to Vault...")
+		fmt.Println("🔐 Uploading token to Vault...")
 
 		client, err := vault.NewClient()
 		if err != nil {
@@ -24,7 +25,7 @@ var vaultUploadCmd = &cobra.Command{
 			return
 		}
 
-		err = client.StoreJoinToken(testClusterID, testToken)
+		err = client.StoreJoinToken(ClusterID, Token)
 		if err != nil {
 			fmt.Printf("❌ Failed to store token: %v\n", err)
 			return
@@ -38,11 +39,11 @@ func init() {
 	// Parent command: edgectl vault
 	var vaultCmd = &cobra.Command{
 		Use:   "vault",
-		Short: "Interact with Vault for testing",
+		Short: "Interact with Edge Vault",
 	}
-
-	vaultUploadCmd.Flags().StringVar(&testClusterID, "cluster-id", "test-cluster", "Cluster ID to store the token under")
-	vaultUploadCmd.Flags().StringVar(&testToken, "token", "dummy-token", "The join token to upload")
+    // upload flags
+	vaultUploadCmd.Flags().StringVar(&ClusterID, "cluster-id", "test-cluster", "Cluster ID to store the token under")
+	vaultUploadCmd.Flags().StringVar(&Token, "token", "dummy-token", "The join token to upload")
 
 	vaultCmd.AddCommand(vaultUploadCmd)
 	rootCmd.AddCommand(vaultCmd)
