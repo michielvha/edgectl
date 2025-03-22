@@ -7,10 +7,19 @@
 # TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality. We could check for the existance of these folders /etc/rancher /var/lib/kubelet /var/lib/etcd
 # TODO: Look into harding the RKE2 installation with CIS benchmarks. SEL linux etc etc. Verify with [kube-bench](https://github.com/aquasecurity/kube-bench)
 # TODO: Find way to pass token to agent automatically, maybe with GO wrapper to integrate with hashicorp vault ?
-# TODO: Find a way to pass the kubeconfig like we have for azure cli and aws cli, build a cli like that in GO.
+# TODO: Find a way to fetch the kubeconfig like we have for azure cli and aws cli, build a cli like that in GO. store in vault ?
+# TODO: Add logic to handle the requirement of a token to join masters to an existing cluster. maybe seperate join_rke2_server function ?
 # bootstrap a RKE2 server node
 install_rke2_server() {
   # usage: install_rke2_server [-l <loadbalancer-hostname>]
+
+  # Pre checks
+  if systemctl is-active --quiet rke2-server; then
+    echo "❌ RKE2 Server is already running. Exiting."
+    return 1
+  fi
+  # TODO: Check for ``/etc/rancher/rke2`` and ``/var/lib/kubelet`` and ``/var/lib/etcd`` folders to see if RKE2 is already installed. If so recommend to run rke2_status or purge_rke2.
+
   echo "🚀 Configuring RKE2 Server Node..."
 
   # Default parameter values
