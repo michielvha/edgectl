@@ -71,6 +71,11 @@ var installServerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("🚀 Installing RKE2 Server...")
 		runBashFunction("rke2.sh", "install_rke2_server")
+
+		// add some logic here to only create the id if it doesn't exist, figure out how more masters are added.
+		id := fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
+        _ = os.WriteFile("/etc/edgectl/cluster-id", []byte(id), 0644)
+
 	},
 }
 
