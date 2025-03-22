@@ -17,5 +17,8 @@ A CLI tool to manage the edge cloud. Comparable to `awscli` or `azure-cli`.
 
 - [ ] Create commands to call bash scripts for admin tasks, rke2 install etc.
 - [ ] Integrate HashiCorp Vault for secret management. Auto save & fetch secrets to Add agents to workers automatically
-- [ ] Fetch kubeconfig automatically. like in azurecli
+  - [ ] add some kind of clusterID generation to be able to tell what to join with what.. I'm thinking based of hostname and then handle the hostname per customer.
+- [ ] Fetch kubeconfig automatically. like in ``azure-cli``
+
 - [ ] Auto Bootstrap ArgoCD for automated dev setup
+  - [ ] Add helm chart to directory on host with rke2 helm integration
