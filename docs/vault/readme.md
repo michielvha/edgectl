@@ -1,6 +1,13 @@
 # Hashicorp vault integration
 
-As a keystore backend for the edgecloud we'll be using Hashicorp Vault. This will allow us to store secrets and other sensitive information securely. I'll be baking support for it into the cli.
+As a keystore backend for the **EdgeCloud** we'll be using Hashicorp Vault. 
+This will allow us to store secrets and other sensitive information securely. I'll be baking support for it into the cli.
+
+## Features
+
+- [ ] Save secrets
+- [ ] Fetch secrets
+
 
 ## Install the cli
 
@@ -17,3 +24,4 @@ As a keystore backend for the edgecloud we'll be using Hashicorp Vault. This wil
     $env:VAULT_TOKEN = ""
     ```
 
+## RKE2 integration

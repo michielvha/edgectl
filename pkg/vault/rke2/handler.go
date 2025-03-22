@@ -12,8 +12,6 @@ type Client struct {
 	VaultClient *vault.Client
 }
 
-//TODO: generalize this for any kind of secret & create seperate RKE2 logic in a different package.
-
 // NewClient initializes a Vault client using environment variables (VAULT_ADDR, VAULT_TOKEN)
 func NewClient() (*Client, error) {
 	config := vault.DefaultConfig() // uses VAULT_ADDR or default http://127.0.0.1:8200
@@ -33,23 +31,24 @@ func NewClient() (*Client, error) {
 }
 
 // StoreJoinToken saves the RKE2 join token to a Vault path
-func (c *Client) StoreToken(tokenPath, tokenKey, tokenValue string) error {
-	path := fmt.Sprintf("kv/data/%s",tokenPath)
+func (c *Client) StoreJoinToken(clusterID, token string) error {
+	path := fmt.Sprintf("kv/data/rke2/%s", clusterID)
 
 	_, err := c.VaultClient.Logical().Write(path, map[string]interface{}{
 		"data": map[string]interface{}{
-			tokenKey: tokenValue,
+			"join_token": token,
+			"cluster": clusterID,
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to write token to Vault: %w", err)
+		return fmt.Errorf("failed to write join token to Vault: %w", err)
 	}
 	return nil
 }
 
-// Fetches token from Vault for a given cluster ID
-func (c *Client) RetrieveToken(tokenPath string) (string, error) {
-	path := fmt.Sprintf("kv/data/%s",tokenPath)
+// RetrieveJoinToken fetches the join token from Vault for a given cluster ID
+func (c *Client) RetrieveJoinToken(clusterID string) (string, error) {
+	path := fmt.Sprintf("kv/data/rke2/%s", clusterID)
 
 	secret, err := c.VaultClient.Logical().Read(path)
 	if err != nil {
