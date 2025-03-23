@@ -6,15 +6,16 @@ Only supported on linux because bash dependencies and containers on windows.. ye
 package cmd
 
 import (
-    "embed"
+	"embed"
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"path/filepath"
+	"strings"
+
 	"github.com/google/uuid"
+	vault "github.com/michielvha/edgectl/pkg/vault/rke2"
 	"github.com/spf13/cobra"
-	"github.com/michielvha/edgectl/pkg/vault/rke2"
 )
 
 // TODO: Move functions to a separate package. Only keep the cobra command logic here.
@@ -115,7 +116,7 @@ var installServerCmd = &cobra.Command{
 
 		runBashFunction("rke2.sh", "install_rke2_server")
 
-        // Store the token in vault if cluster-id wasn't supplied
+		// Store the token in vault if cluster-id wasn't supplied
 		if !cmd.Flags().Changed("cluster-id") {
 			tokenBytes, err := os.ReadFile("/var/lib/rancher/rke2/server/node-token")
 			if err != nil {
@@ -176,7 +177,10 @@ func init() {
 	installServerCmd.Flags().String("cluster-id", "", "The clusterID required to join an existing cluster")
 	// installAgentCmd Flags
 	installAgentCmd.Flags().String("cluster-id", "", "The ID of the cluster you want to join")
-	installAgentCmd.MarkFlagRequired("cluster-id")
+	if err := installAgentCmd.MarkFlagRequired("cluster-id"); err != nil {
+		fmt.Printf("❌ Failed to mark cluster-id flag as required: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Attach subcommands under rke2
 	rke2Cmd.AddCommand(installServerCmd)

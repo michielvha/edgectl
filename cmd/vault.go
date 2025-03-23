@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	vault "github.com/michielvha/edgectl/pkg/vault/rke2"
 	"github.com/spf13/cobra"
-	"github.com/michielvha/edgectl/pkg/vault/rke2"
 )
 
 //TODO: Rework this package to be less specific for rke2, more like in general for using edge vault.
