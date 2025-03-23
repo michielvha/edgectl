@@ -35,11 +35,14 @@ jobs:
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
+#      - name: Disable Go toolchain mode # we are setting goversion in go.mod and this is causing toolchain errors, we are setting env to local and defining it in the pipeline in our case to fix the warnings.
+#        run: echo "GOTOOLCHAIN=local" >> $GITHUB_ENV
+
       # 3: Build and release binaries using GoReleaser, maybe move to seperate workflow
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'  # Specify the Go version
+          go-version: '1.24.1'  # Specify the Go version
 
       # 4: Install Linter (golangci-lint)
       - name: golangci-lint
