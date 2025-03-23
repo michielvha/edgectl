@@ -1,0 +1,14 @@
+# TODO: Look into properly implementing this. Currently using a basic config.
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gofmt
+    - goimports
+    - gosimple
+    - gocritic

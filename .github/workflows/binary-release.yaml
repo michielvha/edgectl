@@ -1,3 +1,4 @@
+# TODO: Add codeQL to check for security vulnerabilities via platform.
 name: Build and Release Go Binary
 
 permissions:
@@ -36,9 +37,21 @@ jobs:
 
       # 3: Build and release binaries using GoReleaser, maybe move to seperate workflow
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.23'  # Specify the Go version
+
+      # 4: Install Linter (golangci-lint)
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64
+
+#      # 5: Run Unit Tests with Coverage
+#      - name: Run Tests with gotestsum
+#        run: |
+#          go install gotest.tools/gotestsum@latest
+#          gotestsum --format testname -- -v -p 10 -count 1 -coverprofile=cover.out ./..
 
       # 4: Cache GoReleaser installation
       - name: Cache GoReleaser

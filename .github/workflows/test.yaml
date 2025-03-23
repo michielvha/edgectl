@@ -1,0 +1,1 @@
+# Create testing with go test. We could simulate a rke2 cluster install with the cli even on a runner to test it ?
