@@ -23,5 +23,11 @@ This will allow us to store secrets and other sensitive information securely. I'
     $env:VAULT_ADDR = "https://edgevault.duckdns.org"
     $env:VAULT_TOKEN = ""
     ```
+- **linux:**
+    ```shell
+    export VAULT_ADDR="https://edgevault.duckdns.org"
+    export VAULT_TOKEN=""
+    ```
+
 
 ## RKE2 integration

@@ -80,11 +80,39 @@ Examples:
 // 	},
 // }
 
+func fetchTokenFromVault(clusterID string) string {
+	fmt.Println("🔐 Cluster ID supplied, retrieving join token from Vault...")
+
+	vaultClient, err := vault.NewClient()
+	if err != nil {
+		fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
+		os.Exit(1)
+	}
+
+	token, err := vaultClient.RetrieveJoinToken(clusterID)
+	if err != nil {
+		fmt.Printf("❌ Failed to retrieve join token from Vault: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("✅ Retrieved token: %s\n", token)
+	_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0644)
+	_ = os.Setenv("RKE2_TOKEN", token)
+
+	return token
+}
+
 // Install RKE2 Server
 var installServerCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Install RKE2 Server",
 	Run: func(cmd *cobra.Command, args []string) {
+		// check if root, needed to upload file
+		if os.Geteuid() != 0 {
+			fmt.Println("❌ This command must be run as root. Try using `sudo`.")
+			os.Exit(1)
+		}
+
 		fmt.Println("🚀 Installing RKE2 Server...")
 
 		// Reuse our vault abstraction in ``pkg/vault/rke2``
@@ -97,18 +125,10 @@ var installServerCmd = &cobra.Command{
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 
 		if clusterID != "" {
-			fmt.Println("🔐 Cluster ID supplied, retrieving join token from Vault...")
-
-			token, err := vaultClient.RetrieveJoinToken(clusterID)
-			if err != nil {
-				fmt.Printf("❌ Failed to retrieve join token from Vault: %v\n", err)
-				os.Exit(1)
-			}
-
-			fmt.Printf("✅ Retrieved token: %s\n", token)
-			_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0644)
-			_ = os.Setenv("RKE2_TOKEN", token)
+			// fetch the token from the vault
+			fetchTokenFromVault(clusterID)
 		} else {
+			// if token is not supplied create it
 			clusterID = fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
 			_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0644)
 			fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
@@ -145,6 +165,7 @@ var installAgentCmd = &cobra.Command{
 			fmt.Println("❌ cluster ID is required to join an existing cluster.")
 			os.Exit(1)
 		}
+		fetchTokenFromVault(clusterID) // this will fetch the token and safe as env var to be used in bash function.
 		runBashFunction("rke2.sh", "install_rke2_agent")
 	},
 }

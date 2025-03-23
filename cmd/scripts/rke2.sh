@@ -154,7 +154,7 @@ install_rke2_agent() {
   # https://docs.rke2.io/reference/linux_agent_config
   cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 server: "https://$LB_HOSTNAME:9345"
-token:
+token: $RKE2_TOKEN
 node-label:
   - "environment=production"
   - "arch=${ARCH}"
@@ -259,9 +259,10 @@ configure_ufw_rke2_agent() {
   echo "✅ UFW rules configured for RKE2 Agent Node."
 }
 
-# 🗑️ purge rke2 install from the current system
+# 🗑️ Purge RKE2 install from the current system
 purge_rke2() {
-  # Remove everything related to RKE2
+  echo "🛑 Stopping and disabling RKE2..."
+
   if systemctl is-active --quiet rke2-server; then
     sudo systemctl stop rke2-server
     sudo systemctl disable rke2-server
@@ -269,20 +270,54 @@ purge_rke2() {
     sudo systemctl stop rke2-agent
     sudo systemctl disable rke2-agent
   else
-    echo "Neither rke2-server nor rke2-agent are running."
+    echo "ℹ️ Neither rke2-server nor rke2-agent are running."
   fi
-  # remove binary
+
+  echo "📛 Killing leftover RKE2-related processes..."
+  pids=$(pgrep -f 'rke2|kubelet')
+  if [ -n "$pids" ]; then
+    echo "Found PIDs: $pids"
+    sudo kill -9 $pids || true
+  fi
+
+  echo "🔌 Unmounting any leftover kubelet volumes..."
+  mount_points=$(mount | grep '/var/lib/kubelet/pods' | awk '{print $3}')
+  for mp in $mount_points; do
+    echo "Unmounting $mp"
+    sudo umount -l "$mp" || true
+  done
+
+  echo "⏳ Waiting for volumes to be fully unmounted..."
+  retries=10
+  while mount | grep -q '/var/lib/kubelet/pods'; do
+    if [ "$retries" -le 0 ]; then
+      echo "❌ Timed out waiting for mounts to release."
+      break
+    fi
+    echo "Still mounted... retrying in 2s"
+    sleep 2
+    ((retries--))
+  done
+
+  echo "🧹 Removing RKE2 files and directories..."
+
+  # Remove binaries
   sudo rm -rf /usr/local/bin/rke2* /var/lib/rancher/rke2
-  # remove systemd unit files
+
+  # Remove systemd unit files
   sudo rm -f /etc/systemd/system/rke2*.service
   sudo rm -f /etc/systemd/system/rke2*.env
-  # remove kubernetes data
-  sudo rm -rf /etc/rancher /var/lib/kubelet /var/lib/etcd
-  # reload systemd and cleanup
+
+  # Remove Kubernetes data
+  sudo rm -rf /etc/rancher /var/lib/kubelet /var/lib/etcd /var/lib/cni /opt/cni /etc/cni
+
+  # Reload systemd and reset
   sudo systemctl daemon-reload
   sudo systemctl reset-failed
-  # verify : which rke2 | rke2 --version
+
+  echo "✅ RKE2 successfully purged. You can check with: which rke2 || rke2 --version"
 }
+
 
 rke2_status() {
   # Check the status of RKE2 services

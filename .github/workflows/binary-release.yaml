@@ -45,18 +45,19 @@ jobs:
           go-version: '1.24.1'  # Specify the Go version
 
       # 4: Install Linter (golangci-lint)
+      # https://github.com/golangci/golangci-lint-action
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.64
 
-#      # 5: Run Unit Tests with Coverage
+#      # TODO: Run Unit Tests with Coverage
 #      - name: Run Tests with gotestsum
 #        run: |
 #          go install gotest.tools/gotestsum@latest
 #          gotestsum --format testname -- -v -p 10 -count 1 -coverprofile=cover.out ./..
 
-      # 4: Cache GoReleaser installation
+      # 5: Cache GoReleaser installation
       - name: Cache GoReleaser
         id: goreleaser-cache
         uses: actions/cache@v3
@@ -76,7 +77,7 @@ jobs:
           gpg --list-secret-keys --keyid-format=long
         env:
           GPG_TTY: /dev/null
-      # 6: Extract PGP Fingerprint
+      # 7: Extract PGP Fingerprint
       - name: Extract and Set GPG Fingerprint
         run: |
           echo "🔹 Extracting GPG Fingerprint..."
@@ -87,7 +88,7 @@ jobs:
 #      - name: Debug Environment Variables
 #        run: env | sort
 
-      # 7: Run GoReleaser to build and release binaries
+      # 8: Run GoReleaser to build and release binaries
       # https://github.com/goreleaser/goreleaser-actionw
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6

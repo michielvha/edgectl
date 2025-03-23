@@ -1,8 +1,6 @@
 # How to Lint
 
-Linting is the process of running a program that will analyse code for potential errors. 
-This is a good practice to ensure that the code is clean and free of errors. 
-Linting can help catch errors early on in the development process, which can save time and effort in the long run.
+We're using **golangci-lint** in our pipeline to integrate linting into our workflow. This will help us catch errors early and keep our codebase clean. You'll want to manually run **golangci-lint** and fix any linting errors before commiting to main.
 
 ````shell
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
