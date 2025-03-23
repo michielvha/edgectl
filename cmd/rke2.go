@@ -19,6 +19,7 @@ import (
 )
 
 // TODO: Move functions to a separate package. Only keep the cobra command logic here.
+// TODO: Create function to store kubeconfig file in vault for later usage.
 
 //go:embed scripts/*.sh
 var embeddedScripts embed.FS
@@ -166,7 +167,7 @@ var installAgentCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		fetchTokenFromVault(clusterID) // this will fetch the token and safe as env var to be used in bash function.
-		runBashFunction("rke2.sh", "install_rke2_agent")
+		runBashFunction("rke2.sh", "install_rke2_agent -l 192.168.10.123")
 	},
 }
 
