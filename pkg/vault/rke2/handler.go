@@ -31,6 +31,7 @@ func NewClient() (*Client, error) {
 }
 
 // StoreJoinToken saves the RKE2 join token to a Vault path
+// TODO: Expand this to also save the hostname ( will be needed in the future for the HAProxy config)
 func (c *Client) StoreJoinToken(clusterID, token string) error {
 	path := fmt.Sprintf("kv/data/rke2/%s", clusterID)
 
@@ -70,3 +71,43 @@ func (c *Client) RetrieveJoinToken(clusterID string) (string, error) {
 
 	return token, nil
 }
+
+// RetrieveMasterInfo fetches the list of server hostnames and the VIP for a cluster from Vault
+func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) {
+	path := fmt.Sprintf("kv/data/rke2/%s", clusterID)
+
+	secret, err := c.VaultClient.Logical().Read(path)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read LB info from Vault: %w", err)
+	}
+	if secret == nil || secret.Data == nil {
+		return nil, "", fmt.Errorf("no data found at path: %s", path)
+	}
+
+	rawData, ok := secret.Data["data"].(map[string]interface{})
+	if !ok {
+		return nil, "", fmt.Errorf("invalid data format at path: %s", path)
+	}
+
+	// Parse hostnames
+	rawHostnames, ok := rawData["hostnames"].([]interface{})
+	if !ok {
+		return nil, "", fmt.Errorf("hostnames not found or wrong type at path: %s", path)
+	}
+
+	var hostnames []string
+	for _, h := range rawHostnames {
+		if host, ok := h.(string); ok {
+			hostnames = append(hostnames, host)
+		}
+	}
+
+	// Parse VIP
+	vip, ok := rawData["vip"].(string)
+	if !ok {
+		return nil, "", fmt.Errorf("vip not found or invalid in Vault at path: %s", path)
+	}
+
+	return hostnames, vip, nil
+}
+

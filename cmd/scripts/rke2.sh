@@ -294,3 +294,87 @@ rke2_status() {
     echo "Neither rke2-server nor rke2-agent are running."
   fi
 }
+
+# TODO: Current LB is handled via Go, maybe also do in bash less secure but more flexible ?
+#install_rke2_lb () {
+#  # Install a load balancer for RKE2
+#  echo "🚀 Configuring RKE2 Load Balancer.."
+#
+#
+#}
+#
+## install_lb_stack installs and configures HAProxy and KeepAlived for K3s/RKE2 load balancing
+## Usage: install_lb_stack "<hostnames>" <vip> <state> <priority>
+## Example: install_lb_stack "server-1 server-2 server-3" 10.10.10.100 MASTER 200
+#install_lb_main() {
+#  local SERVER_HOSTNAMES=( $1 )
+#  local VIP=$2
+#  local STATE=$3     # MASTER or BACKUP
+#  local PRIORITY=$4  # 200 for MASTER, 100 for BACKUP
+#  local INTERFACE="eth1" # Change this if your LB network interface is different
+#
+#  echo "🔧 Installing HAProxy and KeepAlived..."
+#  sudo apt-get update
+#  sudo apt-get install -y haproxy keepalived
+#
+#  echo "📄 Writing HAProxy config..."
+#  sudo tee /etc/haproxy/haproxy.cfg > /dev/null <<EOF
+#frontend k3s-frontend
+#    bind *:6443
+#    mode tcp
+#    option tcplog
+#    default_backend k3s-backend
+#
+#backend k3s-backend
+#    mode tcp
+#    option tcp-check
+#    balance roundrobin
+#    default-server inter 10s downinter 5s
+#EOF
+#
+#  for host in ${SERVER_HOSTNAMES[@]}; do
+#    ip=$(getent hosts "$host" | awk '{ print $1 }')
+#    if [ -z "$ip" ]; then
+#      echo "❌ Could not resolve IP for host: $host"
+#      continue
+#    fi
+#    echo "    server $host ${ip}:6443 check" | sudo tee -a /etc/haproxy/haproxy.cfg > /dev/null
+#  done
+#
+#  echo "📄 Writing KeepAlived config..."
+#  sudo tee /etc/keepalived/keepalived.conf > /dev/null <<EOF
+#global_defs {
+#  enable_script_security
+#  script_user root
+#}
+#
+#vrrp_script chk_haproxy {
+#    script 'killall -0 haproxy'
+#    interval 2
+#}
+#
+#vrrp_instance haproxy-vip {
+#    interface ${INTERFACE}
+#    state ${STATE}
+#    priority ${PRIORITY}
+#
+#    virtual_router_id 51
+#
+#    virtual_ipaddress {
+#        ${VIP}/24
+#    }
+#
+#    track_script {
+#        chk_haproxy
+#    }
+#}
+#EOF
+#
+#  echo "🚀 Restarting HAProxy and KeepAlived..."
+#  sudo systemctl restart haproxy
+#  sudo systemctl restart keepalived
+#  echo "✅ Load balancer stack configured with VIP ${VIP}"
+#}
+#
+## Example usage (comment out or remove after testing):
+## install_lb_stack "server-1 server-2 server-3" 10.10.10.100 MASTER 200

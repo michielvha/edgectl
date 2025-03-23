@@ -3,6 +3,7 @@ module github.com/michielvha/edgectl
 go 1.24.1
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/vault/api v1.16.0
 	github.com/spf13/cobra v1.9.1
 )

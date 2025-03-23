@@ -68,6 +68,16 @@ Examples:
 }
 
 // Install RKE2 Server
+// var installLoadBalancerCmd = &cobra.Command{
+// 	Use:   "lb",
+// 	Short: "Install RKE2 load balancer",
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		fmt.Println("🚀 Install a load balancer for RKE2...")
+// 		runBashFunction("rke2.sh", "install_rke2_lb")
+// 	},
+// }
+
+// Install RKE2 Server
 var installServerCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Install RKE2 Server",
