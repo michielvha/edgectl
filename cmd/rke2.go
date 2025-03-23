@@ -75,13 +75,13 @@ var installServerCmd = &cobra.Command{
 		fmt.Println("🚀 Installing RKE2 Server...")
 		runBashFunction("rke2.sh", "install_rke2_server")
 
-		token, _ := cmd.Flags().GetString("token") // get the token from the flag
-		if token == "" {
+		clusterID, _ := cmd.Flags().GetString("cluster-id") // get the clusterID from the flag
+		if clusterID == "" {
 			id := fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
 			_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(id), 0644)
 			fmt.Printf("🆔 Generated new cluster ID: %s\n", id)
 		} else {
-			fmt.Println("🔐 Token supplied, skipping cluster ID generation.")
+			fmt.Println("🔐 cluster ID supplied, skipping cluster ID generation.")
 		}
 	},
 }
@@ -93,7 +93,7 @@ var installAgentCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		if clusterID == "" {
-			fmt.Println("❌ cluster-id is required to join an existing cluster.")
+			fmt.Println("❌ cluster ID is required to join an existing cluster.")
 			os.Exit(1)
 		}
 		runBashFunction("rke2.sh", "install_rke2_agent")
@@ -101,6 +101,7 @@ var installAgentCmd = &cobra.Command{
 }
 
 // Check RKE2 status
+// TODO: Add more status checks
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show status of RKE2",
@@ -120,11 +121,12 @@ var uninstallCmd = &cobra.Command{
 
 // Register subcommands
 func init() {
-	// Attach rke2 directly under rootCmd
+	// Attach rke2 as rootCmd
 	rootCmd.AddCommand(rke2Cmd)
 
-	// Add flags to the installServerCmd and installAgentCmd
-	installServerCmd.Flags().String("token", "", "The token required to join an existing cluster")
+	// installServerCmd Flags
+	installServerCmd.Flags().String("cluster-id", "", "The clusterID required to join an existing cluster")
+	// installAgentCmd Flags
 	installAgentCmd.Flags().String("cluster-id", "", "The ID of the cluster you want to join")
 	installAgentCmd.MarkFlagRequired("cluster-id")
 
