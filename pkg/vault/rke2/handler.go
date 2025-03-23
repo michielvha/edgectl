@@ -7,15 +7,12 @@ import (
 	vault "github.com/hashicorp/vault/api"
 )
 
-// Client wraps the Vault client for reuse
 type Client struct {
 	VaultClient *vault.Client
 }
 
-// NewClient initializes a Vault client using environment variables (VAULT_ADDR, VAULT_TOKEN)
 func NewClient() (*Client, error) {
-	config := vault.DefaultConfig() // uses VAULT_ADDR or default http://127.0.0.1:8200
-
+	config := vault.DefaultConfig()
 	client, err := vault.NewClient(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Vault client: %w", err)
@@ -30,69 +27,63 @@ func NewClient() (*Client, error) {
 	return &Client{VaultClient: client}, nil
 }
 
-// StoreJoinToken saves the RKE2 join token to a Vault path
-// TODO: Expand this to also save the hostname ( will be needed in the future for the HAProxy config)
-func (c *Client) StoreJoinToken(clusterID, token string) error {
-	path := fmt.Sprintf("kv/data/rke2/%s", clusterID)
-
-	_, err := c.VaultClient.Logical().Write(path, map[string]interface{}{
-		"data": map[string]interface{}{
-			"join_token": token,
-			"cluster": clusterID,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to write join token to Vault: %w", err)
-	}
-	return nil
-}
-
-// RetrieveJoinToken fetches the join token from Vault for a given cluster ID
-func (c *Client) RetrieveJoinToken(clusterID string) (string, error) {
-	path := fmt.Sprintf("kv/data/rke2/%s", clusterID)
-
+// GetSecret reads a Vault KV v2 secret from a fully qualified path and returns its "data" map
+func (c *Client) GetSecret(path string) (map[string]interface{}, error) {
 	secret, err := c.VaultClient.Logical().Read(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to read from Vault: %w", err)
+		return nil, fmt.Errorf("failed to read from Vault at path '%s': %w", path, err)
 	}
 	if secret == nil || secret.Data == nil {
-		return "", fmt.Errorf("no data found at path: %s", path)
+		return nil, fmt.Errorf("no data found at path: %s", path)
 	}
 
 	data, ok := secret.Data["data"].(map[string]interface{})
 	if !ok {
-		return "", fmt.Errorf("invalid data format at path: %s", path)
+		return nil, fmt.Errorf("invalid data format at path: %s", path)
 	}
+	return data, nil
+}
 
+// WriteSecret writes a map of values to a Vault KV v2 path
+func (c *Client) WriteSecret(path string, data map[string]interface{}) error {
+	_, err := c.VaultClient.Logical().Write(path, map[string]interface{}{"data": data})
+	if err != nil {
+		return fmt.Errorf("failed to write data to Vault at path '%s': %w", path, err)
+	}
+	return nil
+}
+
+// StoreJoinToken saves a token under a specific cluster path
+func (c *Client) StoreJoinToken(clusterID, token string) error {
+	return c.WriteSecret(fmt.Sprintf("kv/data/rke2/%s", clusterID), map[string]interface{}{
+		"join_token": token,
+		"cluster":    clusterID,
+	})
+}
+
+// RetrieveJoinToken loads a join token using cluster ID
+func (c *Client) RetrieveJoinToken(clusterID string) (string, error) {
+	data, err := c.GetSecret(fmt.Sprintf("kv/data/rke2/%s", clusterID))
+	if err != nil {
+		return "", err
+	}
 	token, ok := data["join_token"].(string)
 	if !ok {
-		return "", fmt.Errorf("join_token not found in Vault at path: %s", path)
+		return "", fmt.Errorf("join_token not found for cluster %s", clusterID)
 	}
-
 	return token, nil
 }
 
-// RetrieveMasterInfo fetches the list of server hostnames and the VIP for a cluster from Vault
+// RetrieveMasterInfo loads hostnames and VIP using cluster ID
 func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) {
-	path := fmt.Sprintf("kv/data/rke2/%s", clusterID)
-
-	secret, err := c.VaultClient.Logical().Read(path)
+	data, err := c.GetSecret(fmt.Sprintf("kv/data/rke2/%s/master-info", clusterID))
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to read LB info from Vault: %w", err)
-	}
-	if secret == nil || secret.Data == nil {
-		return nil, "", fmt.Errorf("no data found at path: %s", path)
+		return nil, "", err
 	}
 
-	rawData, ok := secret.Data["data"].(map[string]interface{})
+	rawHostnames, ok := data["hostnames"].([]interface{})
 	if !ok {
-		return nil, "", fmt.Errorf("invalid data format at path: %s", path)
-	}
-
-	// Parse hostnames
-	rawHostnames, ok := rawData["hostnames"].([]interface{})
-	if !ok {
-		return nil, "", fmt.Errorf("hostnames not found or wrong type at path: %s", path)
+		return nil, "", fmt.Errorf("hostnames not found or invalid type for cluster %s", clusterID)
 	}
 
 	var hostnames []string
@@ -102,12 +93,10 @@ func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) 
 		}
 	}
 
-	// Parse VIP
-	vip, ok := rawData["vip"].(string)
+	vip, ok := data["vip"].(string)
 	if !ok {
-		return nil, "", fmt.Errorf("vip not found or invalid in Vault at path: %s", path)
+		return nil, "", fmt.Errorf("vip not found or invalid type for cluster %s", clusterID)
 	}
 
 	return hostnames, vip, nil
 }
-

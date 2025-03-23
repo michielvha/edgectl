@@ -83,18 +83,57 @@ var installServerCmd = &cobra.Command{
 	Short: "Install RKE2 Server",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("🚀 Installing RKE2 Server...")
+
+		clusterID, _ := cmd.Flags().GetString("cluster-id")
+		vaultClient, err := vault.NewClient()
+		if err != nil {
+			fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
+			os.Exit(1)
+		}
+
+		if clusterID != "" {
+			fmt.Println("🔐 Cluster ID supplied, retrieving join token from Vault...")
+			token, err := vaultClient.RetrieveJoinToken(clusterID)
+			if err != nil {
+				fmt.Printf("❌ Failed to retrieve join token from Vault: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("✅ Retrieved token: %s\n", token)
+
+			_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0644)
+			_ = os.Setenv("RKE2_TOKEN", token)
+
+		} else {
+			// No cluster ID provided – generate and store after install
+			clusterID = fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
+			_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0644)
+			fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
+		}
+
+		// Always run the install script
 		runBashFunction("rke2.sh", "install_rke2_server")
 
-		clusterID, _ := cmd.Flags().GetString("cluster-id") // get the clusterID from the flag
-		if clusterID == "" {
-			id := fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
-			_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(id), 0644)
-			fmt.Printf("🆔 Generated new cluster ID: %s\n", id)
-		} else {
-			fmt.Println("🔐 cluster ID supplied, skipping cluster ID generation.")
+		// Only store token in Vault if it was a fresh install (clusterID was generated here)
+		if cmd.Flags().Changed("cluster-id") == false {
+			tokenBytes, err := os.ReadFile("/var/lib/rancher/rke2/server/node-token")
+			if err != nil {
+				fmt.Printf("❌ Failed to read generated node token: %v\n", err)
+				os.Exit(1)
+			}
+			token := strings.TrimSpace(string(tokenBytes))
+
+			err = vaultClient.StoreJoinToken(clusterID, token)
+			if err != nil {
+				fmt.Printf("❌ Failed to store token in Vault: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("🔐 Token successfully stored in Vault for cluster %s\n", clusterID)
 		}
 	},
 }
+
+
+
 
 // Install RKE2 Agent
 var installAgentCmd = &cobra.Command{
