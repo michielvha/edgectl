@@ -10,6 +10,16 @@ A CLI tool to manage the edge cloud. Comparable to `awscli` or `azure-cli`.
     - Automated lifecycle management of edge cloud
 - Use Cobra for cli
 
+## Use edgectl
+
+install the cli with the following commands:
+```shell
+go install github.com/michielvha/edgectl@latest
+edgectl version
+```
+enjoy !
+
+
 ## Changelog & TODO
 
 - [x] Create pipeline to auto release with goreleaser.
