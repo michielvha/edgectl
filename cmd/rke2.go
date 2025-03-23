@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"path/filepath"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
