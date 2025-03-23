@@ -115,8 +115,13 @@ EOF
 # TODO: After server is fully tested refactor this function.
 # bootstrap a RKE2 agent node
 install_rke2_agent() {
-  # description: Bootstrap an RKE2 agent node.
   # usage: install_rke2_agent [-l <loadbalancer-hostname>]
+  # Pre checks
+  if systemctl is-active --quiet rke2-agent; then
+    echo "❌ RKE2 Agent is already running. Exiting."
+    return 1
+  fi
+
   echo "🚀 Configuring RKE2 Agent Node..."
 
   # Default parameter values
