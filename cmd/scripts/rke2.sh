@@ -273,7 +273,7 @@ purge_rke2() {
     sudo systemctl stop rke2-agent
     sudo systemctl disable rke2-agent
   else
-    echo "ℹ️ Neither rke2-server nor rke2-agent are running."
+    echo "ℹ️ Neither rke2-server nor rke2-agent are currently active."
   fi
 
   echo "📛 Killing leftover RKE2-related processes..."
@@ -284,42 +284,60 @@ purge_rke2() {
   fi
 
   echo "🔌 Unmounting any leftover kubelet volumes..."
-  mount_points=$(mount | grep '/var/lib/kubelet/pods' | awk '{print $3}')
+  mount_points=$(mount | grep '/var/lib/kubelet' | awk '{print $3}')
   for mp in $mount_points; do
-    echo "Unmounting $mp"
-    sudo umount -l "$mp" || true
+    echo "Attempting to unmount: $mp"
+    sudo fuser -km "$mp" 2>/dev/null || true  # Kill any processes using the mount
+    sudo umount -lf "$mp" || true             # Lazy force unmount
   done
 
   echo "⏳ Waiting for volumes to be fully unmounted..."
   retries=10
-  while mount | grep -q '/var/lib/kubelet/pods'; do
+  while mount | grep -q '/var/lib/kubelet'; do
     if [ "$retries" -le 0 ]; then
-      echo "❌ Timed out waiting for mounts to release."
-      break
+      echo "❌ Timed out waiting for mounts to release. Manual intervention may be required."
+      exit 1
     fi
     echo "Still mounted... retrying in 2s"
     sleep 2
     ((retries--))
-  done
+  done  
 
   echo "🧹 Removing RKE2 files and directories..."
 
-  # Remove binaries
-  sudo rm -rf /usr/local/bin/rke2* /var/lib/rancher/rke2
+  sudo rm -rf /usr/local/bin/rke2* /var/lib/rancher/rke2 \
+              /etc/rancher /var/lib/kubelet /var/lib/etcd \
+              /var/lib/cni /opt/cni /etc/cni
 
-  # Remove systemd unit files
-  sudo rm -f /etc/systemd/system/rke2*.service
-  sudo rm -f /etc/systemd/system/rke2*.env
+  # Check again
+  if mount | grep -q '/var/lib/kubelet'; then
+    echo "❌ Cleanup failed: some kubelet mounts are still active."
+    return 1
+  else
+    echo "✅ /var/lib/kubelet unmounted successfully."
+  fi
 
-  # Remove Kubernetes data
-  sudo rm -rf /etc/rancher /var/lib/kubelet /var/lib/etcd /var/lib/cni /opt/cni /etc/cni
+  if [ -d "/var/lib/kubelet" ]; then
+    echo "❌ /var/lib/kubelet still exists. Possibly busy or not cleaned up. Run again or clean manually"
+    return 1
+ else
+    echo "✅ /var/lib/kubelet purged successfully."
+  fi
 
   # Reload systemd and reset
-  sudo systemctl daemon-reload
-  sudo systemctl reset-failed
+  echo "🔁 Reloading systemd daemon..." && sudo systemctl daemon-reload || {
+    echo "❌ Failed to reload systemd daemon."
+    return 1
+  }
+  echo "🔄 Resetting failed systemd services..." && sudo systemctl reset-failed || {
+    echo "❌ Failed to reset failed systemd services."
+    return 1
+  }
 
-  echo "✅ RKE2 successfully purged. You can check with: which rke2 || rke2 --version"
+  echo "✅ RKE2 purged successfully."
+
 }
+
 
 
 rke2_status() {
