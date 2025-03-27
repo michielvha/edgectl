@@ -40,7 +40,7 @@ Example usage:
                     \▓▓▓▓▓▓
 `
 	    fmt.Println(asciiArt)
-		fmt.Printf("\n🔧 Client Version: %s\n", Version)
+		fmt.Printf("🔧 Client Version: %s\n", Version)
 	},
 }
 
