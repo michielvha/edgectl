@@ -166,6 +166,8 @@ var installServerCmd = &cobra.Command{
 			if err != nil {
 				fmt.Printf("❌ Failed to store kubeconfig in Vault: %v\n", err)
 				os.Exit(1)
+			} else {
+				fmt.Printf("🔐 Kubeconfig successfully stored in Vault for cluster %s\n", clusterID)
 			}
 		}
 	},
