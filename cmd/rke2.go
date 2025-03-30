@@ -160,7 +160,7 @@ var installServerCmd = &cobra.Command{
 				fmt.Printf("❌ Kubeconfig file not found at path: %s\n", kubeconfigPath)
 				os.Exit(1)
 			}
-			
+
 			// if it exists store it vault
 			err = vaultClient.StoreKubeConfig(clusterID, kubeconfigPath)
 			if err != nil {
@@ -205,8 +205,6 @@ var uninstallCmd = &cobra.Command{
 		runBashFunction("rke2.sh", "purge_rke2")
 	},
 }
-
-
 
 // Register subcommands
 func init() {
