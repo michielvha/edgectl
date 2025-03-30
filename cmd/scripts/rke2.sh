@@ -280,17 +280,28 @@ purge_rke2() {
   fi
 
   echo "📛 Killing leftover RKE2-related processes..."
-  current_pid=$$
-  parent_pid=$PPID
 
-  pids=$(ps -eo pid,command | grep -E 'rke2|kubelet|containerd-shim|runc' | grep -v grep | awk '{print $1}' | grep -v -e "^$current_pid$" -e "^$parent_pid$")
+  # Get all matching PIDs but exclude the current session/process tree
+  exclude_pids="$(pgrep -f -d '|' -x "bash|sh|sudo|sshd|systemd|tmux|login|edgectl")"
 
-  if [ -n "$pids" ]; then
-    echo "Found PIDs: $pids"
-    for pid in $pids; do
-      sudo kill -9 "$pid" 2>/dev/null || true
-    done
+  # Find matching processes and exclude known safe ones
+  pids=$(ps -eo pid,comm,args | grep -E 'rke2|kubelet|containerd-shim|runc' | grep -v grep | awk '{print $1}')
+
+  # Exclude critical/safe processes
+  filtered_pids=()
+  for pid in $pids; do
+    if ! echo "$exclude_pids" | grep -q "$pid"; then
+      filtered_pids+=("$pid")
+    fi
+  done
+
+  if [ "${#filtered_pids[@]}" -gt 0 ]; then
+    echo "Found PIDs to kill: ${filtered_pids[*]}"
+    sudo kill -9 "${filtered_pids[@]}" || true
+  else
+    echo "ℹ️ No leftover RKE2-related processes found to kill."
   fi
+
 
   echo "🔌 Unmounting any leftover kubelet volumes..."
   mount_points=$(mount | grep '/var/lib/kubelet' | awk '{print $3}')
@@ -332,6 +343,10 @@ purge_rke2() {
  else
     echo "✅ /var/lib/kubelet purged successfully."
   fi
+
+  echo "🗑️ Removing RKE2 systemd service file..."
+  sudo rm -f /usr/local/lib/systemd/system/rke2-server.service /usr/local/lib/systemd/system/rke2-agent.service
+
 
   # Reload systemd and reset
   echo "🔁 Reloading systemd daemon..." && sudo systemctl daemon-reload || {
