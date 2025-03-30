@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	vault "github.com/michielvha/edgectl/pkg/vault/rke2"
+	vault "github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
 )
 

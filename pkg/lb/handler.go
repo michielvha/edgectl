@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	vault "github.com/michielvha/edgectl/pkg/vault/rke2"
+	vault "github.com/michielvha/edgectl/pkg/vault"
 )
 
 type LoadBalancerConfig struct {

@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	vault "github.com/michielvha/edgectl/pkg/vault/rke2"
+	vault "github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
 )
 
