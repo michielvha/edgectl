@@ -60,7 +60,7 @@ jobs:
       # 5: Cache GoReleaser installation
       - name: Cache GoReleaser
         id: goreleaser-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.goreleaser
           key: goreleaser-${{ runner.os }}-latest
