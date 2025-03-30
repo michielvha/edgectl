@@ -94,31 +94,31 @@ func (c *Client) RetrieveJoinToken(clusterID string) (string, error) {
 }
 
 // RetrieveMasterInfo loads hostnames and VIP using cluster ID
-func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) {
-	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/master-info", clusterID))
-	if err != nil {
-		return nil, "", err
-	}
+// func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) {
+// 	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/master-info", clusterID))
+// 	if err != nil {
+// 		return nil, "", err
+// 	}
 
-	rawHostnames, ok := data["hostnames"].([]interface{})
-	if !ok {
-		return nil, "", fmt.Errorf("hostnames not found or invalid type for cluster %s", clusterID)
-	}
+// 	rawHostnames, ok := data["hostnames"].([]interface{})
+// 	if !ok {
+// 		return nil, "", fmt.Errorf("hostnames not found or invalid type for cluster %s", clusterID)
+// 	}
 
-	var hostnames []string
-	for _, h := range rawHostnames {
-		if host, ok := h.(string); ok {
-			hostnames = append(hostnames, host)
-		}
-	}
+// 	var hostnames []string
+// 	for _, h := range rawHostnames {
+// 		if host, ok := h.(string); ok {
+// 			hostnames = append(hostnames, host)
+// 		}
+// 	}
 
-	vip, ok := data["vip"].(string)
-	if !ok {
-		return nil, "", fmt.Errorf("vip not found or invalid type for cluster %s", clusterID)
-	}
+// 	vip, ok := data["vip"].(string)
+// 	if !ok {
+// 		return nil, "", fmt.Errorf("vip not found or invalid type for cluster %s", clusterID)
+// 	}
 
-	return hostnames, vip, nil
-}
+// 	return hostnames, vip, nil
+// }
 
 // StoreKubeConfig reads the kubeconfig from the host and uploads it to Vault
 func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath string) error {
