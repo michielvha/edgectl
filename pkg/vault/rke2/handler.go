@@ -100,3 +100,35 @@ func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) 
 
 	return hostnames, vip, nil
 }
+
+// StoreKubeConfig reads the kubeconfig from the host and uploads it to Vault
+func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath string) error {
+	kubeconfig, err := os.ReadFile(kubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to read kubeconfig from path '%s': %w", kubeconfigPath, err)
+	}
+
+	return c.WriteSecret(fmt.Sprintf("kv/data/rke2/%s/kubeconfig", clusterID), map[string]interface{}{
+		"kubeconfig": string(kubeconfig),
+	})
+}
+
+// RetrieveKubeConfig fetches the kubeconfig from Vault and saves it to the host
+func (c *Client) RetrieveKubeConfig(clusterID, destinationPath string) error {
+	data, err := c.GetSecret(fmt.Sprintf("kv/data/rke2/%s/kubeconfig", clusterID))
+	if err != nil {
+		return fmt.Errorf("failed to retrieve kubeconfig for cluster %s: %w", clusterID, err)
+	}
+
+	kubeconfig, ok := data["kubeconfig"].(string)
+	if !ok {
+		return fmt.Errorf("kubeconfig not found or invalid type for cluster %s", clusterID)
+	}
+
+	err = os.WriteFile(destinationPath, []byte(kubeconfig), 0600)
+	if err != nil {
+		return fmt.Errorf("failed to write kubeconfig to path '%s': %w", destinationPath, err)
+	}
+
+	return nil
+}

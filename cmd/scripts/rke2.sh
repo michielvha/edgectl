@@ -6,7 +6,7 @@
 
 # TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality. We could check for the existance of these folders /etc/rancher /var/lib/kubelet /var/lib/etcd
 # TODO: Look into harding the RKE2 installation with CIS benchmarks. SEL linux etc etc. Verify with [kube-bench](https://github.com/aquasecurity/kube-bench)
-# TODO: Find way to pass token to agent automatically, maybe with GO wrapper to integrate with hashicorp vault ?
+# WIP: Find way to pass token to agent automatically, maybe with GO wrapper to integrate with hashicorp vault ?
 # TODO: Find a way to fetch the kubeconfig like we have for azure cli and aws cli, build a cli like that in GO. store in vault ?
 # TODO: Add logic to handle the requirement of a token to join masters to an existing cluster. maybe seperate join_rke2_server function ?
 # bootstrap a RKE2 server node
