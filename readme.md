@@ -25,6 +25,8 @@ enjoy !
 - [x] Create pipeline to auto release with goreleaser.
 - [x] Create version command using cobra and the variable is dynamically set at build time, in pipeline this is integrated with GitVersion.
 
+- [ ] Change to a logging library to support log levels and better logging. Support an `--debug / --verbose` flag to enable debug logging.
+
 - [ ] Create commands to call bash scripts for admin tasks, rke2 install etc.
 - [ ] Integrate HashiCorp Vault for secret management. Auto save & fetch secrets to Add agents to workers automatically
   - [ ] add some kind of clusterID generation to be able to tell what to join with what.. I'm thinking based of hostname and then handle the hostname per customer.
