@@ -12,12 +12,16 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "edgectl",
-	Short: "A CLI for Edge Cloud",
-	Long: `This CLI is a tool for managing edge cloud resources.
-It provides commands for creating, updating, and deleting resources
-in an edge cloud environment.
-It is designed to be easy to use and efficient, allowing users
-to quickly manage their edge cloud resources from the command line.`,
+	Short: "A CLI tool for managing Edge Cloud infrastructure",
+	Long: `
+edgectl is a lightweight command-line interface for managing Edge Cloud resources.
+
+It streamlines tasks such as provisioning clusters, joining nodes, managing configurations,
+and interacting with secure secrets storage — all tailored for edge environments.
+
+Whether you're deploying a new RKE2 cluster, automating node registration, or storing
+kubeconfigs securely in Vault, edgectl helps you orchestrate your edge infrastructure with ease.
+`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
