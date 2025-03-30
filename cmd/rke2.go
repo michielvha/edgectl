@@ -137,7 +137,7 @@ var installServerCmd = &cobra.Command{
 
 		runBashFunction("rke2.sh", "install_rke2_server")
 
-		// Store the token in vault if cluster-id wasn't supplied
+		// Store the token & kubeconfig in vault if cluster-id wasn't supplied
 		if !cmd.Flags().Changed("cluster-id") {
 			tokenBytes, err := os.ReadFile("/var/lib/rancher/rke2/server/node-token")
 			if err != nil {
@@ -152,23 +152,22 @@ var installServerCmd = &cobra.Command{
 			}
 
 			fmt.Printf("🔐 Token successfully stored in Vault for cluster %s\n", clusterID)
-		}
 
-		// Store the kubeconfig in Vault
-		// Check if it exists
-		kubeconfigPath := "/etc/rancher/rke2/rke2.yaml"
-		if _, statErr := os.Stat(kubeconfigPath); os.IsNotExist(statErr) {
-			fmt.Printf("❌ Kubeconfig file not found at path: %s\n", kubeconfigPath)
-			os.Exit(1)
+			// Check if kubeconfig exists
+			// TODO: handle changing 127.0.0.1 to the load balancer IP
+			kubeconfigPath := "/etc/rancher/rke2/rke2.yaml"
+			if _, statErr := os.Stat(kubeconfigPath); os.IsNotExist(statErr) {
+				fmt.Printf("❌ Kubeconfig file not found at path: %s\n", kubeconfigPath)
+				os.Exit(1)
+			}
+			
+			// if it exists store it vault
+			err = vaultClient.StoreKubeConfig(clusterID, kubeconfigPath)
+			if err != nil {
+				fmt.Printf("❌ Failed to store kubeconfig in Vault: %v\n", err)
+				os.Exit(1)
+			}
 		}
-		
-		// if it exists store it
-		err = vaultClient.StoreKubeConfig(clusterID, kubeconfigPath)
-		if err != nil {
-			fmt.Printf("❌ Failed to store kubeconfig in Vault: %v\n", err)
-			os.Exit(1)
-		}
-		
 	},
 }
 
