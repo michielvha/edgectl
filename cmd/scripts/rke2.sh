@@ -168,6 +168,9 @@ EOF
   # Enable and start RKE2 agent
   echo "⚙️  Starting RKE2 agent..."
   sudo systemctl enable --now rke2-agent || { echo "❌ RKE2 Agent node bootstrap failed."; return 1; }
+
+  configure_ufw_rke2_server
+
   echo "✅ RKE2 Agent node bootstrapped."
 }
 
