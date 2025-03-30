@@ -51,26 +51,7 @@ import (
 // 	return nil
 // }
 
-// // StoreJoinToken saves a token under a specific cluster path
-// func (c *Client) StoreJoinToken(clusterID, token string) error {
-// 	return c.WriteSecret(fmt.Sprintf("kv/data/rke2/%s", clusterID), map[string]interface{}{
-// 		"join_token": token,
-// 		"cluster":    clusterID,
-// 	})
-// }
 
-// // RetrieveJoinToken loads a join token using cluster ID
-// func (c *Client) RetrieveJoinToken(clusterID string) (string, error) {
-// 	data, err := c.GetSecret(fmt.Sprintf("kv/data/rke2/%s", clusterID))
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	token, ok := data["join_token"].(string)
-// 	if !ok {
-// 		return "", fmt.Errorf("join_token not found for cluster %s", clusterID)
-// 	}
-// 	return token, nil
-// }
 
 // StoreJoinToken saves a token under a specific cluster path
 func (c *Client) StoreJoinToken(clusterID, token string) error {

@@ -280,10 +280,16 @@ purge_rke2() {
   fi
 
   echo "📛 Killing leftover RKE2-related processes..."
-  pids=$(pgrep -f 'rke2|kubelet')
+  current_pid=$$
+  parent_pid=$PPID
+
+  pids=$(ps -eo pid,command | grep -E 'rke2|kubelet|containerd-shim|runc' | grep -v grep | awk '{print $1}' | grep -v -e "^$current_pid$" -e "^$parent_pid$")
+
   if [ -n "$pids" ]; then
     echo "Found PIDs: $pids"
-    sudo kill -9 $pids || true
+    for pid in $pids; do
+      sudo kill -9 "$pid" 2>/dev/null || true
+    done
   fi
 
   echo "🔌 Unmounting any leftover kubelet volumes..."
