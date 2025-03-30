@@ -51,8 +51,6 @@ import (
 // 	return nil
 // }
 
-
-
 // StoreJoinToken saves a token under a specific cluster path
 func (c *Client) StoreJoinToken(clusterID, token string) error {
 	return c.StoreSecret(fmt.Sprintf("kv/data/rke2/%s", clusterID), map[string]interface{}{

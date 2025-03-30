@@ -25,7 +25,7 @@ Example usage:
   edgectl version
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-        asciiArt :=`
+		asciiArt := `
  ________       __                    ______  __ __
 |        \     |  \                  /      \|  \  \
 | ▓▓▓▓▓▓▓▓ ____| ▓▓ ______   ______ |  ▓▓▓▓▓▓\ ▓▓\▓▓
@@ -39,7 +39,7 @@ Example usage:
                    \▓▓    ▓▓
                     \▓▓▓▓▓▓
 `
-	    fmt.Println(asciiArt)
+		fmt.Println(asciiArt)
 		fmt.Printf("🔧 Client Version: %s\n", Version)
 	},
 }
@@ -62,7 +62,6 @@ Example usage:
 //                   |  \__| ▓▓
 //                    \▓▓    ▓▓
 //                     \▓▓▓▓▓▓
-
 
 // `
 //  ________       __                   ________
@@ -93,8 +92,6 @@ Example usage:
 //                    \▓▓    ▓▓
 //                     \▓▓▓▓▓▓
 // `
-
-
 
 // Seriff
 // `
@@ -130,7 +127,6 @@ func init() {
 	// versionCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-
 // `
 //                 __                            __ __
 //                |  \                          |  \  \
@@ -146,7 +142,6 @@ func init() {
 //                     \▓▓▓▓▓▓
 //
 // `
-
 
 // `
 //                 ▄▄                           ▄▄   ▄▄
