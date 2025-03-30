@@ -1,0 +1,37 @@
+{
+    "extends": [
+      "config:recommended",
+      ":semanticCommits",
+      ":semanticPrefixFixDepsChoreOthers",
+      ":label(dependencies)",
+      ":timezone(Europe/Brussels)"
+    ],
+    "packageRules": [
+      {
+        "matchPackagePatterns": ["^github.com/"],
+        "groupName": "Go dependencies",
+        "matchManagers": ["gomod"],
+        "enabled": true
+      },
+      {
+        "matchManagers": ["gomod"],
+        "matchUpdateTypes": ["patch"],
+        "automerge": true,
+        "automergeType": "pr"
+      },
+      {
+        "matchManagers": ["github-actions"],
+        "groupName": "GitHub Actions updates"
+      },
+      {
+        "matchManagers": ["dockerfile"],
+        "groupName": "Docker base images",
+        "enabled": true
+      }
+    ],
+    "schedule": ["after 7am and before 10pm every weekday"],
+    "prHourlyLimit": 5,
+    "prConcurrentLimit": 10,
+    "dependencyDashboard": true
+}
+  
