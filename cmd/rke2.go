@@ -48,12 +48,22 @@ func extractEmbeddedScript(scriptName string) string {
 func runBashFunction(scriptName, functionName string) {
 	scriptPath := extractEmbeddedScript(scriptName)
 
-	// Run the function from the sourced script
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("source %s && %s", scriptPath, functionName))
+	// // Run the function from the sourced script
+	// cmd := exec.Command("bash", "-c", fmt.Sprintf("source %s && %s", scriptPath, functionName))
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
+	// if err := cmd.Run(); err != nil {
+	// 	fmt.Printf("❌ Error executing function %s from %s: %v\n", functionName, scriptPath, err)
+	// 	os.Exit(1)
+	// }
+
+	// Run the full script and pass the function name to call inside the script
+	cmd := exec.Command("bash", scriptPath, functionName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin // Important to inherit input in case sudo or interactive steps exist
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("❌ Error executing function %s from %s: %v\n", functionName, scriptPath, err)
+		fmt.Printf("❌ Error executing %s from %s: %v\n", functionName, scriptPath, err)
 		os.Exit(1)
 	}
 }

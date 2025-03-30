@@ -375,6 +375,14 @@ rke2_status() {
   fi
 }
 
+# Dispatcher: allows calling the function by name
+if declare -f "$1" > /dev/null; then
+  "$@"
+else
+  echo "❌ Unknown function: $1"
+  exit 1
+fi
+
 # TODO: Current LB is handled via Go, maybe also do in bash less secure but more flexible ?
 #install_rke2_lb () {
 #  # Install a load balancer for RKE2
