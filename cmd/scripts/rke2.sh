@@ -315,7 +315,7 @@ purge_rke2() {
 
 
 
-
+# TODO: expand this status check
 rke2_status() {
   # Check the status of RKE2 services
   if systemctl is-active --quiet rke2-server; then
