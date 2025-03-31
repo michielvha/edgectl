@@ -219,6 +219,36 @@ var uninstallCmd = &cobra.Command{
 	},
 }
 
+// Configure kubeconfig
+var SetKubeConfigCmd = &cobra.Command{
+	Use:   "config kube",
+	Short: "Fetch kubeconfig from Vault and store it on the host",
+	Run: func(cmd *cobra.Command, args []string) {
+		clusterID, _ := cmd.Flags().GetString("cluster-id")
+		outputPath, _ := cmd.Flags().GetString("output")
+
+		if clusterID == "" {
+			fmt.Println("❌ You must provide a --cluster-id")
+			os.Exit(1)
+		}
+
+		vaultClient, err := vault.NewClient()
+		if err != nil {
+			fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
+			os.Exit(1)
+		}
+
+		err = vaultClient.RetrieveKubeConfig(clusterID, outputPath)
+		if err != nil {
+			fmt.Printf("❌ Failed to retrieve kubeconfig: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("✅ Kubeconfig successfully written to: %s\n", outputPath)
+	},
+}
+
+
 // Register subcommands
 func init() {
 	// Attach rke2 as rootCmd
@@ -233,9 +263,14 @@ func init() {
 		os.Exit(1)
 	}
 
+	SetKubeConfigCmd.Flags().String("cluster-id", "", "The ID of the cluster to fetch the kubeconfig for")
+	SetKubeConfigCmd.Flags().String("output", "/etc/rancher/rke2/rke2.yaml", "Destination path to store the kubeconfig")
+	_ = SetKubeConfigCmd.MarkFlagRequired("cluster-id")
+	
 	// Attach subcommands under rke2
 	rke2Cmd.AddCommand(installServerCmd)
 	rke2Cmd.AddCommand(installAgentCmd)
 	rke2Cmd.AddCommand(statusCmd)
 	rke2Cmd.AddCommand(uninstallCmd)
+	rke2Cmd.AddCommand(SetKubeConfigCmd)
 }
