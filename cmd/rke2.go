@@ -245,8 +245,12 @@ var SetKubeConfigCmd = &cobra.Command{
 		}
 
 		fmt.Printf("✅ Kubeconfig successfully written to: %s\n", outputPath)
+
+		// Configure bash shell to use the kubeconfig
+		runBashFunction("rke2.sh", "configure_rke2_bash")
 	},
 }
+
 
 // Register subcommands
 func init() {
