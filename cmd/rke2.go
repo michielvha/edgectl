@@ -248,7 +248,6 @@ var SetKubeConfigCmd = &cobra.Command{
 	},
 }
 
-
 // Register subcommands
 func init() {
 	// Attach rke2 as rootCmd
@@ -266,7 +265,7 @@ func init() {
 	SetKubeConfigCmd.Flags().String("cluster-id", "", "The ID of the cluster to fetch the kubeconfig for")
 	SetKubeConfigCmd.Flags().String("output", "/etc/rancher/rke2/rke2.yaml", "Destination path to store the kubeconfig")
 	_ = SetKubeConfigCmd.MarkFlagRequired("cluster-id")
-	
+
 	// Attach subcommands under rke2
 	rke2Cmd.AddCommand(installServerCmd)
 	rke2Cmd.AddCommand(installAgentCmd)
