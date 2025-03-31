@@ -251,7 +251,6 @@ var SetKubeConfigCmd = &cobra.Command{
 	},
 }
 
-
 // Register subcommands
 func init() {
 	// Attach rke2 as rootCmd

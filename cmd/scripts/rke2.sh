@@ -174,6 +174,7 @@ EOF
   echo "✅ RKE2 Agent node bootstrapped."
 }
 
+# TODO: Check if we can make this more user scoped
 # configure the shell for administration on an RKE2 bootstrapped node
 configure_rke2_bash() {
   local profile_file="/etc/profile.d/rke2.sh"
