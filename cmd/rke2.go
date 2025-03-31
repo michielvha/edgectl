@@ -221,7 +221,7 @@ var uninstallCmd = &cobra.Command{
 
 // Configure kubeconfig
 var SetKubeConfigCmd = &cobra.Command{
-	Use:   "config",
+	Use:   "config kube",
 	Short: "Fetch kubeconfig from Vault and store it on the host",
 	Run: func(cmd *cobra.Command, args []string) {
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
