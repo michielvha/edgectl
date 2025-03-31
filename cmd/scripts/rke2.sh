@@ -270,97 +270,48 @@ purge_rke2() {
   echo "🛑 Stopping and disabling RKE2..."
 
   if systemctl is-active --quiet rke2-server; then
-    sudo systemctl stop rke2-server
-    sudo systemctl disable rke2-server
+    echo "🧹 Running official RKE2 server uninstall script..."
+    if [ -f "/usr/local/bin/rke2-uninstall.sh" ]; then
+      sudo /usr/local/bin/rke2-uninstall.sh
+    else
+      echo "❌ Server uninstall script not found!"
+    fi
   elif systemctl is-active --quiet rke2-agent; then
-    sudo systemctl stop rke2-agent
-    sudo systemctl disable rke2-agent
+    echo "🧹 Running official RKE2 agent uninstall script..."
+    if [ -f "/usr/local/bin/rke2-agent-uninstall.sh" ]; then
+      sudo /usr/local/bin/rke2-agent-uninstall.sh
+    else
+      echo "❌ Agent uninstall script not found!"
+    fi
   else
     echo "ℹ️ Neither rke2-server nor rke2-agent are currently active."
   fi
 
-  echo "📛 Killing leftover RKE2-related processes..."
+  echo "🗑️ Cleaning up leftover systemd service files..."
+  sudo rm -f /usr/local/lib/systemd/system/rke2-server.service
+  sudo rm -f /usr/local/lib/systemd/system/rke2-agent.service
 
-  # Get all matching PIDs but exclude the current session/process tree
-  exclude_pids="$(pgrep -f -d '|' -x "bash|sh|sudo|sshd|systemd|tmux|login|edgectl")"
-
-  # Find matching processes and exclude known safe ones
-  pids=$(ps -eo pid,comm,args | grep -E 'rke2|kubelet|containerd-shim|runc' | grep -v grep | awk '{print $1}')
-
-  # Exclude critical/safe processes
-  filtered_pids=()
-  for pid in $pids; do
-    if ! echo "$exclude_pids" | grep -q "$pid"; then
-      filtered_pids+=("$pid")
-    fi
-  done
-
-  if [ "${#filtered_pids[@]}" -gt 0 ]; then
-    echo "Found PIDs to kill: ${filtered_pids[*]}"
-    sudo kill -9 "${filtered_pids[@]}" || true
-  else
-    echo "ℹ️ No leftover RKE2-related processes found to kill."
-  fi
-
-
-  echo "🔌 Unmounting any leftover kubelet volumes..."
-  mount_points=$(mount | grep '/var/lib/kubelet' | awk '{print $3}')
-  for mp in $mount_points; do
-    echo "Attempting to unmount: $mp"
-    sudo fuser -km "$mp" 2>/dev/null || true  # Kill any processes using the mount
-    sudo umount -lf "$mp" || true             # Lazy force unmount
-  done
-
-  echo "⏳ Waiting for volumes to be fully unmounted..."
-  retries=10
-  while mount | grep -q '/var/lib/kubelet'; do
-    if [ "$retries" -le 0 ]; then
-      echo "❌ Timed out waiting for mounts to release. Manual intervention may be required."
-      exit 1
-    fi
-    echo "Still mounted... retrying in 2s"
-    sleep 2
-    ((retries--))
-  done  
-
-  echo "🧹 Removing RKE2 files and directories..."
-
-  sudo rm -rf /usr/local/bin/rke2* /var/lib/rancher/rke2 \
-              /etc/rancher /var/lib/kubelet /var/lib/etcd \
-              /var/lib/cni /opt/cni /etc/cni
-
-  # Check again
-  if mount | grep -q '/var/lib/kubelet'; then
-    echo "❌ Cleanup failed: some kubelet mounts are still active."
+  echo "🔁 Rexecuting systemd daemon..."
+  if ! sudo systemctl daemon-reexec; then
+    echo "❌ Failed to Rexecute systemd daemon."
     return 1
-  else
-    echo "✅ /var/lib/kubelet unmounted successfully."
   fi
 
-  if [ -d "/var/lib/kubelet" ]; then
-    echo "❌ /var/lib/kubelet still exists. Possibly busy or not cleaned up. Run again or clean manually"
-    return 1
- else
-    echo "✅ /var/lib/kubelet purged successfully."
-  fi
-
-  echo "🗑️ Removing RKE2 systemd service file..."
-  sudo rm -f /usr/local/lib/systemd/system/rke2-server.service /usr/local/lib/systemd/system/rke2-agent.service
-
-
-  # Reload systemd and reset
-  echo "🔁 Reloading systemd daemon..." && sudo systemctl daemon-reload || {
+  echo "🔁 Reloading systemd daemon..."
+  if ! sudo systemctl daemon-reload; then
     echo "❌ Failed to reload systemd daemon."
     return 1
-  }
-  echo "🔄 Resetting failed systemd services..." && sudo systemctl reset-failed || {
+  fi
+
+  echo "🔄 Resetting failed systemd services..."
+  if ! sudo systemctl reset-failed; then
     echo "❌ Failed to reset failed systemd services."
     return 1
-  }
+  fi
 
-  echo "✅ RKE2 purged successfully."
-
+  echo "✅ RKE2 completely purged from this system."
 }
+
 
 
 

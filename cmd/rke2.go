@@ -91,6 +91,7 @@ Examples:
 // 	},
 // }
 
+// Fetch token from Vault & set as env var / file
 func fetchTokenFromVault(clusterID string) string {
 	fmt.Println("🔐 Cluster ID supplied, retrieving join token from Vault...")
 
@@ -195,7 +196,7 @@ var installAgentCmd = &cobra.Command{
 		}
 		fetchTokenFromVault(clusterID) // this will fetch the token and safe as env var to be used in bash function.
 		// TODO: figure how to dynamically set lb hostname/ip as env var...
-		runBashFunction("rke2.sh", "install_rke2_agent -l 192.168.10.123")
+		runBashFunction("rke2.sh", "install_rke2_agent -l 192.168.10.125")
 	},
 }
 
