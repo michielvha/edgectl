@@ -127,7 +127,7 @@ var installServerCmd = &cobra.Command{
 
 		fmt.Println("🚀 Installing RKE2 Server...")
 
-		// Reuse our vault abstraction in ``pkg/vault/rke2``
+		// Reuse our vault abstraction in ``pkg/vault/rke2-handler.go``
 		vaultClient, err := vault.NewClient()
 		if err != nil {
 			fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
@@ -190,10 +190,11 @@ var installAgentCmd = &cobra.Command{
 	Short: "Install RKE2 Agent",
 	Run: func(cmd *cobra.Command, args []string) {
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
-		if clusterID == "" {
-			fmt.Println("❌ cluster ID is required to join an existing cluster.")
-			os.Exit(1)
-		}
+		// cobra already checks this
+		// if clusterID == "" {
+		// 	fmt.Println("❌ cluster ID is required to join an existing cluster.")
+		// 	os.Exit(1)
+		// }
 		fetchTokenFromVault(clusterID) // this will fetch the token and safe as env var to be used in bash function.
 		// TODO: figure how to dynamically set lb hostname/ip as env var...
 		runBashFunction("rke2.sh", "install_rke2_agent -l 192.168.10.125")
@@ -227,10 +228,11 @@ var SetKubeConfigCmd = &cobra.Command{
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		outputPath, _ := cmd.Flags().GetString("output")
 
-		if clusterID == "" {
-			fmt.Println("❌ You must provide a --cluster-id")
-			os.Exit(1)
-		}
+		// Cobra already checks this when using `MarkFlagRequired`
+		// if clusterID == "" {
+		// 	fmt.Println("❌ You must provide a --cluster-id")
+		// 	os.Exit(1)
+		// }
 
 		vaultClient, err := vault.NewClient()
 		if err != nil {
@@ -260,10 +262,7 @@ func init() {
 	installServerCmd.Flags().String("cluster-id", "", "The clusterID required to join an existing cluster")
 	// installAgentCmd Flags
 	installAgentCmd.Flags().String("cluster-id", "", "The ID of the cluster you want to join")
-	if err := installAgentCmd.MarkFlagRequired("cluster-id"); err != nil {
-		fmt.Printf("❌ Failed to mark cluster-id flag as required: %v\n", err)
-		os.Exit(1)
-	}
+	_ = installAgentCmd.MarkFlagRequired("cluster-id")
 
 	SetKubeConfigCmd.Flags().String("cluster-id", "", "The ID of the cluster to fetch the kubeconfig for")
 	SetKubeConfigCmd.Flags().String("output", "/etc/rancher/rke2/rke2.yaml", "Destination path to store the kubeconfig")
