@@ -53,6 +53,7 @@ signs:
 release:
   draft: false
 changelog:
+  use: git
   filters:
     include:
       - main
