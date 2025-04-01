@@ -56,7 +56,10 @@ changelog:
   use: git
   filters:
     include:
-      - main
+      - "^feat:"
+      - "^fix:"
+      - "^chore:"
+      - "^docs:"
   sort: asc # Sort commits chronologically (oldest to newest)
   groups:   # organize your changelog into categories using regular expressions, start commit with feat: or fix:
     - title: "🚀 Features"
