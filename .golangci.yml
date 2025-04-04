@@ -10,7 +10,16 @@ linters:
     - errcheck
     - staticcheck
     - unused
-    - gofmt
     - goimports
     - gosimple
     - gocritic
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+    - gci
+    - gofmt
+    - golines
+
+# Reference: https://golangci-lint.run/usage/configuration/
