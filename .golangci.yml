@@ -18,6 +18,6 @@ formatters:
     - goimports
     - gci
     - gofmt
-    - golines
+    # - golines
 
 # Reference: https://golangci-lint.run/usage/configuration/
