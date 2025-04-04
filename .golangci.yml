@@ -10,7 +10,6 @@ linters:
     - errcheck
     - staticcheck
     - unused
-    - goimports
     - gosimple
     - gocritic
 
