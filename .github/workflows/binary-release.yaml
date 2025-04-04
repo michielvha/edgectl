@@ -48,8 +48,6 @@ jobs:
       # https://github.com/golangci/golangci-lint-action
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
-        with:
-          version: v1.64
 
 #      # TODO: Run Unit Tests with Coverage
 #      - name: Run Tests with gotestsum
