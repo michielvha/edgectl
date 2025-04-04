@@ -1,6 +1,15 @@
-assembly-versioning-scheme: MajorMinorPatchTag
-mode: Mainline
-branches: {}
+# https://gitversion.net/docs/reference/configuration
+mode: ContinuousDeployment
+branches:
+  main:
+    regex: ^main$
+    is-release-branch: false
+  release:
+    regex: ^release/
+    is-release-branch: true
+    increment: Patch # Increment patch on every commit (can be `Major` or `Minor` if needed)
+assembly-versioning-scheme: MajorMinorPatch
+commit-message-incrementing: Enabled
 ignore:
   sha: []
 merge-message-formats: {}
