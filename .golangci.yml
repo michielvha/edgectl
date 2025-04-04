@@ -10,7 +10,6 @@ linters:
     - errcheck
     - staticcheck
     - unused
-    - gosimple
     - gocritic
 
 formatters:
