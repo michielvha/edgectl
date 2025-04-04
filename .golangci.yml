@@ -1,4 +1,6 @@
 # TODO: Look into properly implementing this. Currently using a basic config.
+version: "2"
+
 run:
   timeout: 5m
 
