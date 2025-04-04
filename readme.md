@@ -37,4 +37,4 @@ edgectl version
 - [ ] Integrate viper for environment variables and config file support
   - [ ] Add support for `--dry-run` to all commands
 
-- [ ] update gitVersion to be like chartFetch with release branch strategy
+- [x] update gitVersion to be like chartFetch with release branch strategy
