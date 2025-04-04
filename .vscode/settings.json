@@ -1,6 +1,12 @@
-{
-    "editor.fontFamily": "JetBrains Mono",
-    "editor.fontSize": 14,
-    "editor.fontLigatures": false
-  }
+// {
+//     "editor.fontFamily": "JetBrains Mono",
+//     "editor.fontSize": 14,
+//     "editor.fontLigatures": false
+//   }
   
+{
+"go.formatTool": "gofumpt",
+"[go]": {
+  "editor.formatOnSave": true
+}
+}

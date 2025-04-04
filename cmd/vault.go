@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//TODO: Rework this package to be less specific for rke2, more like in general for using edge vault.
+// TODO: Rework this package to be less specific for rke2, more like in general for using edge vault.
 // handler done in pkg/vault/handler.go todo implement here after rke2 testing.
 
 // initVaultClient centralizes Vault client creation and error handling
@@ -70,7 +70,7 @@ var vaultFetchCmd = &cobra.Command{
 
 func init() {
 	// Parent command: edgectl vault
-	var vaultCmd = &cobra.Command{
+	vaultCmd := &cobra.Command{
 		Use:   "vault",
 		Short: "Interact with Edge Vault",
 	}

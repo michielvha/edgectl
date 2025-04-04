@@ -123,7 +123,7 @@ func (c *Client) RetrieveKubeConfig(clusterID, destinationPath string) error {
 		return fmt.Errorf("kubeconfig not found or invalid type for cluster %s", clusterID)
 	}
 
-	err = os.WriteFile(destinationPath, []byte(kubeconfig), 0600)
+	err = os.WriteFile(destinationPath, []byte(kubeconfig), 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to write kubeconfig to path '%s': %w", destinationPath, err)
 	}

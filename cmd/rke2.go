@@ -36,7 +36,7 @@ func extractEmbeddedScript(scriptName string) string {
 	}
 
 	// Write to a temp file
-	if err := os.WriteFile(scriptPath, data, 0755); err != nil {
+	if err := os.WriteFile(scriptPath, data, 0o755); err != nil {
 		fmt.Printf("❌ Failed to write script: %v\n", err)
 		os.Exit(1)
 	}
@@ -108,7 +108,7 @@ func fetchTokenFromVault(clusterID string) string {
 	}
 
 	fmt.Printf("✅ Retrieved token: %s\n", token)
-	_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0644)
+	_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
 	_ = os.Setenv("RKE2_TOKEN", token)
 
 	return token
@@ -142,7 +142,7 @@ var installServerCmd = &cobra.Command{
 		} else {
 			// if token is not supplied create it
 			clusterID = fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
-			_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0644)
+			_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
 			fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
 		}
 
