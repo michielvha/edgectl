@@ -17,8 +17,6 @@ install the cli with the following commands:
 go install github.com/michielvha/edgectl@latest
 edgectl version
 ```
-enjoy !
-
 
 ## Changelog & TODO
 
@@ -35,3 +33,6 @@ enjoy !
 
 - [ ] Auto Bootstrap ArgoCD for automated dev setup
   - [ ] Add helm chart to directory on host with rke2 helm integration
+
+- [ ] Integrate viper for environment variables and config file support
+  - [ ] Add support for `--dry-run` to all commands
