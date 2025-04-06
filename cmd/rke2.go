@@ -1,19 +1,17 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright © 2025 EDGEFORGE contact@edgeforge.eu
 
 Only supported on linux because bash dependencies and containers on windows.. yeah, nope.
 */
 package cmd
 
 import (
-	"embed"
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
+	common "github.com/michielvha/edgectl/pkg/common"
 	vault "github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
 )
@@ -21,7 +19,7 @@ import (
 // TODO: Move functions to a separate package. Only keep the cobra command logic here.
 // TODO: Create function to store kubeconfig file in vault for later usage.
 
-//go:embed scripts/*.sh
+/* //go:embed scripts/*.sh
 var embeddedScripts embed.FS
 
 // Extracts an embedded script to /tmp
@@ -67,7 +65,7 @@ func runBashFunction(scriptName, functionName string) {
 		os.Exit(1)
 	}
 }
-
+*/
 // rke2Cmd represents the "rke2" command
 var rke2Cmd = &cobra.Command{
 	Use:   "rke2",
@@ -146,7 +144,7 @@ var installServerCmd = &cobra.Command{
 			fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
 		}
 
-		runBashFunction("rke2.sh", "install_rke2_server")
+		common.RunBashFunction("rke2.sh", "install_rke2_server")
 
 		// Store the token & kubeconfig in vault if cluster-id wasn't supplied
 		if !cmd.Flags().Changed("cluster-id") {
@@ -197,7 +195,7 @@ var installAgentCmd = &cobra.Command{
 		// }
 		fetchTokenFromVault(clusterID) // this will fetch the token and safe as env var to be used in bash function.
 		// TODO: figure how to dynamically set lb hostname/ip as env var...
-		runBashFunction("rke2.sh", "install_rke2_agent -l 192.168.10.125")
+		common.RunBashFunction("rke2.sh", "install_rke2_agent -l 192.168.10.125")
 	},
 }
 
@@ -207,7 +205,7 @@ var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show status of RKE2",
 	Run: func(cmd *cobra.Command, args []string) {
-		runBashFunction("rke2.sh", "rke2_status")
+		common.RunBashFunction("rke2.sh", "rke2_status")
 	},
 }
 
@@ -216,7 +214,7 @@ var uninstallCmd = &cobra.Command{
 	Use:   "purge",
 	Short: "purge RKE2 install from host",
 	Run: func(cmd *cobra.Command, args []string) {
-		runBashFunction("rke2.sh", "purge_rke2")
+		common.RunBashFunction("rke2.sh", "purge_rke2")
 	},
 }
 
@@ -249,7 +247,7 @@ var SetKubeConfigCmd = &cobra.Command{
 		fmt.Printf("✅ Kubeconfig successfully written to: %s\n", outputPath)
 
 		// Configure bash shell to use the kubeconfig
-		runBashFunction("rke2.sh", "configure_rke2_bash")
+		common.RunBashFunction("rke2.sh", "configure_rke2_bash")
 	},
 }
 

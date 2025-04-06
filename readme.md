@@ -38,3 +38,24 @@ edgectl version
   - [ ] Add support for `--dry-run` to all commands
 
 - [x] update gitVersion to be like chartFetch with release branch strategy
+
+- [ ] rewrite the file structure to be like this 
+
+```
+edgectl/
+├── cmd/                   # All cobra commands live here
+│   ├── root.go            # Entry point, adds subcommands
+│   ├── version.go         # `edgectl version`
+│   ├── server/            # Subcommand group (optional, for modularity)
+│   │   ├── install.go     # `edgectl server install`
+│   │   └── purge.go       # `edgectl server purge`
+│   └── agent/             # Another group if needed
+├── scripts/               # Embedded or external bash scripts
+├── pkg/                   # Public libraries usable outside CLI
+│   ├── vault/             # Logic to interact with Vault
+│   ├── common/            # Common handlers
+│   ├── rke2/              # rke2 handler
+├── go.mod
+├── main.go                # Just sets version and calls cmd.Execute()
+└── README.md
+```
