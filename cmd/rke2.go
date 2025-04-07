@@ -8,9 +8,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	/* 	"strings"
 
-	   	"github.com/google/uuid" */
 	common "github.com/michielvha/edgectl/pkg/common"
 	server "github.com/michielvha/edgectl/pkg/rke2/server" // Import the new package
 	vault "github.com/michielvha/edgectl/pkg/vault"
