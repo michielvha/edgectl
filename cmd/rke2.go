@@ -8,11 +8,12 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
+/* 	"strings"
 
-	"github.com/google/uuid"
+	"github.com/google/uuid" */
 	common "github.com/michielvha/edgectl/pkg/common"
 	vault "github.com/michielvha/edgectl/pkg/vault"
+	server	"github.com/michielvha/edgectl/pkg/rke2/server" // Import the new package
 	"github.com/spf13/cobra"
 )
 
@@ -112,7 +113,29 @@ func fetchTokenFromVault(clusterID string) string {
 	return token
 }
 
-// Install RKE2 Server
+var installServerCmd = &cobra.Command{
+	Use:   "server install",
+	Short: "Install RKE2 Server",
+	Run: func(cmd *cobra.Command, args []string) {
+		// ✅ Check if user is root
+		if os.Geteuid() != 0 {
+			fmt.Println("❌ This command must be run as root. Try using `sudo`.")
+			os.Exit(1)
+		}
+
+		// ✅ Extract values and call logic
+		clusterID, _ := cmd.Flags().GetString("cluster-id")
+		isExisting := cmd.Flags().Changed("cluster-id")
+
+		err := server.Install(clusterID, isExisting)
+		if err != nil {
+			fmt.Printf("❌ RKE2 server install failed: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
+/* // Install RKE2 Server
 var installServerCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Install RKE2 Server",
@@ -180,7 +203,7 @@ var installServerCmd = &cobra.Command{
 			}
 		}
 	},
-}
+} */
 
 // Install RKE2 Agent
 var installAgentCmd = &cobra.Command{
