@@ -8,12 +8,12 @@ package cmd
 import (
 	"fmt"
 	"os"
-/* 	"strings"
+	/* 	"strings"
 
-	"github.com/google/uuid" */
+	   	"github.com/google/uuid" */
 	common "github.com/michielvha/edgectl/pkg/common"
+	server "github.com/michielvha/edgectl/pkg/rke2/server" // Import the new package
 	vault "github.com/michielvha/edgectl/pkg/vault"
-	server	"github.com/michielvha/edgectl/pkg/rke2/server" // Import the new package
 	"github.com/spf13/cobra"
 )
 
