@@ -78,38 +78,28 @@ Examples:
 `,
 }
 
-// Install RKE2 Server
-// var installLoadBalancerCmd = &cobra.Command{
-// 	Use:   "lb",
-// 	Short: "Install RKE2 load balancer",
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		fmt.Println("🚀 Install a load balancer for RKE2...")
-// 		runBashFunction("rke2.sh", "install_rke2_lb")
-// 	},
+// // Fetch token from Vault & set as env var / file
+// func fetchTokenFromVault(clusterID string) string {
+// 	fmt.Println("🔐 Cluster ID supplied, retrieving join token from Vault...")
+
+// 	vaultClient, err := vault.NewClient()
+// 	if err != nil {
+// 		fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
+// 		os.Exit(1)
+// 	}
+
+// 	token, err := vaultClient.RetrieveJoinToken(clusterID)
+// 	if err != nil {
+// 		fmt.Printf("❌ Failed to retrieve join token from Vault: %v\n", err)
+// 		os.Exit(1)
+// 	}
+
+// 	fmt.Printf("✅ Retrieved token: %s\n", token)
+// 	_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
+// 	_ = os.Setenv("RKE2_TOKEN", token)
+
+// 	return token
 // }
-
-// Fetch token from Vault & set as env var / file
-func fetchTokenFromVault(clusterID string) string {
-	fmt.Println("🔐 Cluster ID supplied, retrieving join token from Vault...")
-
-	vaultClient, err := vault.NewClient()
-	if err != nil {
-		fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
-		os.Exit(1)
-	}
-
-	token, err := vaultClient.RetrieveJoinToken(clusterID)
-	if err != nil {
-		fmt.Printf("❌ Failed to retrieve join token from Vault: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("✅ Retrieved token: %s\n", token)
-	_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
-	_ = os.Setenv("RKE2_TOKEN", token)
-
-	return token
-}
 
 var installServerCmd = &cobra.Command{
 	Use:   "server install",
@@ -133,88 +123,14 @@ var installServerCmd = &cobra.Command{
 	},
 }
 
-/* // Install RKE2 Server
-var installServerCmd = &cobra.Command{
-	Use:   "server",
-	Short: "Install RKE2 Server",
-	Run: func(cmd *cobra.Command, args []string) {
-		// check if root, needed to upload file
-		if os.Geteuid() != 0 {
-			fmt.Println("❌ This command must be run as root. Try using `sudo`.")
-			os.Exit(1)
-		}
-
-		fmt.Println("🚀 Installing RKE2 Server...")
-
-		// Reuse our vault abstraction in ``pkg/vault/rke2-handler.go``
-		vaultClient, err := vault.NewClient()
-		if err != nil {
-			fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
-			os.Exit(1)
-		}
-
-		clusterID, _ := cmd.Flags().GetString("cluster-id")
-
-		if clusterID != "" {
-			// fetch the token from the vault
-			fetchTokenFromVault(clusterID)
-		} else {
-			// if token is not supplied create it
-			clusterID = fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
-			_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
-			fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
-		}
-
-		common.RunBashFunction("rke2.sh", "install_rke2_server")
-
-		// Store the token & kubeconfig in vault if cluster-id wasn't supplied
-		if !cmd.Flags().Changed("cluster-id") {
-			tokenBytes, err := os.ReadFile("/var/lib/rancher/rke2/server/node-token")
-			if err != nil {
-				fmt.Printf("❌ Failed to read generated node token: %v\n", err)
-				os.Exit(1)
-			}
-
-			token := strings.TrimSpace(string(tokenBytes))
-			if err := vaultClient.StoreJoinToken(clusterID, token); err != nil {
-				fmt.Printf("❌ Failed to store token in Vault: %v\n", err)
-				os.Exit(1)
-			}
-
-			fmt.Printf("🔐 Token successfully stored in Vault for cluster %s\n", clusterID)
-
-			// Check if kubeconfig exists
-			// TODO: handle changing 127.0.0.1 to the load balancer IP
-			kubeconfigPath := "/etc/rancher/rke2/rke2.yaml"
-			if _, statErr := os.Stat(kubeconfigPath); os.IsNotExist(statErr) {
-				fmt.Printf("❌ Kubeconfig file not found at path: %s\n", kubeconfigPath)
-				os.Exit(1)
-			}
-
-			// if it exists store it vault
-			err = vaultClient.StoreKubeConfig(clusterID, kubeconfigPath)
-			if err != nil {
-				fmt.Printf("❌ Failed to store kubeconfig in Vault: %v\n", err)
-				os.Exit(1)
-			} else {
-				fmt.Printf("🔐 Kubeconfig successfully stored in Vault for cluster %s\n", clusterID)
-			}
-		}
-	},
-} */
-
 // Install RKE2 Agent
 var installAgentCmd = &cobra.Command{
 	Use:   "agent",
 	Short: "Install RKE2 Agent",
 	Run: func(cmd *cobra.Command, args []string) {
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
-		// cobra already checks this
-		// if clusterID == "" {
-		// 	fmt.Println("❌ cluster ID is required to join an existing cluster.")
-		// 	os.Exit(1)
-		// }
-		fetchTokenFromVault(clusterID) // this will fetch the token and safe as env var to be used in bash function.
+
+		common.FetchTokenFromVault(clusterID) // this will fetch the token and safe as env var to be used in bash function.
 		// TODO: figure how to dynamically set lb hostname/ip as env var...
 		common.RunBashFunction("rke2.sh", "install_rke2_agent -l 192.168.10.125")
 	},
@@ -246,12 +162,6 @@ var SetKubeConfigCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		outputPath, _ := cmd.Flags().GetString("output")
-
-		// Cobra already checks this when using `MarkFlagRequired`
-		// if clusterID == "" {
-		// 	fmt.Println("❌ You must provide a --cluster-id")
-		// 	os.Exit(1)
-		// }
 
 		vaultClient, err := vault.NewClient()
 		if err != nil {

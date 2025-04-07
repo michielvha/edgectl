@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	vault "github.com/michielvha/edgectl/pkg/vault"
 )
 
 //go:embed scripts/*.sh
@@ -45,4 +47,28 @@ func RunBashFunction(scriptName, functionName string) {
 		fmt.Printf("❌ Error executing %s from %s: %v\n", functionName, scriptPath, err)
 		os.Exit(1)
 	}
+}
+
+// Fetch token from Vault & set as env var / file
+// TODO: check if we can rewrite this with viper package.
+func FetchTokenFromVault(clusterID string) string {
+	fmt.Println("🔐 Cluster ID supplied, retrieving join token from Vault...")
+
+	vaultClient, err := vault.NewClient()
+	if err != nil {
+		fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
+		os.Exit(1)
+	}
+
+	token, err := vaultClient.RetrieveJoinToken(clusterID)
+	if err != nil {
+		fmt.Printf("❌ Failed to retrieve join token from Vault: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("✅ Retrieved token: %s\n", token)
+	_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
+	_ = os.Setenv("RKE2_TOKEN", token)
+
+	return token
 }
