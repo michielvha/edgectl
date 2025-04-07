@@ -1,4 +1,6 @@
-// cmd/common/embedded.go
+/*
+Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+*/
 package common
 
 import (
