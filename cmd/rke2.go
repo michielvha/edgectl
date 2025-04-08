@@ -57,7 +57,10 @@ var installAgentCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 
-		server.FetchTokenFromVault(clusterID) // this will fetch the token and safe as env var to be used in bash function.
+		if _, err := server.FetchTokenFromVault(clusterID); err != nil {
+			fmt.Printf("❌ Failed to fetch token from Vault: %v\n", err)
+			os.Exit(1)
+		}
 		// TODO: figure how to dynamically set lb hostname/ip as env var...
 		common.RunBashFunction("rke2.sh", "install_rke2_agent -l 192.168.10.125")
 	},
