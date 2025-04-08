@@ -20,8 +20,12 @@ server:
 	$(GO_RUN) rke2 server install
 
 .PHONY: server-join
-server:
+server-join:
 	$(GO_RUN) rke2 server install --cluster-id rke2-03db202f
+
+.PHONY: server-test
+server-verify:
+	sudo cat /etc/rancher/rke2/config.yaml # | grep 'token:'
 
 # Commands
 .PHONY: agent
