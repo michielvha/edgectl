@@ -13,6 +13,8 @@
 install_rke2_server() {
   # usage: install_rke2_server [-l <loadbalancer-hostname>]
 
+  echo "🧪 RKE2_TOKEN is: $RKE2_TOKEN" # for testing, TODO: remove.
+
   # Pre checks
   if systemctl is-active --quiet rke2-server; then
     echo "❌ RKE2 Server is already running. Exiting."

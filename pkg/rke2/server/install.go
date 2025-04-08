@@ -78,7 +78,33 @@ func FetchTokenFromVault(clusterID string) (string, error) {
 		return "", fmt.Errorf("failed to retrieve join token: %w", err)
 	}
 
-	_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
+	// ensure edgectl main directory exists
+	_ = os.MkdirAll("/etc/edgectl", 0o755)
+
+	if err := os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644); err != nil {
+		return "", fmt.Errorf("failed to write cluster-id: %w", err)
+	}
+
+	// This sets it only for the current Go process
 	_ = os.Setenv("RKE2_TOKEN", token)
+
+	// ✅ Write token to config.yaml
+	rke2ConfigPath := "/etc/rancher/rke2/config.yaml"
+	appendLine := fmt.Sprintf("token: \"%s\"\n", token)
+
+	// Ensure the parent directory exists
+	if err := os.MkdirAll("/etc/rancher/rke2", 0o755); err != nil {
+		return "", fmt.Errorf("failed to create RKE2 config directory: %w", err)
+	}
+
+	f, err := os.OpenFile(rke2ConfigPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
+	if err != nil {
+		return "", fmt.Errorf("failed to open rke2 config for writing token: %w", err)
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(appendLine); err != nil {
+		return "", fmt.Errorf("failed to append token to rke2 config: %w", err)
+	}
 	return token, nil
 }
