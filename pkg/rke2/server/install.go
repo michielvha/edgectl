@@ -101,7 +101,11 @@ func FetchTokenFromVault(clusterID string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open rke2 config for writing token: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if cerr := f.Close(); cerr != nil {
+			fmt.Fprintf(os.Stderr, "failed to close rke2 config file: %v\n", cerr)
+		}
+	}()
 
 	if _, err := f.WriteString(appendLine); err != nil {
 		return "", fmt.Errorf("failed to append token to rke2 config: %w", err)
