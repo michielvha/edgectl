@@ -96,11 +96,15 @@ func FetchTokenFromVault(clusterID string) (string, error) {
 	if err := os.MkdirAll("/etc/rancher/rke2", 0o755); err != nil {
 		return "", fmt.Errorf("failed to create RKE2 config directory: %w", err)
 	}
+	fmt.Println("📁 Ensured /etc/rancher/rke2 exists")
 
+	fmt.Printf("📄 Attempting to write token to config at %s\n", rke2ConfigPath)
 	f, err := os.OpenFile(rke2ConfigPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Error writing token to config: %v\n", err)
 		return "", fmt.Errorf("failed to open rke2 config for writing token: %w", err)
 	}
+	fmt.Println("✅ Opened config file successfully")
 	defer func() {
 		if cerr := f.Close(); cerr != nil {
 			fmt.Fprintf(os.Stderr, "failed to close rke2 config file: %v\n", cerr)
@@ -108,7 +112,9 @@ func FetchTokenFromVault(clusterID string) (string, error) {
 	}()
 
 	if _, err := f.WriteString(appendLine); err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Error writing token to config: %v\n", err)
 		return "", fmt.Errorf("failed to append token to rke2 config: %w", err)
 	}
+	fmt.Println("✅ Appended token to rke2 config")
 	return token, nil
 }
