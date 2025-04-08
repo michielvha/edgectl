@@ -6,15 +6,20 @@ CLI=edgectl
 .PHONY: help
 help:
 	@echo "Usage:"
-	@echo "  make server      Run 'rke2 server install --cluster-id rke2-03db202f'"
-	@echo "  make agent       Run 'rke2 instal agent --cluster-id rke2-03db202f'"
-	@echo "  make purge        		  Run 'rke2 purge'"
-	@echo "  make config              Run 'rke2 config"
-	@echo "  make test func           Test a Go function with a sample input"
-	@echo "  make clean               Remove temporary files (optional)"
+	@echo "  make server      		    Run 'rke2 server install'"
+	@echo "  make server-join           Run 'rke2 instal install --cluster-id rke2-03db202f'"
+	@echo "  make agent       			Run 'rke2 instal agent --cluster-id rke2-03db202f'"
+	@echo "  make purge        		    Run 'rke2 purge'"
+	@echo "  make config                Run 'rke2 config"
+	@echo "  make test func             Test a Go function with a sample input"
+	@echo "  make clean                 Remove temporary files (optional)"
 
 # Commands
 .PHONY: server
+server:
+	$(GO_RUN) rke2 server install
+
+.PHONY: server-join
 server:
 	$(GO_RUN) rke2 server install --cluster-id rke2-03db202f
 
