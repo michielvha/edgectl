@@ -10,7 +10,7 @@ on:
   push:
     branches:
       - main
-      - release/*
+#      - release/*  # Uncomment to release on any branch starting with `release/`
     paths-ignore:  # Ignore certain paths from triggering the pipeline
       - 'docs/**'
       - 'readme.md'
