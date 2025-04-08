@@ -24,14 +24,9 @@ func Install(clusterID string, isExisting bool) error {
 
 	// If the cluster ID was provided (existing cluster), fetch the join token
 	if isExisting {
-		fmt.Println("🔐 Cluster ID supplied, retrieving join token from Vault...")
-		token, err := vaultClient.RetrieveJoinToken(clusterID)
-		if err != nil {
-			return fmt.Errorf("failed to retrieve join token from Vault: %w", err)
+		if _, err := FetchTokenFromVault(clusterID); err != nil {
+			return err
 		}
-		fmt.Printf("✅ Retrieved token: %s\n", token)
-		_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
-		_ = os.Setenv("RKE2_TOKEN", token)
 	} else {
 		// Generate a new cluster ID
 		clusterID = fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
@@ -68,4 +63,22 @@ func Install(clusterID string, isExisting bool) error {
 	}
 
 	return nil
+}
+
+// Fetch token from Vault & set as env var / file
+// TODO: check if we can rewrite this with viper package.
+func FetchTokenFromVault(clusterID string) (string, error) {
+	vaultClient, err := vault.NewClient()
+	if err != nil {
+		return "", fmt.Errorf("failed to initialize Vault client: %w", err)
+	}
+
+	token, err := vaultClient.RetrieveJoinToken(clusterID)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve join token: %w", err)
+	}
+
+	_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
+	_ = os.Setenv("RKE2_TOKEN", token)
+	return token, nil
 }
