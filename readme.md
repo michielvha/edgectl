@@ -35,9 +35,12 @@ edgectl version
   - [ ] Add helm chart to directory on host with rke2 helm integration
 
 - [ ] Integrate viper for environment variables and config file support
+- [ ] use viper for global flags.
   - [ ] Add support for `--dry-run` to all commands
 
 - [x] update gitVersion to be like chartFetch with release branch strategy
+
+
 
 - [ ] rewrite the file structure to be like this 
 
