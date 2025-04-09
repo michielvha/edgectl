@@ -23,21 +23,25 @@ edgectl version
 - [x] Create pipeline to auto release with goreleaser.
 - [x] Create version command using cobra and the variable is dynamically set at build time, in pipeline this is integrated with GitVersion.
 
-- [ ] Change to a logging library to support log levels and better logging. Support an `--debug / --verbose` flag to enable debug logging.
-
+### Logging
+- [ ] WIP: Change to a logging library to support log levels and better logging. Support an `--verbose` flag to enable debug logging. using zerolog.
+- [ ] Integrate viper for environment variables and config file support
+- [ ] use viper for global flags.
+  - [ ] Add support for `--dry-run` to all commands
+  
+### managed rke2
 - [ ] Create commands to call bash scripts for admin tasks, rke2 install etc.
-- [ ] Integrate HashiCorp Vault for secret management. Auto save & fetch secrets to Add agents to workers automatically
-  - [ ] add some kind of clusterID generation to be able to tell what to join with what.. I'm thinking based of hostname and then handle the hostname per customer.
-  - so create an id on master creation. Always ask for the cluster id when joining a worker, all other logic can be handled based of that in the background.
-- [ ] Fetch kubeconfig automatically. like in ``azure-cli``
+- [ ] Integrate HashiCorp Vault for secret management. 
+  - [x] Auto save & fetch secrets to Add agents to workers automatically
+  - [x] add some kind of clusterID generation to be able to tell what to join with what.. I'm thinking based of hostname and then handle the hostname per customer. so create an id on master creatio if cluster id provided don't create new one. Always ask for the cluster id when joining a worker, all other logic can be handled based of that in the background.
+  
+- [x] Fetch kubeconfig automatically. like in ``azure-cli``
 
 - [ ] Auto Bootstrap ArgoCD for automated dev setup
   - [ ] Add helm chart to directory on host with rke2 helm integration
 
-- [ ] Integrate viper for environment variables and config file support
-- [ ] use viper for global flags.
-  - [ ] Add support for `--dry-run` to all commands
 
+### Pipeline
 - [x] update gitVersion to be like chartFetch with release branch strategy
 
 
