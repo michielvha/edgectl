@@ -126,6 +126,8 @@ install_rke2_agent() {
     return 1
   fi
 
+  echo "🧪 RKE2_TOKEN is: $RKE2_TOKEN" # for testing, TODO: remove.
+
   echo "🚀 Configuring RKE2 Agent Node..."
 
   # Default parameter values
@@ -137,7 +139,7 @@ install_rke2_agent() {
       l) LB_HOSTNAME="$OPTARG" ;;  # -l <loadbalancer-hostname>
       \?)
         echo "❌ Invalid option: -$OPTARG"
-        echo "Usage: install_rke2_server [-l <loadbalancer-hostname>]"
+        echo "Usage: install_rke2_agent [-l <loadbalancer-hostname>]"
         return 1
         ;;
     esac
@@ -146,6 +148,10 @@ install_rke2_agent() {
   # environment
   local ARCH=$(uname -m | cut -c1-3)
   local FQDN=$(hostname -f)
+  local HOST=$(hostname -s) # hostname without domain
+  local TS="$HOST.tail6948f.ts.net" # get tailscale domain for internal management interface, will be needed to add to SAN.
+  # Default purpose for agent nodes if not set
+  local PURPOSE=${PURPOSE:-"worker"}
 
   # perform default bootstrap configurations required on each RKE2 node.
   configure_rke2_host
@@ -166,14 +172,14 @@ node-label:
   - "environment=production"
   - "arch=${ARCH}"
   - "purpose=$PURPOSE"
-tls-san: ["$FQDN", "$LB_HOSTNAME"]
+tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]
 EOF
 
   # Enable and start RKE2 agent
   echo "⚙️  Starting RKE2 agent..."
   sudo systemctl enable --now rke2-agent || { echo "❌ RKE2 Agent node bootstrap failed."; return 1; }
 
-  configure_ufw_rke2_server
+  configure_ufw_rke2_agent
 
   echo "✅ RKE2 Agent node bootstrapped."
 }
@@ -328,7 +334,7 @@ rke2_status() {
     sudo systemctl status rke2-agent
   else
     echo "Neither rke2-server nor rke2-agent are running."
-  fi
+  }
 }
 
 # Dispatcher: allows calling the function by name
