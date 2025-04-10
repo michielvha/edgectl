@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/michielvha/edgectl/pkg/common"
+	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/michielvha/edgectl/pkg/vault"
 )
 
@@ -22,6 +23,12 @@ func Install(clusterID string, isExisting bool) error {
 		return fmt.Errorf("failed to initialize Vault client: %w", err)
 	}
 
+	// Get current hostname
+	hostname, err := os.Hostname()
+	if err != nil {
+		return fmt.Errorf("failed to get hostname: %w", err)
+	}
+
 	// If the cluster ID was provided (existing cluster), fetch the join token
 	if isExisting {
 		if _, err := FetchTokenFromVault(clusterID); err != nil {
@@ -30,6 +37,7 @@ func Install(clusterID string, isExisting bool) error {
 	} else {
 		// Generate a new cluster ID
 		clusterID = fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
+		_ = os.MkdirAll("/etc/edgectl", 0o755)
 		_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
 		fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
 	}
@@ -61,6 +69,49 @@ func Install(clusterID string, isExisting bool) error {
 		}
 		fmt.Printf("🔐 Kubeconfig successfully stored in Vault for cluster %s\n", clusterID)
 	}
+
+	// Track master nodes in Vault (for both new and existing clusters)
+	logger.Info("Updating master node information in Vault")
+
+	// Try to get existing master nodes if any
+	var hosts []string
+	var vip string
+
+	existingHosts, existingVIP, err := vaultClient.RetrieveMasterInfo(clusterID)
+	if err == nil {
+		// Successfully retrieved existing master info
+		hosts = existingHosts
+		vip = existingVIP
+		logger.Debug("%s", fmt.Sprintf("Found existing master nodes: %v", hosts))
+	} else {
+		// First master node in this cluster
+		hosts = []string{}
+		logger.Debug("No existing master nodes found, initializing new master list")
+	}
+
+	// Add this host to the list if not already present
+	found := false
+	for _, h := range hosts {
+		if h == hostname {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		hosts = append(hosts, hostname)
+		logger.Debug("Added this host (%s) to master nodes list", hostname)
+	} else {
+		logger.Debug("This host (%s) is already in master nodes list", hostname)
+	}
+
+	// Store updated master info
+	err = vaultClient.StoreMasterInfo(clusterID, hostname, hosts, vip)
+	if err != nil {
+		return fmt.Errorf("failed to store master node info in Vault: %w", err)
+	}
+
+	fmt.Printf("🔄 Master nodes updated in Vault: %d node(s) registered\n", len(hosts))
 
 	return nil
 }

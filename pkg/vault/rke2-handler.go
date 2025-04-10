@@ -67,3 +67,90 @@ func (c *Client) RetrieveKubeConfig(clusterID, destinationPath string) error {
 
 	return nil
 }
+
+// StoreLBInfo stores information about a load balancer node
+func (c *Client) StoreLBInfo(clusterID, hostname, vip string, isMain bool) error {
+	path := fmt.Sprintf("kv/data/rke2/%s/lb/%s", clusterID, hostname)
+	return c.StoreSecret(path, map[string]interface{}{
+		"hostname": hostname,
+		"vip":      vip,
+		"is_main":  isMain,
+	})
+}
+
+// RetrieveLBInfo retrieves information about load balancer nodes
+func (c *Client) RetrieveLBInfo(clusterID string) ([]map[string]interface{}, string, error) {
+	// List all LB entries for this cluster
+	path := fmt.Sprintf("kv/metadata/rke2/%s/lb", clusterID)
+	keys, err := c.ListKeys(path)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to list load balancers for cluster %s: %w", clusterID, err)
+	}
+
+	lbNodes := []map[string]interface{}{}
+	var vip string
+
+	// Retrieve details for each LB
+	for _, key := range keys {
+		data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/lb/%s", clusterID, key))
+		if err != nil {
+			continue
+		}
+
+		lbNodes = append(lbNodes, data)
+
+		// Get VIP from any LB (they should all have the same VIP)
+		if vip == "" {
+			vip, _ = data["vip"].(string)
+		}
+
+		// If this is the main LB, use its VIP as the definitive one
+		isMain, ok := data["is_main"].(bool)
+		if ok && isMain && data["vip"] != nil {
+			vip = data["vip"].(string)
+		}
+	}
+
+	if len(lbNodes) == 0 {
+		return nil, "", fmt.Errorf("no load balancers found for cluster %s", clusterID)
+	}
+
+	return lbNodes, vip, nil
+}
+
+// StoreMasterInfo stores information about RKE2 master nodes and their configuration
+func (c *Client) StoreMasterInfo(clusterID, hostname string, hosts []string, vip string) error {
+	path := fmt.Sprintf("kv/data/rke2/%s/masters", clusterID)
+	return c.StoreSecret(path, map[string]interface{}{
+		"hosts":      hosts,
+		"vip":        vip,
+		"last_added": hostname,
+	})
+}
+
+// RetrieveMasterInfo retrieves RKE2 master nodes information
+func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) {
+	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/masters", clusterID))
+	if err != nil {
+		return nil, "", err
+	}
+
+	hostsRaw, ok := data["hosts"]
+	if !ok {
+		return nil, "", fmt.Errorf("hosts information not found for cluster %s", clusterID)
+	}
+
+	// Convert interface{} to string slice
+	hosts := []string{}
+	if hostsArray, ok := hostsRaw.([]interface{}); ok {
+		for _, h := range hostsArray {
+			if hostStr, ok := h.(string); ok {
+				hosts = append(hosts, hostStr)
+			}
+		}
+	}
+
+	vip, _ := data["vip"].(string)
+
+	return hosts, vip, nil
+}
