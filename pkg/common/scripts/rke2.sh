@@ -323,8 +323,6 @@ purge_rke2() {
   echo "✅ RKE2 completely purged from this system."
 }
 
-
-
 # TODO: expand this status check
 rke2_status() {
   # Check the status of RKE2 services
@@ -334,6 +332,7 @@ rke2_status() {
     sudo systemctl status rke2-agent
   else
     echo "Neither rke2-server nor rke2-agent are running."
+  fi
 }
 
 # Dispatcher: allows calling the function by name
