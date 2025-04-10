@@ -1,4 +1,4 @@
-# GitVersion Implementation Guide
+# GitVersion Implementation Docs
 
 ## Overview
 
