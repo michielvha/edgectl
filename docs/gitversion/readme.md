@@ -104,7 +104,7 @@ When running `gitversion`, you will get JSON output similar to:
   "Sha": "dba550f2c2bd7bfd4e4c56c5ee920a41dab5d866",
   "ShortSha": "dba550f",
   "UncommittedChanges": 1
-  // Additional properties not shown for brevity
+  ...
 }
 ```
 
