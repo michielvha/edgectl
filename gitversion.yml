@@ -1,13 +1,8 @@
 # https://gitversion.net/docs/reference/configuration
+# manually verify with `gitversion (/showconfig)`
 workflow: GitHubFlow/v1
-mode: ContinuousDelivery
-tag-prefix: '[vV]?'
-major-version-bump-message: '\+semver:\s?(breaking|major)'
-minor-version-bump-message: '\+semver:\s?(feature|minor)'
-patch-version-bump-message: '\+semver:\s?(fix|patch)'
-no-bump-message: '\+semver:\s?(none|skip)'
-commit-message-incrementing: Enabled
 
+# Custom strategies - this differs from default
 strategies:
 - MergeMessage
 - TaggedCommit
@@ -16,15 +11,11 @@ strategies:
 
 branches:
   main:
+    # Only keeping non-default settings
     regex: ^master$|^main$
-    label: ''
-    increment: Patch
-    prevent-increment:
-      of-merged-branch: true
-    track-merge-target: false
-    track-merge-message: true
     is-main-branch: true
   release:
+    # Custom release branch configuration
     regex: ^release/(?<BranchName>[0-9]+\.[0-9]+\.[0-9]+)$
     label: ''
     increment: None
