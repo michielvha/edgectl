@@ -37,8 +37,8 @@ purge:
 	$(GO_RUN) rke2 purge
 
 .PHONY: config
-list:
-	$(GO_RUN) config kube --cluster-id rke2-03db202f
+config:
+	$(GO_RUN) rke2 config --cluster-id rke2-03db202f
 
 .PHONY: test-func
 test func:
