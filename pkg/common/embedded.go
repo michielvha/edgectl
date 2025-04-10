@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 //go:embed scripts/*.sh
@@ -35,20 +36,30 @@ func ExtractEmbeddedScript(scriptName string) string {
 }
 
 // Runs a function from the sourced script
-func RunBashFunction(scriptName, functionName string) {
+func RunBashFunction(scriptName, commandString string) {
 	scriptPath := ExtractEmbeddedScript(scriptName)
 
-	// Run the full script and pass the function name to call inside the script
-	cmd := exec.Command("bash", scriptPath, functionName)
+	// Split the command into function name and arguments
+	parts := strings.Fields(commandString)
+	functionName := parts[0]
+	args := []string{scriptPath, functionName}
+
+	// Add any additional arguments if present
+	if len(parts) > 1 {
+		args = append(args, parts[1:]...)
+	}
+
+	// Run the full script and pass the function name and arguments
+	cmd := exec.Command("bash", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin // Important to inherit input in case sudo or interactive steps exist
 
 	// Pass the current environment, including updated vars from os.Setenv
-
 	cmd.Env = os.Environ() // 👈 Important! Ensures it inherits updated env
+
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("❌ Error executing %s from %s: %v\n", functionName, scriptPath, err)
+		fmt.Printf("❌ Error executing %s from %s: %v\n", commandString, scriptPath, err)
 		os.Exit(1)
 	}
 }
