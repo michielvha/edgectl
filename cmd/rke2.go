@@ -44,8 +44,9 @@ var installServerCmd = &cobra.Command{
 		// ✅ Extract values and call logic
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		isExisting := cmd.Flags().Changed("cluster-id")
+		vip, _ := cmd.Flags().GetString("vip")
 
-		err := server.Install(clusterID, isExisting)
+		err := server.Install(clusterID, isExisting, vip)
 		if err != nil {
 			fmt.Printf("❌ RKE2 server install failed: %v\n", err)
 			os.Exit(1)
@@ -230,6 +231,7 @@ func init() {
 
 	// installServerCmd Flags
 	installServerCmd.Flags().String("cluster-id", "", "The clusterID required to join an existing cluster")
+	installServerCmd.Flags().String("vip", "", "Virtual IP to use for the load balancer (used for TLS SANs)")
 	// installAgentCmd Flags
 	installAgentCmd.Flags().String("cluster-id", "", "The ID of the cluster you want to join")
 	installAgentCmd.Flags().String("lb-hostname", "", "The hostname of the load balancer to use if VIP is not found")

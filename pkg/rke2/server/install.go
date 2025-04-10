@@ -17,7 +17,8 @@ import (
 // Install sets up the RKE2 server on the host.
 // If `isExisting` is true, it pulls the token from Vault using the supplied clusterID.
 // Otherwise, it generates a new clusterID and saves token + kubeconfig to Vault.
-func Install(clusterID string, isExisting bool) error {
+// If `vip` is provided, it will be used in the TLS SANs for the server.
+func Install(clusterID string, isExisting bool, vip string) error {
 	vaultClient, err := vault.NewClient()
 	if err != nil {
 		return fmt.Errorf("failed to initialize Vault client: %w", err)
@@ -42,8 +43,15 @@ func Install(clusterID string, isExisting bool) error {
 		fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
 	}
 
-	// Run the installation script
-	common.RunBashFunction("rke2.sh", "install_rke2_server")
+	// If a VIP was provided, use that in the TLS SANs
+	installOptions := ""
+	if vip != "" {
+		installOptions = fmt.Sprintf("-l %s", vip)
+		fmt.Printf("🌐 Using VIP %s for load balancer TLS SANs\n", vip)
+	}
+
+	// Run the installation script with options
+	common.RunBashFunction("rke2.sh", fmt.Sprintf("install_rke2_server %s", installOptions))
 
 	// If this is a new cluster, store token and kubeconfig in Vault
 	if !isExisting {
@@ -75,13 +83,15 @@ func Install(clusterID string, isExisting bool) error {
 
 	// Try to get existing master nodes if any
 	var hosts []string
-	var vip string
+	existingVIP := vip // Use provided VIP as default
 
-	existingHosts, existingVIP, err := vaultClient.RetrieveMasterInfo(clusterID)
+	existingHosts, storedVIP, err := vaultClient.RetrieveMasterInfo(clusterID)
 	if err == nil {
 		// Successfully retrieved existing master info
 		hosts = existingHosts
-		vip = existingVIP
+		if storedVIP != "" {
+			existingVIP = storedVIP // Use the stored VIP if it exists
+		}
 		logger.Debug("%s", fmt.Sprintf("Found existing master nodes: %v", hosts))
 	} else {
 		// First master node in this cluster
@@ -105,13 +115,16 @@ func Install(clusterID string, isExisting bool) error {
 		logger.Debug("This host (%s) is already in master nodes list", hostname)
 	}
 
-	// Store updated master info
-	err = vaultClient.StoreMasterInfo(clusterID, hostname, hosts, vip)
+	// Store updated master info with the VIP
+	err = vaultClient.StoreMasterInfo(clusterID, hostname, hosts, existingVIP)
 	if err != nil {
 		return fmt.Errorf("failed to store master node info in Vault: %w", err)
 	}
 
 	fmt.Printf("🔄 Master nodes updated in Vault: %d node(s) registered\n", len(hosts))
+	if existingVIP != "" {
+		fmt.Printf("ℹ️ Load balancer VIP stored in Vault: %s\n", existingVIP)
+	}
 
 	return nil
 }
