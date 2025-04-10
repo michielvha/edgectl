@@ -79,7 +79,7 @@ func Install(clusterID string, isExisting bool, vip string) error {
 	}
 
 	// Track master nodes in Vault (for both new and existing clusters)
-	logger.Info("Updating master node information in Vault")
+	logger.Debug("Updating master node information in Vault")
 
 	// Try to get existing master nodes if any
 	var hosts []string
