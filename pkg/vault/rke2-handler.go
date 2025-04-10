@@ -6,6 +6,7 @@ package vault
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // StoreJoinToken saves a token under a specific cluster path
@@ -51,6 +52,12 @@ func (c *Client) RetrieveKubeConfig(clusterID, destinationPath string) error {
 	kubeconfig, ok := data["kubeconfig"].(string)
 	if !ok {
 		return fmt.Errorf("kubeconfig not found or invalid type for cluster %s", clusterID)
+	}
+
+	// Create directory structure if it doesn't exist
+	dir := filepath.Dir(destinationPath)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("failed to create directory '%s': %w", dir, err)
 	}
 
 	err = os.WriteFile(destinationPath, []byte(kubeconfig), 0o600)
