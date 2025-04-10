@@ -45,9 +45,6 @@ Example usage:
 `
 		fmt.Println(asciiArt)
 		fmt.Printf("🔧 Client Version: %s\n", Version)
-
-		// Log the version at info level
-		logger.Info("Client version: %s", Version)
 	},
 }
 

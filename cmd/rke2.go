@@ -12,6 +12,7 @@ import (
 	common "github.com/michielvha/edgectl/pkg/common"
 	server "github.com/michielvha/edgectl/pkg/rke2/server" // Import the new package
 	vault "github.com/michielvha/edgectl/pkg/vault"
+	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -32,6 +33,7 @@ var installServerCmd = &cobra.Command{
 	Use:   "server install",
 	Short: "Install RKE2 Server",
 	Run: func(cmd *cobra.Command, args []string) {
+		logger.Debug("server install command executed")
 		// ✅ Check if user is root
 		if os.Geteuid() != 0 {
 			fmt.Println("❌ This command must be run as root. Try using `sudo`.")

@@ -24,9 +24,9 @@ edgectl version
 - [x] Create version command using cobra and the variable is dynamically set at build time, in pipeline this is integrated with GitVersion.
 
 ### Logging
-- [ ] WIP: Change to a logging library to support log levels and better logging. Support an `--verbose` flag to enable debug logging. using zerolog.
-- [ ] Integrate viper for environment variables and config file support
-- [ ] use viper for global flags.
+-  Changed to a logging library (zerolog) and wrote log.go pkg to support log levels and better logging. Supporting a `--verbose` flag to enable debug logging. **We'll only use `logger.debug` for debug logging everything else will be stdout on cli.**
+- Integrated viper for environment variables and config file support
+- using viper for global flags.
   - [ ] Add support for `--dry-run` to all commands
   
 ### managed rke2
@@ -53,15 +53,15 @@ edgectl/
 ├── cmd/                   # All cobra commands live here
 │   ├── root.go            # Entry point, adds subcommands
 │   ├── version.go         # `edgectl version`
-│   ├── server/            # Subcommand group (optional, for modularity)
-│   │   ├── install.go     # `edgectl server install`
-│   │   └── purge.go       # `edgectl server purge`
 │   └── agent/             # Another group if needed
 ├── scripts/               # Embedded or external bash scripts
 ├── pkg/                   # Public libraries usable outside CLI
 │   ├── vault/             # Logic to interact with Vault
 │   ├── common/            # Common handlers
 │   ├── rke2/              # rke2 handler
+│   │   └── server/            # Subcommand handler (for modularity)
+│   │       ├── install.go     # `edgectl server install`
+│   │       └── purge.go       # `edgectl server purge`
 ├── go.mod
 ├── main.go                # Just sets version and calls cmd.Execute()
 └── README.md
