@@ -334,7 +334,6 @@ rke2_status() {
     sudo systemctl status rke2-agent
   else
     echo "Neither rke2-server nor rke2-agent are running."
-  }
 }
 
 # Dispatcher: allows calling the function by name

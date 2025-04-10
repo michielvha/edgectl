@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +26,9 @@ Example usage:
   edgectl version
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Log that the version command was executed (debug level)
+		logger.Debug("Version command executed")
+
 		asciiArt := `
  ________       __                    ______  __ __
 |        \     |  \                  /      \|  \  \
@@ -41,6 +45,9 @@ Example usage:
 `
 		fmt.Println(asciiArt)
 		fmt.Printf("🔧 Client Version: %s\n", Version)
+
+		// Log the version at info level
+		logger.Info("Client version: %s", Version)
 	},
 }
 

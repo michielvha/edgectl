@@ -6,10 +6,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"time"
 
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -33,10 +31,19 @@ Whether you're deploying a new RKE2 cluster, automating node registration, or st
 kubeconfigs securely in Vault, edgectl helps you orchestrate your edge infrastructure with ease.
 `,
 	// This ensures the logger is set up before any command runs
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// Initialize logger
-		initLogger()
-		return nil
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Initialize logger with verbose flag from viper (which combines cli flags, env vars, config file)
+		logger.Init(viper.GetBool("verbose"))
+
+		// Always log these messages at debug level to verify verbose mode
+		logger.Debug("CLI execution started")
+
+		// Log config file path if one was found
+		if viper.ConfigFileUsed() != "" {
+			logger.Debug("Config file found: %s", viper.ConfigFileUsed())
+		} else {
+			logger.Debug("No config file found, using defaults and environment variables")
+		}
 	},
 }
 
@@ -47,30 +54,6 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
-}
-
-// initLogger configures zerolog based on verbose flag
-func initLogger() {
-	// Set up console writer with color and time formatting
-	output := zerolog.ConsoleWriter{
-		Out:        os.Stdout,
-		TimeFormat: time.RFC3339,
-	}
-
-	// Initialize logger with timestamp
-	log.Logger = zerolog.New(output).With().Timestamp().Logger()
-
-	// By default, only show info level and above (info, warn, error, fatal)
-	level := zerolog.InfoLevel
-
-	// Check verbose flag (from flag or config file or env var)
-	if viper.GetBool("verbose") {
-		level = zerolog.DebugLevel
-		log.Debug().Msg("Verbose logging enabled")
-	}
-
-	// Set the global log level
-	zerolog.SetGlobalLevel(level)
 }
 
 func init() {
@@ -116,7 +99,6 @@ func initConfig() {
 
 	// If a config file is found, read it in (silently fail if not found)
 	if err := viper.ReadInConfig(); err == nil {
-		// Only show in verbose mode
-		log.Debug().Msgf("Using config file: %s", viper.ConfigFileUsed())
+		// This will be logged later during PersistentPreRun
 	}
 }
