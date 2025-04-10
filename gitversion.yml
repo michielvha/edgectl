@@ -1,15 +1,44 @@
 # https://gitversion.net/docs/reference/configuration
-mode: ContinuousDeployment
+workflow: GitHubFlow/v1
+mode: ContinuousDelivery
+tag-prefix: '[vV]?'
+major-version-bump-message: '\+semver:\s?(breaking|major)'
+minor-version-bump-message: '\+semver:\s?(feature|minor)'
+patch-version-bump-message: '\+semver:\s?(fix|patch)'
+no-bump-message: '\+semver:\s?(none|skip)'
+commit-message-incrementing: Enabled
+
+strategies:
+- MergeMessage
+- TaggedCommit
+- TrackReleaseBranches
+- VersionInBranchName
+
 branches:
   main:
-    regex: ^main$
-    is-release-branch: false
+    regex: ^master$|^main$
+    label: ''
+    increment: Patch
+    prevent-increment:
+      of-merged-branch: true
+    track-merge-target: false
+    track-merge-message: true
+    is-main-branch: true
   release:
-    regex: ^release/
+    regex: ^release/(?<BranchName>[0-9]+\.[0-9]+\.[0-9]+)$
+    label: ''
+    increment: None
+    prevent-increment:
+      of-merged-branch: true
+      when-current-commit-tagged: true
+    track-merge-target: false
+    track-merge-message: true
     is-release-branch: true
-    increment: Patch # Increment patch on every commit (can be `Major` or `Minor` if needed)
+    mode: ContinuousDelivery
+    source-branches:
+    - main
+
 assembly-versioning-scheme: MajorMinorPatch
-commit-message-incrementing: Enabled
 ignore:
   sha: []
 merge-message-formats: {}
