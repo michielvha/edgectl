@@ -92,7 +92,7 @@ GitVersion can be integrated into CI/CD pipelines to automatically:
 
 which we've ofcourse done in our [workflow](../../.github/workflows/binary-release.yaml) you can use my [custom action](https://github.com/michielvha/gitversion-tag-action)
 
-## Sample Output
+<!-- ## Sample Output
 
 When running `gitversion`, you will get JSON output similar to:
 
@@ -104,9 +104,8 @@ When running `gitversion`, you will get JSON output similar to:
   "Sha": "dba550f2c2bd7bfd4e4c56c5ee920a41dab5d866",
   "ShortSha": "dba550f",
   "UncommittedChanges": 1
-  ...
 }
-```
+``` -->
 
 ## References
 
@@ -114,11 +113,11 @@ When running `gitversion`, you will get JSON output similar to:
 - [Configuration Options](https://gitversion.net/docs/reference/configuration)
 - [Version Strategies](https://gitversion.net/docs/reference/version-increments)
 
-## Troubleshooting
+<!-- ## Troubleshooting
 
 If GitVersion is not behaving as expected:
 
 1. Use `gitversion /showconfig` to verify the current configuration
 2. Check that your branch naming follows the expected patterns
 3. Verify that Git tags are properly formatted
-4. Ensure your commit messages use the correct format if you're using commit message versioning
+4. Ensure your commit messages use the correct format if you're using commit message versioning -->
