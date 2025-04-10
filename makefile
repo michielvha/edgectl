@@ -51,6 +51,10 @@ purge:
 config:
 	$(GO_RUN) rke2 config --cluster-id rke2-03db202f
 
+.PHONY: config
+status:
+	$(GO_RUN) rke2 status
+
 .PHONY: test-func
 test func:
 	@echo "🔍 Testing individual function..."
