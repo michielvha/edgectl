@@ -1,12 +1,11 @@
-// {
-//     "editor.fontFamily": "JetBrains Mono",
-//     "editor.fontSize": 14,
-//     "editor.fontLigatures": false
-//   }
-  
 {
-"go.formatTool": "gofumpt",
-"[go]": {
-  "editor.formatOnSave": true
-}
+  "go.formatTool": "gofumpt",
+  "go.alternateTools": {
+    "gofumpt": "/Users/michielvh/go/bin/gofumpt"
+  },
+  "[go]": {
+    "editor.formatOnSave": true
+  },
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000
 }
