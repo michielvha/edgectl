@@ -40,8 +40,8 @@ func Install(clusterID string, isExisting bool, vip string) error {
 		if vip == "" {
 			_, storedVIP, err := vaultClient.RetrieveMasterInfo(clusterID)
 			if err == nil && storedVIP != "" {
+				fmt.Printf("🔍 VIP fetched from Vault: %s\n", storedVIP)
 				vip = storedVIP
-				fmt.Printf("🌐 Using VIP %s from Vault for load balancer TLS SANs\n", vip)
 			}
 		}
 	} else {
