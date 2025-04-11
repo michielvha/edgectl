@@ -17,7 +17,7 @@ import (
 // Install sets up the RKE2 server on the host.
 // If `isExisting` is true, it pulls the token from Vault using the supplied clusterID.
 // Otherwise, it generates a new clusterID and saves token + kubeconfig to Vault.
-// If `vip` is provided, it will be used in the TLS SANs for the server.
+// If `vip` is provided, it will be used in the TLS SANs for the server. if a cluster id is provided, it will fetch VIP from the vault.
 func Install(clusterID string, isExisting bool, vip string) error {
 	vaultClient, err := vault.NewClient()
 	if err != nil {
