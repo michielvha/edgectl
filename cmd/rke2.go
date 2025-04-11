@@ -29,7 +29,7 @@ Examples:
   edgectl rke2 uninstall   # Uninstall RKE2
 `,
 }
-
+//TODO: rework to global flag ? create instead of install, or something that works better for maintainability & scalability.
 var installServerCmd = &cobra.Command{
 	Use:   "server install",
 	Short: "Install RKE2 Server",
@@ -141,8 +141,9 @@ var setKubeConfigCmd = &cobra.Command{
 }
 
 // New command to just configure the bash environment
-var configBashCmd = &cobra.Command{
-	Use:   "config bash",
+// TODO: create global set package for `set config` & `set bash`
+var bashCmd = &cobra.Command{
+	Use:   "bash",
 	Short: "Configure the bash environment for RKE2",
 	Long:  `Configures the bash environment to use RKE2 binaries and kubeconfig.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -175,7 +176,7 @@ func init() {
 	rke2Cmd.AddCommand(statusCmd)
 	rke2Cmd.AddCommand(uninstallCmd)
 	rke2Cmd.AddCommand(setKubeConfigCmd)
-	rke2Cmd.AddCommand(configBashCmd)
+	rke2Cmd.AddCommand(bashCmd)
 
 	// Add loadbalancer command from the new package
 	rke2Cmd.AddCommand(lbcmd.Cmd)
