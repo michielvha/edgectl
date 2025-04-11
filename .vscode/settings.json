@@ -7,5 +7,34 @@
     "editor.formatOnSave": true
   },
   "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 1000
+  "files.autoSaveDelay": 1000,
+  "cSpell.words": [
+    "bpftool",
+    "cerr",
+    "downinter",
+    "ebpf",
+    "edgectl",
+    "existance",
+    "getent",
+    "hostnames",
+    "HOSTNAMES",
+    "killall",
+    "kubeconfig",
+    "KUBECONFIG",
+    "kubelet",
+    "michielvha",
+    "netfilter",
+    "onprem",
+    "reexec",
+    "Rexecute",
+    "Rexecuting",
+    "roundrobin",
+    "seperate",
+    "swapfile",
+    "swapoff",
+    "tailnet",
+    "tcplog",
+    "vrrp",
+    "zgrep"
+  ]
 }
