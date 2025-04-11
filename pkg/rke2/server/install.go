@@ -80,7 +80,7 @@ func Install(clusterID string, isExisting bool, vip string) error {
 			return fmt.Errorf("kubeconfig file not found at path: %s", kubeconfigPath)
 		}
 
-		err = vaultClient.StoreKubeConfig(clusterID, kubeconfigPath)
+		err = vaultClient.StoreKubeConfig(clusterID, kubeconfigPath, vip)
 		if err != nil {
 			return fmt.Errorf("failed to store kubeconfig in Vault: %w", err)
 		}
@@ -139,7 +139,7 @@ func Install(clusterID string, isExisting bool, vip string) error {
 }
 
 // Fetch token from Vault & set as env var / file
-// TODO: check if we can rewrite this with viper package.
+// Also retrieves the first master's IP if joining an existing cluster
 func FetchTokenFromVault(clusterID string) (string, error) {
 	vaultClient, err := vault.NewClient()
 	if err != nil {
@@ -161,9 +161,8 @@ func FetchTokenFromVault(clusterID string) (string, error) {
 	// This sets it only for the current Go process
 	_ = os.Setenv("RKE2_TOKEN", token)
 
-	// ✅ Write token to config.yaml
-	rke2ConfigPath := "/etc/rancher/rke2/config.yaml"
-	appendLine := fmt.Sprintf("token: \"%s\"\n", token)
+	// For additional master nodes, get the first master's IP
+	firstMasterIP, ipErr := vaultClient.RetrieveFirstMasterIP(clusterID)
 
 	// Ensure the parent directory exists
 	if err := os.MkdirAll("/etc/rancher/rke2", 0o755); err != nil {
@@ -171,11 +170,14 @@ func FetchTokenFromVault(clusterID string) (string, error) {
 	}
 	fmt.Println("📁 Ensured /etc/rancher/rke2 exists")
 
-	fmt.Printf("📄 Attempting to write token to config at %s\n", rke2ConfigPath)
+	// ✅ Write config.yaml with token and server URL (if joining existing cluster)
+	rke2ConfigPath := "/etc/rancher/rke2/config.yaml"
+
+	fmt.Printf("📄 Attempting to write configuration to %s\n", rke2ConfigPath)
 	f, err := os.OpenFile(rke2ConfigPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "❌ Error writing token to config: %v\n", err)
-		return "", fmt.Errorf("failed to open rke2 config for writing token: %w", err)
+		fmt.Fprintf(os.Stderr, "❌ Error writing to config: %v\n", err)
+		return "", fmt.Errorf("failed to open rke2 config for writing: %w", err)
 	}
 	fmt.Println("✅ Opened config file successfully")
 	defer func() {
@@ -184,10 +186,26 @@ func FetchTokenFromVault(clusterID string) (string, error) {
 		}
 	}()
 
-	if _, err := f.WriteString(appendLine); err != nil {
+	// Write token
+	tokenLine := fmt.Sprintf("token: \"%s\"\n", token)
+	if _, err := f.WriteString(tokenLine); err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Error writing token to config: %v\n", err)
 		return "", fmt.Errorf("failed to append token to rke2 config: %w", err)
 	}
 	fmt.Println("✅ Appended token to rke2 config")
+
+	// If we successfully retrieved the first master's IP, add server URL
+	if ipErr == nil && firstMasterIP != "" {
+		serverLine := fmt.Sprintf("server: \"https://%s:9345\"\n", firstMasterIP)
+		if _, err := f.WriteString(serverLine); err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Error writing server URL to config: %v\n", err)
+			return "", fmt.Errorf("failed to append server URL to rke2 config: %w", err)
+		}
+		fmt.Printf("✅ Added server URL pointing to first master (%s)\n", firstMasterIP)
+	} else if ipErr != nil {
+		// Log the error but continue since it's not critical (could be first server)
+		logger.Debug("Could not find first master IP: %v", ipErr)
+	}
+
 	return token, nil
 }
