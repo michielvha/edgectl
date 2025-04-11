@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"os"
 
+	lbcmd "github.com/michielvha/edgectl/cmd/rke2/lb"
 	common "github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/logger"
 	server "github.com/michielvha/edgectl/pkg/rke2/server"
 	vault "github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
-	lbcmd "github.com/michielvha/edgectl/cmd/rke2/lb"
 )
 
 // rke2Cmd represents the "rke2" command
