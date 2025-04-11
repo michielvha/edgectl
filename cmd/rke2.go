@@ -104,6 +104,7 @@ var statusCmd = &cobra.Command{
 }
 
 // Uninstall RKE2
+// TODO: When purging a master cluster we should also remove the state from the vault.
 var uninstallCmd = &cobra.Command{
 	Use:   "purge",
 	Short: "purge RKE2 install from host",

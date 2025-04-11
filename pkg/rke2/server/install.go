@@ -35,6 +35,15 @@ func Install(clusterID string, isExisting bool, vip string) error {
 		if _, err := FetchTokenFromVault(clusterID); err != nil {
 			return err
 		}
+
+		// For existing clusters, try to fetch the VIP from Vault if none was provided
+		if vip == "" {
+			_, storedVIP, err := vaultClient.RetrieveMasterInfo(clusterID)
+			if err == nil && storedVIP != "" {
+				vip = storedVIP
+				fmt.Printf("🌐 Using VIP %s from Vault for load balancer TLS SANs\n", vip)
+			}
+		}
 	} else {
 		// Generate a new cluster ID
 		clusterID = fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
