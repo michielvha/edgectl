@@ -42,11 +42,10 @@ func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath string, vip string) e
 	// Replace the localhost URL with the VIP in the kubeconfig if VIP is provided
 	kubeconfigStr := string(kubeconfig)
 	if vip != "" {
-		kubeconfigStr = strings.Replace(
+		kubeconfigStr = strings.ReplaceAll(
 			kubeconfigStr,
 			"server: https://127.0.0.1:6443",
 			fmt.Sprintf("server: https://%s:6443", vip),
-			-1,
 		)
 		fmt.Printf("🔄 Updated kubeconfig to use VIP: %s\n", vip)
 	}

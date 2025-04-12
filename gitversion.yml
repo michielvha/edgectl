@@ -17,8 +17,9 @@ branches:
     increment: None
     prevent-increment:
       when-current-commit-tagged: true
+      of-merged-branch: true
     is-release-branch: true
-    mode: ContinuousDelivery
+    mode: ContinuousDeployment # do not use ContinuousDelivery, else it will increment the version with a suffix on each commit.
     source-branches:
     - main
 
