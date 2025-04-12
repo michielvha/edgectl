@@ -1,5 +1,8 @@
 # GitVersion Implementation
 
+> [!IMPORTANT]
+> These docs are based on gitVersion version 6.2.0
+
 ## Overview
 
 This document describes the **GitVersion** implementation for the `edgectl` repository. **GitVersion** is used to automatically generate semantic version numbers based on Git history and branch structure, eliminating the need for manual version management.
