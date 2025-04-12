@@ -65,10 +65,14 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output for debugging")
 
 	// Bind flags to viper for config file and env var support
-	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	if err := viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")); err != nil {
+		fmt.Fprintf(os.Stderr, "Error binding verbose flag: %v\n", err)
+	}
 
 	// Also bind to environment variables
-	viper.BindEnv("verbose", "VERBOSE")
+	if err := viper.BindEnv("verbose", "VERBOSE"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error binding verbose environment variable: %v\n", err)
+	}
 
 	// Cobra also supports local flags, which will only run when this action is called directly
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
@@ -99,6 +103,7 @@ func initConfig() {
 
 	// If a config file is found, read it in (silently fail if not found)
 	if err := viper.ReadInConfig(); err == nil {
-		// This will be logged later during PersistentPreRun
+		// Log that we found and are using a config file
+		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 }
