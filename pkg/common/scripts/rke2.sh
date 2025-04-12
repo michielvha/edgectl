@@ -74,7 +74,7 @@ tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]
 
 EOF
 
-  # Add token and server IP to config if they are set as environment variables
+  # Add token and server IP to config if they are set as environment variables - for secondary server installations.
   if [ -n "$RKE2_TOKEN" ]; then
     echo "token: \"$RKE2_TOKEN\"" | sudo tee -a /etc/rancher/rke2/config.yaml
     echo "🔑 Added token to config"
