@@ -1,5 +1,8 @@
+# https://gitversion.net/docs/reference/configuration
+# manually verify with `gitversion (/showconfig)`
 workflow: GitHubFlow/v1
 
+# Custom strategies - this differs from default
 strategies:
 - MergeMessage
 - TaggedCommit
@@ -8,6 +11,7 @@ strategies:
 
 branches:
   release:
+    # Custom release branch configuration
     regex: ^release/(?<BranchName>[0-9]+\.[0-9]+\.[0-9]+)$
     label: ''
     increment: None
@@ -18,4 +22,5 @@ branches:
     source-branches:
     - main
 
+# Only including assembly-versioning-scheme since it's a common setting people want explicit
 assembly-versioning-scheme: MajorMinorPatch
