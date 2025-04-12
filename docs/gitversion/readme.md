@@ -1,7 +1,7 @@
 # GitVersion Implementation
 
 > [!IMPORTANT]
-> These docs are based on gitVersion version 6.2.0
+> These docs are based on gitVersion version 6.x
 
 ## Overview
 
