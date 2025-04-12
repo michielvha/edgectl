@@ -10,6 +10,15 @@ strategies:
 - VersionInBranchName
 
 branches:
+  main:
+    regex: ^master$|^main$
+    increment: Patch
+    prevent-increment:
+      of-merged-branch: true
+    track-merge-target: false
+    track-merge-message: true
+    is-main-branch: true
+    mode: ContinuousDeployment # also do it here
   release:
     # Custom release branch configuration
     regex: ^release/(?<BranchName>[0-9]+\.[0-9]+\.[0-9]+)$
