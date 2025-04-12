@@ -94,7 +94,3 @@ edgectl rke2 agent --cluster-id rke2-abc12345
 - Add support for multi-tenant environments via Vault namespaces or tags
 - Abstract even more bash logic into Go
 - Support `edgectl upgrade`, `edgectl add-master`, etc.
-
----
-
-Would you like this turned into a Markdown doc in a `/docs/architecture.md` or embedded inside the CLI help text somewhere?

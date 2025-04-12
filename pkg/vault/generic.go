@@ -1,3 +1,6 @@
+/*
+Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+*/
 package vault
 
 import (
@@ -50,4 +53,34 @@ func (c *Client) RetrieveSecret(fullVaultPath string) (map[string]interface{}, e
 		return nil, fmt.Errorf("invalid data format at path: %s", fullVaultPath)
 	}
 	return data, nil
+}
+
+// ListKeys lists all keys at a given path
+func (c *Client) ListKeys(fullVaultPath string) ([]string, error) {
+	secret, err := c.VaultClient.Logical().List(fullVaultPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list keys at path '%s': %w", fullVaultPath, err)
+	}
+	if secret == nil || secret.Data == nil {
+		return []string{}, nil // Return empty slice for non-existent paths
+	}
+
+	keysRaw, ok := secret.Data["keys"]
+	if !ok {
+		return []string{}, nil
+	}
+
+	keysInterface, ok := keysRaw.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid keys format at path: %s", fullVaultPath)
+	}
+
+	keys := make([]string, 0, len(keysInterface))
+	for _, k := range keysInterface {
+		if strKey, ok := k.(string); ok {
+			keys = append(keys, strKey)
+		}
+	}
+
+	return keys, nil
 }

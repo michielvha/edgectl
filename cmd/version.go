@@ -1,11 +1,12 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright © 2025 EDGEFORGE contact@edgeforge.eu
 */
 package cmd
 
 import (
 	"fmt"
 
+	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +26,9 @@ Example usage:
   edgectl version
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Log that the version command was executed (debug level)
+		logger.Debug("Version command executed")
+
 		asciiArt := `
  ________       __                    ______  __ __
 |        \     |  \                  /      \|  \  \

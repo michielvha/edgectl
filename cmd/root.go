@@ -1,12 +1,20 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright © 2025 EDGEFORGE contact@edgeforge.eu
 */
 package cmd
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+var (
+	cfgFile string
+	verbose bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -22,6 +30,21 @@ and interacting with secure secrets storage — all tailored for edge environmen
 Whether you're deploying a new RKE2 cluster, automating node registration, or storing
 kubeconfigs securely in Vault, edgectl helps you orchestrate your edge infrastructure with ease.
 `,
+	// This ensures the logger is set up before any command runs
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Initialize logger with verbose flag from viper (which combines cli flags, env vars, config file)
+		logger.Init(viper.GetBool("verbose"))
+
+		// Always log these messages at debug level to verify verbose mode
+		logger.Debug("CLI execution started")
+
+		// Log config file path if one was found
+		if viper.ConfigFileUsed() != "" {
+			logger.Debug("Config file found: %s", viper.ConfigFileUsed())
+		} else {
+			logger.Debug("No config file found, using defaults and environment variables")
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -34,13 +57,48 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	// Initialize cobra
+	cobra.OnInitialize(initConfig)
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.edge-cli.yaml)")
+	// Define persistent flags (available to all commands)
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.edgectl.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output for debugging")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Bind flags to viper for config file and env var support
+	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+
+	// Also bind to environment variables
+	viper.BindEnv("verbose", "VERBOSE")
+
+	// Cobra also supports local flags, which will only run when this action is called directly
+	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+// initConfig reads in config file and ENV variables if set (viper)
+func initConfig() {
+	if cfgFile != "" {
+		// Use config file from the flag
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// Find home directory
+		home, err := os.UserHomeDir()
+		if err != nil {
+			// Can't use logger yet as it's not initialized
+			fmt.Fprintf(os.Stderr, "Error: could not find home directory: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Search config in home directory with name ".edgectl" (without extension)
+		viper.AddConfigPath(home)
+		viper.SetConfigName(".edgectl")
+		viper.SetConfigType("yaml")
+	}
+
+	// Read in environment variables that match
+	viper.AutomaticEnv()
+
+	// If a config file is found, read it in (silently fail if not found)
+	if err := viper.ReadInConfig(); err == nil {
+		// This will be logged later during PersistentPreRun
+	}
 }
