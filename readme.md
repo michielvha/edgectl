@@ -6,7 +6,7 @@ A CLI tool to manage the edge cloud. Comparable to `awscli` or `azure-cli`.
 
 - Auto Create an edge cloud kubernetes cluster powered by rke2
     - Fetch & Add kubeconfig file to current context
-    - Auto setup ArgoCD - Add helmchart to directory on host with rke2 helm integration
+    - Auto setup ArgoCD - Add helm chart to directory on host with rke2 helm integration
     - Automated lifecycle management of edge cloud
 - Use Cobra for cli
 
@@ -40,6 +40,7 @@ edgectl version
 - [ ] Auto Bootstrap ArgoCD for automated dev setup
   - [ ] Add helm chart to directory on host with rke2 helm integration
 
+- [ ] Some kind of debug command that will verify connectivity etc, when an install fails..?
 
 ### Pipeline
 - [x] update gitVersion to be like chartFetch with release branch strategy

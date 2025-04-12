@@ -29,7 +29,8 @@ Examples:
   edgectl rke2 uninstall   # Uninstall RKE2
 `,
 }
-//TODO: rework to global flag ? create instead of install, or something that works better for maintainability & scalability.
+
+// TODO: rework to global flag ? create instead of install, or something that works better for maintainability & scalability.
 var installServerCmd = &cobra.Command{
 	Use:   "server install",
 	Short: "Install RKE2 Server",
