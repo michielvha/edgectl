@@ -22,5 +22,6 @@ branches:
     source-branches:
     - main
 
+
 # Only including assembly-versioning-scheme since it's a common setting people want explicit
 assembly-versioning-scheme: MajorMinorPatch
