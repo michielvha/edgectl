@@ -1,7 +1,7 @@
 # RKE2 module for RKE2 installation and configuration
 # purpose: bootstrap RKE2 nodes.
 # usage: quickly source this module with the following command:
-# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/edgectl/main/cmd/scripts/rke2.sh) `
+# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/edgectl/main/pkg/common/scripts/rke2.sh) `
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
 # TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality. We could check for the existance of these folders /etc/rancher /var/lib/kubelet /var/lib/etcd
@@ -56,6 +56,7 @@ install_rke2_server() {
   # https://docs.rke2.io/reference/server_config
   cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 write-kubeconfig-mode: "0644"
+profile: "cis"
 node-label:
   - "environment=production"
   - "arch=${ARCH}"
@@ -115,6 +116,9 @@ spec:
     operator:
       replicas: 1
 EOF
+
+  # Hardening RKE2 with CIS benchmarks
+  configure_rke2_cis
 
   # Enable and start RKE2 server
   echo "⚙️  Starting RKE2 server..."
@@ -180,12 +184,16 @@ install_rke2_agent() {
   cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 server: "https://$LB_HOSTNAME:9345"
 token: $RKE2_TOKEN
+profile: "cis"
 node-label:
   - "environment=production"
   - "arch=${ARCH}"
   - "purpose=$PURPOSE"
 tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]
 EOF
+
+  # Hardening RKE2 with CIS benchmarks
+  configure_rke2_cis
 
   # Enable and start RKE2 agent
   echo "⚙️  Starting RKE2 agent..."
@@ -248,6 +256,19 @@ EOF
   sudo sysctl --system > /dev/null && echo "✅ Sysctl settings applied successfully."
 
   sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+}
+
+configure_rke2_cis() {
+  # https://docs.rke2.io/security/hardening_guide/#kernel-parameters
+  local cis_sysctl="/usr/local/share/rke2/rke2-cis-sysctl.conf"
+  if [ -f "$cis_sysctl" ]; then
+    echo "🔐 Applying CIS sysctl settings..."
+    sudo cp -f "$cis_sysctl" /etc/sysctl.d/60-rke2-cis.conf
+    sudo systemctl restart systemd-sysctl
+    echo "✅ CIS sysctl settings applied."
+  else
+    echo "⚠️  CIS sysctl config not found at $cis_sysctl. Skipping."
+  fi
 }
 
 # configure the firewall for a RKE2 server node
