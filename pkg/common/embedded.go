@@ -27,7 +27,7 @@ func ExtractEmbeddedScript(scriptName string) string {
 	}
 
 	// Write to a temp file
-	if err := os.WriteFile(scriptPath, data, 0o755); err != nil {
+	if err := os.WriteFile(scriptPath, data, 0o777); err != nil {
 		fmt.Printf("❌ Failed to write script: %v\n", err)
 		os.Exit(1)
 	}
