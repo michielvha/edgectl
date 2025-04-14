@@ -11,6 +11,7 @@ import (
 	vault "github.com/michielvha/edgectl/pkg/vault"
 )
 
+//TODO: the isMain flag should is currently not working correctly.
 type LoadBalancerConfig struct {
 	ClusterID string
 	IsMain    bool
@@ -113,12 +114,12 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		state = "MASTER"
 	}
 
-	logger.Info("🔧 Installing HAProxy and KeepAlived...")
+	fmt.Print("🔧 Installing HAProxy and KeepAlived...")
 	if err := installPackages(); err != nil {
 		return fmt.Errorf("failed to install dependencies: %w", err)
 	}
 
-	logger.Info("📄 Generating HAProxy config...")
+	fmt.Print("📄 Generating HAProxy config...")
 	haproxyConfig, err := generateHAProxyConfig(cfg.Hostnames, cfg.HostIPs)
 	if err != nil {
 		return err
@@ -127,13 +128,13 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		return fmt.Errorf("failed to write haproxy config: %w", err)
 	}
 
-	logger.Info("📄 Generating Keepalived config...")
+	fmt.Print("📄 Generating Keepalived config...")
 	keepalivedConfig := generateKeepalivedConfig(cfg.Interface, cfg.VIP, state, priority)
 	if err := os.WriteFile("/etc/keepalived/keepalived.conf", []byte(keepalivedConfig), 0o644); err != nil {
 		return fmt.Errorf("failed to write keepalived config: %w", err)
 	}
 
-	logger.Info("🚀 Restarting services...")
+	fmt.Print("🚀 Restarting services...")
 	if err := restartService("haproxy"); err != nil {
 		return err
 	}
@@ -141,7 +142,7 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		return err
 	}
 
-	logger.Info("%s", fmt.Sprintf("✅ Load balancer stack configured with VIP %s", cfg.VIP))
+	fmt.Printf("✅ Load balancer stack configured with VIP %s", cfg.VIP)
 	return nil
 }
 
