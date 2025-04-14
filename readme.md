@@ -24,6 +24,7 @@ edgectl version
 - [x] Create version command using cobra and the variable is dynamically set at build time, in pipeline this is integrated with GitVersion.
 - [ ] Ensure scalable file structure.
 - [ ] Add support for fedora based architectures.
+- [ ] write some kind of var or file to determine which system is which role ( server, agent, lb ) or find another way.
 
 ### Logging
 -  Changed to a logging library (zerolog) and wrote log.go pkg to support log levels and better logging. Supporting a `--verbose` flag to enable debug logging. **We'll only use `logger.debug` for debug logging everything else will be stdout on cli.**
