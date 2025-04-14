@@ -56,6 +56,7 @@ func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath string, vip string) e
 }
 
 // RetrieveKubeConfig fetches the kubeconfig from Vault and saves it to the host
+// TODO: save to a path that is users home directory instead of the default directory which is only accessible by root & this won't work if the host is not part of the rke2 setup
 func (c *Client) RetrieveKubeConfig(clusterID, destinationPath string) error {
 	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/kubeconfig", clusterID))
 	if err != nil {

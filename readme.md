@@ -30,6 +30,7 @@ edgectl version
 -  Changed to a logging library (zerolog) and wrote log.go pkg to support log levels and better logging. Supporting a `--verbose` flag to enable debug logging. **We'll only use `logger.debug` for debug logging everything else will be stdout on cli.**
 - Integrated viper for environment variables and config file support
   - [ ] Create logic to allow Adding ClusterID to the config file so you don't have to manually specify it
+  - [ ] Store Cluster-ID & role in `/etc/environment` so it's available everywhere.
 - using viper for global flags.
   - [ ] Add support for `--dry-run` to all commands
   
