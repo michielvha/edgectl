@@ -17,13 +17,15 @@ type LoadBalancerConfig struct {
 	Interface string
 	VIP       string
 	Hostnames []string
+	HostIPs   map[string]string
 }
 
 // CreateLoadBalancer creates a new load balancer for the RKE2 cluster
 // It determines if this node should be the primary or backup LB node
 // and configures HAProxy and Keepalived accordingly
 func CreateLoadBalancer(clusterID, vip string) error {
-	logger.Info("Creating load balancer for RKE2 cluster")
+	logger.Debug("Creating load balancer for RKE2 cluster")
+	fmt.Printf("Creating load balancer for RKE2 cluster %s\n", clusterID)
 
 	// Get the current hostname
 	hostname, err := os.Hostname()
@@ -38,7 +40,7 @@ func CreateLoadBalancer(clusterID, vip string) error {
 	}
 
 	// Retrieve server nodes from Vault or set up initial config if this is the first LB
-	hosts, existingVIP, err := client.RetrieveMasterInfo(clusterID)
+	hosts, existingVIP, hostIPs, err := client.RetrieveMasterInfo(clusterID)
 	isFirst := err != nil || existingVIP == ""
 
 	// If no VIP was provided and no existing VIP was found, error out
@@ -73,6 +75,7 @@ func CreateLoadBalancer(clusterID, vip string) error {
 		Interface: iface,
 		VIP:       vip,
 		Hostnames: hosts,
+		HostIPs:   hostIPs,
 	})
 }
 
@@ -82,7 +85,7 @@ func BootstrapLBFromVault(clusterID string, isMain bool) error {
 		return fmt.Errorf("failed to create Vault client: %w", err)
 	}
 
-	hosts, vip, err := client.RetrieveMasterInfo(clusterID)
+	hosts, vip, hostIPs, err := client.RetrieveMasterInfo(clusterID)
 	if err != nil {
 		return fmt.Errorf("failed to fetch master info from Vault: %w", err)
 	}
@@ -98,6 +101,7 @@ func BootstrapLBFromVault(clusterID string, isMain bool) error {
 		Interface: iface,
 		VIP:       vip,
 		Hostnames: hosts,
+		HostIPs:   hostIPs,
 	})
 }
 
@@ -115,7 +119,7 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 	}
 
 	logger.Info("📄 Generating HAProxy config...")
-	haproxyConfig, err := generateHAProxyConfig(cfg.Hostnames)
+	haproxyConfig, err := generateHAProxyConfig(cfg.Hostnames, cfg.HostIPs)
 	if err != nil {
 		return err
 	}
@@ -148,7 +152,7 @@ func installPackages() error {
 	return cmd.Run()
 }
 
-func generateHAProxyConfig(hostnames []string) (string, error) {
+func generateHAProxyConfig(hostnames []string, hostIPs map[string]string) (string, error) {
 	var b strings.Builder
 	b.WriteString(`# HAProxy Configuration for RKE2 Load Balancing
 global
@@ -198,26 +202,38 @@ backend k3s-backend
 
 `)
 
-	for _, host := range hostnames {
-		ip, err := net.LookupIP(host)
-		if err != nil || len(ip) == 0 {
-			return "", fmt.Errorf("could not resolve IP for host %s: %v", host, err)
-		}
-		b.WriteString(fmt.Sprintf("    server %s %s:6443 check\n", host, ip[0].String()))
-	}
+	// Add servers to the k3s backend (port 6443)
+	addServersToBackend(&b, hostnames, hostIPs, 6443)
 
 	// Add supervisor API backend
 	b.WriteString("\nbackend rke2-supervisor-backend\n    mode tcp\n    option tcp-check\n    balance roundrobin\n    default-server inter 10s downinter 5s rise 3 fall 3\n")
 
-	for _, host := range hostnames {
-		ip, err := net.LookupIP(host)
-		if err != nil || len(ip) == 0 {
-			return "", fmt.Errorf("could not resolve IP for host %s: %v", host, err)
-		}
-		b.WriteString(fmt.Sprintf("    server %s %s:9345 check\n", host, ip[0].String()))
-	}
+	// Add servers to the supervisor backend (port 9345)
+	addServersToBackend(&b, hostnames, hostIPs, 9345)
 
 	return b.String(), nil
+}
+
+// Helper function to add servers to a HAProxy backend
+func addServersToBackend(b *strings.Builder, hostnames []string, hostIPs map[string]string, port int) {
+	for _, host := range hostnames {
+		// First try to get IP from the hostIPs map (cached IPs from Vault)
+		if ip, ok := hostIPs[host]; ok {
+			b.WriteString(fmt.Sprintf("    server %s %s:%d check\n", host, ip, port))
+			logger.Debug("Using IP %s from Vault for host %s", ip, host)
+			continue
+		}
+
+		// Fallback to DNS lookup if IP not found in Vault
+		ipAddrs, err := net.LookupIP(host)
+		if err != nil || len(ipAddrs) == 0 {
+			logger.Warn("Could not resolve IP for host %s via DNS, skipping: %v", host, err)
+			// Instead of failing, skip this host and continue
+			continue
+		}
+		b.WriteString(fmt.Sprintf("    server %s %s:%d check\n", host, ipAddrs[0].String(), port))
+		logger.Debug("Using IP %s from DNS for host %s", ipAddrs[0].String(), host)
+	}
 }
 
 func generateKeepalivedConfig(iface, vip, state, priority string) string {

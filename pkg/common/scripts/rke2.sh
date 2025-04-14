@@ -7,6 +7,7 @@
 # TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality. We could check for the existance of these folders /etc/rancher /var/lib/kubelet /var/lib/etcd
 # TODO: Look into harding the RKE2 installation with CIS benchmarks. SEL linux etc etc. Verify with [kube-bench](https://github.com/aquasecurity/kube-bench)
 # Hardening Guide created in edge cloud repo: edge-cloud/docs/setup/software/kubernetes/rke2/hardening/readme.md. For ubuntu we'll have to manually create the profiles.
+# code snippets added but currently failing, check what's going wrong.
 # TODO: Add support for Fedora based systems.
 # bootstrap a RKE2 server node
 install_rke2_server() {

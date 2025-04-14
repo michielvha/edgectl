@@ -205,15 +205,15 @@ func getHostIP(hostname string) (string, error) {
 }
 
 // RetrieveMasterInfo retrieves RKE2 master nodes information
-func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) {
+func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, map[string]string, error) {
 	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/masters", clusterID))
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
 	hostsRaw, ok := data["hosts"]
 	if !ok {
-		return nil, "", fmt.Errorf("hosts information not found for cluster %s", clusterID)
+		return nil, "", nil, fmt.Errorf("hosts information not found for cluster %s", clusterID)
 	}
 
 	// Convert interface{} to string slice
@@ -228,7 +228,17 @@ func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) 
 
 	vip, _ := data["vip"].(string)
 
-	return hosts, vip, nil
+	// Extract host_ips map if available
+	hostIPs := make(map[string]string)
+	if hostIPsRaw, ok := data["host_ips"].(map[string]interface{}); ok {
+		for hostname, ipRaw := range hostIPsRaw {
+			if ip, ok := ipRaw.(string); ok {
+				hostIPs[hostname] = ip
+			}
+		}
+	}
+
+	return hosts, vip, hostIPs, nil
 }
 
 // RetrieveFirstMasterIP retrieves the IP address of the first master node in the cluster
