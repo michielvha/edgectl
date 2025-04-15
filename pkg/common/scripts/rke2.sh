@@ -9,13 +9,14 @@
 # Hardening Guide created in edge cloud repo: edge-cloud/docs/setup/software/kubernetes/rke2/hardening/readme.md. For ubuntu we'll have to manually create the profiles.
 # code snippets added but currently failing, check what's going wrong.
 # TODO: Add support for Fedora based systems.
+# TODO: Refactor tailscale management plane into GO CLI so i can be passed to the script.
 # bootstrap a RKE2 server node
 install_rke2_server() {
   # usage: install_rke2_server [-l <loadbalancer-hostname>]
 
   # Pre checks
-  if systemctl is-active --quiet rke2-server; then
-    echo "❌ RKE2 Server is already running. Exiting."
+  if systemctl list-unit-files | grep -q "^rke2-server.service"; then
+    echo "❌ RKE2 Server service already exists. Exiting."
     return 1
   fi
   # TODO: Check for ``/etc/rancher/rke2`` and ``/var/lib/kubelet`` and ``/var/lib/etcd`` folders to see if RKE2 is already installed. If so recommend to run rke2_status or purge_rke2.
@@ -132,8 +133,8 @@ EOF
 install_rke2_agent() {
   # usage: install_rke2_agent [-l <loadbalancer-hostname>]
   # Pre checks
-  if systemctl is-active --quiet rke2-agent; then
-    echo "❌ RKE2 Agent is already running. Exiting."
+  if systemctl list-unit-files | grep -q "^rke2-agent.service"; then
+    echo "❌ RKE2 Server service already exists. Exiting."
     return 1
   fi
 

@@ -6,7 +6,7 @@ workflow: GitHubFlow/v1
 strategies:
 - MergeMessage
 - TaggedCommit
-- TrackReleaseBranches
+- TrackReleaseBranches   # this ensures that commits from release branches are tracked and included in the versioning process.
 - VersionInBranchName
 
 branches:
@@ -16,9 +16,9 @@ branches:
     prevent-increment:
       of-merged-branch: true
     track-merge-target: false
-    track-merge-message: true
+    track-merge-message: true # ensures that merge commit messages are included.
     is-main-branch: true
-    mode: ContinuousDeployment # also do it here
+    mode: ContinuousDeployment # This mode avoids adding suffixes to the version, ensuring a clean versioning process.
   release:
     # Custom release branch configuration
     regex: ^release/(?<BranchName>[0-9]+\.[0-9]+\.[0-9]+)$
