@@ -11,7 +11,7 @@ import (
 	vault "github.com/michielvha/edgectl/pkg/vault"
 )
 
-//TODO: the isMain flag should is currently not working correctly.
+// TODO: the isMain flag should is currently not working correctly.
 type LoadBalancerConfig struct {
 	ClusterID string
 	IsMain    bool

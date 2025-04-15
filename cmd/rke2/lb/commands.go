@@ -54,7 +54,7 @@ var createCmd = &cobra.Command{
 }
 
 // statusCmd represents the "lb status" command
-//TODO: add IP Address to output
+// TODO: add IP Address to output
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show status of RKE2 load balancer",
