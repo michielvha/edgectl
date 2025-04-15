@@ -220,7 +220,7 @@ func addServersToBackend(b *strings.Builder, hostnames []string, hostIPs map[str
 	for _, host := range hostnames {
 		// First try to get IP from the hostIPs map (cached IPs from Vault)
 		if ip, ok := hostIPs[host]; ok {
-			b.WriteString(fmt.Sprintf("    server %s %s:%d check\n", host, ip, port))
+			fmt.Fprintf(b, "    server %s %s:%d check\n", host, ip, port)
 			logger.Debug("Using IP %s from Vault for host %s", ip, host)
 			continue
 		}
@@ -232,7 +232,7 @@ func addServersToBackend(b *strings.Builder, hostnames []string, hostIPs map[str
 			// Instead of failing, skip this host and continue
 			continue
 		}
-		b.WriteString(fmt.Sprintf("    server %s %s:%d check\n", host, ipAddrs[0].String(), port))
+		fmt.Fprintf(b, "    server %s %s:%d check\n", host, ipAddrs[0].String(), port)
 		logger.Debug("Using IP %s from DNS for host %s", ipAddrs[0].String(), host)
 	}
 }

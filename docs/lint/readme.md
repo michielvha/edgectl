@@ -6,6 +6,7 @@ We're using **golangci-lint** in our pipeline to integrate linting into our work
 
 ```shell
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+# brew install golangci-lint
 golangci-lint run
 golangci-lint run --fix     # Try this first to autofix
 gofmt -w .                  # Then fix remaining formatting
