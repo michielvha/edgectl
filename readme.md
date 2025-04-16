@@ -1,5 +1,9 @@
 # edge-cli
 
+<div align="center">
+  <img src="./docs/edge-cloud.png" alt="EdgeCloud Logo" width="250"/>
+</div>
+
 A CLI tool to manage the edge cloud. Comparable to `awscli` or `azure-cli`.
 
 ## features
