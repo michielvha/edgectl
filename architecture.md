@@ -8,36 +8,36 @@ EdgeCTL is a CLI tool designed to manage edge cloud infrastructure. It provides 
 ## High-Level Architecture
 
 ```mermaid
-graph TD
-    A[Main CLI (edgectl)] --> B[Command Handlers]
-    B --> C[RKE2 Commands]
-    B --> D[Vault Commands]
-    B --> E[Version Command]
-    B --> F[Load Balancer Commands]
+graph TD;
+    A[Main CLI (edgectl)] --> B[Command Handlers];
+    B --> C[RKE2 Commands];
+    B --> D[Vault Commands];
+    B --> E[Version Command];
+    B --> F[Load Balancer Commands];
 
-    C --> G[Server Installation Logic]
-    C --> H[Agent Installation Logic]
-    C --> I[Status Check]
-    C --> J[Uninstall Logic]
+    C --> G[Server Installation Logic];
+    C --> H[Agent Installation Logic];
+    C --> I[Status Check];
+    C --> J[Uninstall Logic];
 
-    D --> K[Vault Client]
-    D --> L[Cluster Metadata]
+    D --> K[Vault Client];
+    D --> L[Cluster Metadata];
 
-    F --> M[Load Balancer Setup]
+    F --> M[Load Balancer Setup];
 
     subgraph CorePackages
-        P1[Logger]
-        P2[Common Utilities]
-        P3[Vault Integration]
-        P4[RKE2 Server Logic]
-        P5[Load Balancer Handler]
-    end
+        P1[Logger];
+        P2[Common Utilities];
+        P3[Vault Integration];
+        P4[RKE2 Server Logic];
+        P5[Load Balancer Handler];
+    end;
 
-    A --> P1
-    B --> P2
-    D --> P3
-    G --> P4
-    M --> P5
+    A --> P1;
+    B --> P2;
+    D --> P3;
+    G --> P4;
+    M --> P5;
 ```
 
 ---
