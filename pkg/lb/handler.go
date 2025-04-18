@@ -114,12 +114,12 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		state = "MASTER"
 	}
 
-	fmt.Print("🔧 Installing HAProxy and KeepAlived...")
+	fmt.Print("🔧 Installing HAProxy and KeepAlived... \n")
 	if err := installPackages(); err != nil {
 		return fmt.Errorf("failed to install dependencies: %w", err)
 	}
 
-	fmt.Print("📄 Generating HAProxy config...")
+	fmt.Print("📄 Generating HAProxy config... \n")
 	haproxyConfig, err := generateHAProxyConfig(cfg.Hostnames, cfg.HostIPs)
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		return fmt.Errorf("failed to write haproxy config: %w", err)
 	}
 
-	fmt.Print("📄 Generating Keepalived config...")
+	fmt.Print("📄 Generating Keepalived config... \n")
 	keepalivedConfig := generateKeepalivedConfig(cfg.Interface, cfg.VIP, state, priority)
 	if err := os.WriteFile("/etc/keepalived/keepalived.conf", []byte(keepalivedConfig), 0o644); err != nil {
 		return fmt.Errorf("failed to write keepalived config: %w", err)
@@ -142,7 +142,7 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		return err
 	}
 
-	fmt.Printf("✅ Load balancer stack configured with VIP %s", cfg.VIP)
+	fmt.Printf("✅ Load balancer stack configured with VIP %s \n", cfg.VIP)
 	return nil
 }
 
