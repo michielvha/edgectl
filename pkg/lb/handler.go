@@ -151,7 +151,7 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		return fmt.Errorf("failed to write keepalived config: %w", err)
 	}
 
-	fmt.Print("🚀 Restarting services...")
+	fmt.Print("🚀 Restarting services... \n")
 	if err := restartService("haproxy"); err != nil {
 		return err
 	}
