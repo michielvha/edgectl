@@ -1,5 +1,17 @@
 /*
 Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+
+Package vault provides specialized handlers for RKE2 cluster secrets management.
+
+This file extends the generic Vault client with RKE2-specific functionality for:
+- Managing RKE2 join tokens for server and agent nodes
+- Storing and retrieving cluster kubeconfig files
+- Managing load balancer configuration and VIPs
+- Tracking master node information and IP addresses
+
+It implements a structured approach to secret storage with a path hierarchy
+organized by cluster ID, creating a consistent and navigable secret storage
+schema for multi-cluster environments.
 */
 package vault
 

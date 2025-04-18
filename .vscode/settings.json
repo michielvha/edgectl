@@ -11,6 +11,7 @@
   "cSpell.words": [
     "bpftool",
     "cerr",
+    "dontlognull",
     "downinter",
     "ebpf",
     "edgectl",
@@ -21,6 +22,7 @@
     "goreleaser",
     "hostnames",
     "HOSTNAMES",
+    "iface",
     "incpatch",
     "killall",
     "kubeconfig",
@@ -42,6 +44,7 @@
     "tcplog",
     "trimpath",
     "vrrp",
+    "zerolog",
     "zgrep"
   ]
 }

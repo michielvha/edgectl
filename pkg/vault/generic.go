@@ -1,5 +1,17 @@
 /*
 Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+
+Package vault provides a client for interacting with HashiCorp Vault.
+
+This file implements the generic Vault client that provides basic CRUD operations
+for secrets management. It offers a clean abstraction over the Vault API for:
+- Creating and initializing a Vault client
+- Storing secrets at specific paths
+- Retrieving secrets from paths
+- Listing keys under a path
+
+This generic implementation serves as the foundation for more specialized
+Vault interactions defined elsewhere in the package.
 */
 package vault
 
