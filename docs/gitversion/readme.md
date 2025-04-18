@@ -16,7 +16,6 @@ The project uses a custom **GitVersion** configuration defined in the root `gitv
 ```yaml
 workflow: GitHubFlow/v1
 
-# Custom strategies
 strategies:
 - MergeMessage
 - TaggedCommit
@@ -24,15 +23,24 @@ strategies:
 - VersionInBranchName
 
 branches:
+  main:
+    regex: ^master$|^main$
+    increment: Patch
+    prevent-increment:
+      of-merged-branch: true
+    track-merge-target: false
+    track-merge-message: true
+    is-main-branch: true
+    mode: ContinuousDeployment
   release:
-    # Custom release branch configuration
     regex: ^release/(?<BranchName>[0-9]+\.[0-9]+\.[0-9]+)$
     label: ''
     increment: None
     prevent-increment:
       when-current-commit-tagged: true
+      of-merged-branch: true
     is-release-branch: true
-    mode: ContinuousDelivery
+    mode: ContinuousDeployment
     source-branches:
     - main
 
@@ -69,7 +77,7 @@ Version increments can be triggered by:
 The release branch configuration is customized to:
 - Match branches named `release/x.y.z`
 - Prevent version increments when commits are tagged
-- Use ContinuousDelivery mode for predictable version numbers
+- Use ContinuousDeployment mode for predictable version number
 - Source from the main branch
 
 ## Usage

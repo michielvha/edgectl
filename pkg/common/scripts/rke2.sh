@@ -1,21 +1,22 @@
 # RKE2 module for RKE2 installation and configuration
 # purpose: bootstrap RKE2 nodes.
 # usage: quickly source this module with the following command:
-# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/edgectl/main/cmd/scripts/rke2.sh) `
+# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/edgectl/main/pkg/common/scripts/rke2.sh) `
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
 # TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality. We could check for the existance of these folders /etc/rancher /var/lib/kubelet /var/lib/etcd
 # TODO: Look into harding the RKE2 installation with CIS benchmarks. SEL linux etc etc. Verify with [kube-bench](https://github.com/aquasecurity/kube-bench)
-# WIP: Find way to pass token to agent automatically, maybe with GO wrapper to integrate with hashicorp vault ?
-# TODO: Find a way to fetch the kubeconfig like we have for azure cli and aws cli, build a cli like that in GO. store in vault ?
-# TODO: Add logic to handle the requirement of a token to join masters to an existing cluster. maybe seperate join_rke2_server function ?
+# Hardening Guide created in edge cloud repo: edge-cloud/docs/setup/software/kubernetes/rke2/hardening/readme.md. For ubuntu we'll have to manually create the profiles.
+# code snippets added but currently failing, check what's going wrong.
+# TODO: Add support for Fedora based systems.
+# TODO: Refactor tailscale management plane into GO CLI so i can be passed to the script.
 # bootstrap a RKE2 server node
 install_rke2_server() {
   # usage: install_rke2_server [-l <loadbalancer-hostname>]
 
   # Pre checks
-  if systemctl is-active --quiet rke2-server; then
-    echo "❌ RKE2 Server is already running. Exiting."
+  if systemctl list-unit-files | grep -q "^rke2-server.service"; then
+    echo "❌ RKE2 Server service already exists. Exiting."
     return 1
   fi
   # TODO: Check for ``/etc/rancher/rke2`` and ``/var/lib/kubelet`` and ``/var/lib/etcd`` folders to see if RKE2 is already installed. If so recommend to run rke2_status or purge_rke2.
@@ -57,6 +58,7 @@ install_rke2_server() {
   # https://docs.rke2.io/reference/server_config
   cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 write-kubeconfig-mode: "0644"
+#profile: "cis"
 node-label:
   - "environment=production"
   - "arch=${ARCH}"
@@ -117,6 +119,9 @@ spec:
       replicas: 1
 EOF
 
+  # Hardening RKE2 with CIS benchmarks
+  configure_rke2_cis
+
   # Enable and start RKE2 server
   echo "⚙️  Starting RKE2 server..."
   sudo systemctl enable --now rke2-server || { echo "❌ RKE2 Server node bootstrap failed."; return 1; }
@@ -128,8 +133,8 @@ EOF
 install_rke2_agent() {
   # usage: install_rke2_agent [-l <loadbalancer-hostname>]
   # Pre checks
-  if systemctl is-active --quiet rke2-agent; then
-    echo "❌ RKE2 Agent is already running. Exiting."
+  if systemctl list-unit-files | grep -q "^rke2-agent.service"; then
+    echo "❌ RKE2 Server service already exists. Exiting."
     return 1
   fi
 
@@ -181,12 +186,16 @@ install_rke2_agent() {
   cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 server: "https://$LB_HOSTNAME:9345"
 token: $RKE2_TOKEN
+#profile: "cis"
 node-label:
   - "environment=production"
   - "arch=${ARCH}"
   - "purpose=$PURPOSE"
 tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]
 EOF
+
+  # Hardening RKE2 with CIS benchmarks
+  configure_rke2_cis
 
   # Enable and start RKE2 agent
   echo "⚙️  Starting RKE2 agent..."
@@ -249,6 +258,19 @@ EOF
   sudo sysctl --system > /dev/null && echo "✅ Sysctl settings applied successfully."
 
   sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+}
+
+configure_rke2_cis() {
+  # https://docs.rke2.io/security/hardening_guide/#kernel-parameters
+  local cis_sysctl="/usr/local/share/rke2/rke2-cis-sysctl.conf"
+  if [ -f "$cis_sysctl" ]; then
+    echo "🔐 Applying CIS sysctl settings..."
+    sudo cp -f "$cis_sysctl" /etc/sysctl.d/60-rke2-cis.conf
+    sudo systemctl restart systemd-sysctl
+    echo "✅ CIS sysctl settings applied."
+  else
+    echo "⚠️  CIS sysctl config not found at $cis_sysctl. Skipping."
+  fi
 }
 
 # configure the firewall for a RKE2 server node

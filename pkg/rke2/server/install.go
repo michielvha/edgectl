@@ -38,7 +38,7 @@ func Install(clusterID string, isExisting bool, vip string) error {
 
 		// For existing clusters, try to fetch the VIP from Vault if none was provided
 		if vip == "" {
-			_, storedVIP, err := vaultClient.RetrieveMasterInfo(clusterID)
+			_, storedVIP, _, err := vaultClient.RetrieveMasterInfo(clusterID)
 			if err == nil && storedVIP != "" {
 				fmt.Printf("🔍 VIP fetched from Vault: %s\n", storedVIP)
 				vip = storedVIP
@@ -94,7 +94,7 @@ func Install(clusterID string, isExisting bool, vip string) error {
 	var hosts []string
 	existingVIP := vip // Use provided VIP as default
 
-	existingHosts, storedVIP, err := vaultClient.RetrieveMasterInfo(clusterID)
+	existingHosts, storedVIP, _, err := vaultClient.RetrieveMasterInfo(clusterID)
 	if err == nil {
 		// Successfully retrieved existing master info
 		hosts = existingHosts

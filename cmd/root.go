@@ -26,9 +26,6 @@ edgectl is a lightweight command-line interface for managing Edge Cloud resource
 
 It streamlines tasks such as provisioning clusters, joining nodes, managing configurations,
 and interacting with secure secrets storage — all tailored for edge environments.
-
-Whether you're deploying a new RKE2 cluster, automating node registration, or storing
-kubeconfigs securely in Vault, edgectl helps you orchestrate your edge infrastructure with ease.
 `,
 	// This ensures the logger is set up before any command runs
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
