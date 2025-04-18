@@ -98,7 +98,16 @@ func (c *Client) RetrieveLBInfo(clusterID string) ([]map[string]interface{}, str
 	path := fmt.Sprintf("kv/metadata/rke2/%s/lb", clusterID)
 	keys, err := c.ListKeys(path)
 	if err != nil {
+		// Return an empty list instead of an error when no LBs exist yet
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return []map[string]interface{}{}, "", nil
+		}
 		return nil, "", fmt.Errorf("failed to list load balancers for cluster %s: %w", clusterID, err)
+	}
+
+	// If keys list is empty, we have no load balancers yet
+	if len(keys) == 0 {
+		return []map[string]interface{}{}, "", nil
 	}
 
 	lbNodes := []map[string]interface{}{}
@@ -125,8 +134,9 @@ func (c *Client) RetrieveLBInfo(clusterID string) ([]map[string]interface{}, str
 		}
 	}
 
+	// Return empty list instead of error when no load balancer nodes are found
 	if len(lbNodes) == 0 {
-		return nil, "", fmt.Errorf("no load balancers found for cluster %s", clusterID)
+		return []map[string]interface{}{}, "", nil
 	}
 
 	return lbNodes, vip, nil
