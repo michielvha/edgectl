@@ -11,7 +11,7 @@ import (
 	vault "github.com/michielvha/edgectl/pkg/vault"
 )
 
-// TODO: the isMain flag should is currently not working correctly.
+// LoadBalancerConfig struct defines the configuration for a load balancer
 type LoadBalancerConfig struct {
 	ClusterID string
 	IsMain    bool
@@ -40,31 +40,45 @@ func CreateLoadBalancer(clusterID, vip string) error {
 		return fmt.Errorf("failed to create Vault client: %w", err)
 	}
 
-	// Retrieve server nodes from Vault or set up initial config if this is the first LB
-	hosts, existingVIP, hostIPs, err := client.RetrieveMasterInfo(clusterID)
-	isFirst := err != nil || existingVIP == ""
+	// First check if there are any existing load balancers
+	existingLBs, existingVIP, err := client.RetrieveLBInfo(clusterID)
 
-	// If no VIP was provided and no existing VIP was found, error out
-	if vip == "" && existingVIP == "" {
+	// isFirst is true if there are no existing load balancers
+	isFirst := err != nil || len(existingLBs) == 0
+
+	logger.Debug("Load balancer first node check: isFirst=%v, error=%v, existingLBCount=%d",
+		isFirst, err, len(existingLBs))
+
+	// Retrieve server nodes from Vault for HAProxy configuration
+	hosts, masterVIP, hostIPs, err := client.RetrieveMasterInfo(clusterID)
+	if err != nil {
+		logger.Debug("No master nodes found, this might be a new cluster: %v", err)
+	}
+
+	// Determine which VIP to use (priority: provided VIP > existing LB VIP > master VIP)
+	effectiveVIP := vip
+	if effectiveVIP == "" && existingVIP != "" {
+		effectiveVIP = existingVIP
+	} else if effectiveVIP == "" && masterVIP != "" {
+		effectiveVIP = masterVIP
+	}
+
+	// If no VIP was determined, error out
+	if effectiveVIP == "" {
 		return fmt.Errorf("no VIP provided and no existing VIP found in Vault")
 	}
 
-	// Use existing VIP if none provided
-	if vip == "" {
-		vip = existingVIP
-	}
-
 	// Determine network interface for VIP
-	iface, err := detectInterfaceForVIP(vip)
+	iface, err := detectInterfaceForVIP(effectiveVIP)
 	if err != nil {
-		return fmt.Errorf("could not detect network interface for VIP %s: %w", vip, err)
+		return fmt.Errorf("could not detect network interface for VIP %s: %w", effectiveVIP, err)
 	}
 
 	// Configure this node as the main LB if it's the first one
 	isMain := isFirst
 
 	// Store the current LB info in Vault
-	err = client.StoreLBInfo(clusterID, hostname, vip, isMain)
+	err = client.StoreLBInfo(clusterID, hostname, effectiveVIP, isMain)
 	if err != nil {
 		return fmt.Errorf("failed to store load balancer info in Vault: %w", err)
 	}
@@ -74,7 +88,7 @@ func CreateLoadBalancer(clusterID, vip string) error {
 		ClusterID: clusterID,
 		IsMain:    isMain,
 		Interface: iface,
-		VIP:       vip,
+		VIP:       effectiveVIP,
 		Hostnames: hosts,
 		HostIPs:   hostIPs,
 	})
