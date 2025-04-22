@@ -1,7 +1,7 @@
 /*
 Copyright © 2025 EDGEFORGE contact@edgeforge.eu
 */
-package server
+package agent
 
 import (
 	"fmt"
