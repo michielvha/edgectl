@@ -44,8 +44,7 @@ func Install(clusterID string) error {
 	return nil
 }
 
-// Fetch token from Vault & set as env var
-// Also retrieves the first master's IP if joining an existing cluster
+// Fetch token from Vault & set as env variable
 func FetchToken(clusterID string) (string, error) {
 	vaultClient, err := vault.NewClient()
 	if err != nil {

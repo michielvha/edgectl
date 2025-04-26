@@ -32,7 +32,7 @@ server-verify:
 # Commands
 .PHONY: agent
 agent:
-	$(GO_RUN) rke2 agent --cluster-id $(CLUSTER_ID)
+	$(GO_RUN) rke2 agent install --cluster-id $(CLUSTER_ID)
 
 # Load balancer commands
 .PHONY: lb-create
@@ -45,15 +45,15 @@ lb-status:
 
 .PHONY: purge
 purge:
-	$(GO_RUN) rke2 purge
+	$(GO_RUN) rke2 system purge
 
 .PHONY: config
 config:
-	$(GO_RUN) rke2 config --cluster-id $(CLUSTER_ID)
+	$(GO_RUN) rke2 config kubeconfig --cluster-id $(CLUSTER_ID)
 
 .PHONY: config
 status:
-	$(GO_RUN) rke2 status
+	$(GO_RUN) rke2 system status
 
 .PHONY: test-func
 test func:
