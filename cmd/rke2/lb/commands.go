@@ -54,7 +54,6 @@ var createCmd = &cobra.Command{
 }
 
 // statusCmd represents the "lb status" command
-// TODO: add IP Address to output
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show status of RKE2 load balancer",
@@ -99,6 +98,37 @@ var statusCmd = &cobra.Command{
 	},
 }
 
+// cleanupCmd represents the "lb cleanup" command
+var cleanupCmd = &cobra.Command{
+	Use:   "cleanup",
+	Short: "Clean up a load balancer for RKE2",
+	Long: `The "cleanup" command removes the load balancer configuration for an RKE2 cluster.
+This includes disabling services (which also stops them) and removing configuration files.
+The HAProxy and Keepalived packages will remain installed.
+
+Example:
+  edgectl rke2 lb cleanup --cluster-id my-cluster  # Clean up LB and remove from Vault`,
+	Run: func(cmd *cobra.Command, args []string) {
+		logger.Debug("lb cleanup command executed")
+
+		// Check if user is root
+		if os.Geteuid() != 0 {
+			fmt.Println("❌ This command must be run as root. Try using `sudo`.")
+			os.Exit(1)
+		}
+
+		// Extract values
+		clusterID, _ := cmd.Flags().GetString("cluster-id")
+
+		// Cleanup load balancer
+		err := lb.CleanupLoadBalancer(clusterID)
+		if err != nil {
+			fmt.Printf("❌ Failed to clean up load balancer: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
 // Initialize command flags and register subcommands
 func init() {
 	// Create command flags
@@ -110,7 +140,12 @@ func init() {
 	statusCmd.Flags().String("cluster-id", "", "The ID of the cluster to check load balancer status for")
 	_ = statusCmd.MarkFlagRequired("cluster-id")
 
+	// Cleanup command flags
+	cleanupCmd.Flags().String("cluster-id", "", "The ID of the cluster to clean up the load balancer for")
+	_ = cleanupCmd.MarkFlagRequired("cluster-id")
+
 	// Register subcommands
 	Cmd.AddCommand(createCmd)
 	Cmd.AddCommand(statusCmd)
+	Cmd.AddCommand(cleanupCmd)
 }

@@ -302,3 +302,61 @@ func detectInterfaceForVIP(vip string) (string, error) {
 	}
 	return strings.TrimSpace(string(out)), nil
 }
+
+// CleanupLoadBalancer removes the load balancer configuration for a RKE2 cluster
+// It disables the services, removes configuration files, and cleans up the Vault entry
+func CleanupLoadBalancer(clusterID string) error {
+	logger.Debug("Cleaning up load balancer for RKE2 cluster %s", clusterID)
+	fmt.Printf("Cleaning up load balancer for RKE2 cluster %s\n", clusterID)
+
+	// Get the current hostname
+	hostname, err := os.Hostname()
+	if err != nil {
+		return fmt.Errorf("failed to get hostname: %w", err)
+	}
+
+	// Disable the services (this will also stop them)
+	fmt.Print("🛑 Disabling HAProxy and Keepalived services... \n")
+	if err := disableService("haproxy"); err != nil {
+		logger.Warn("Failed to disable HAProxy service: %v", err)
+		// Continue execution even if service disable fails
+	}
+	if err := disableService("keepalived"); err != nil {
+		logger.Warn("Failed to disable Keepalived service: %v", err)
+		// Continue execution even if service disable fails
+	}
+
+	// Remove configuration files
+	fmt.Print("🗑️ Removing configuration files... \n")
+	if err := os.Remove("/etc/haproxy/haproxy.cfg"); err != nil && !os.IsNotExist(err) {
+		logger.Warn("Failed to remove HAProxy config: %v", err)
+		// Continue execution even if file removal fails
+	}
+	if err := os.Remove("/etc/keepalived/keepalived.conf"); err != nil && !os.IsNotExist(err) {
+		logger.Warn("Failed to remove Keepalived config: %v", err)
+		// Continue execution even if file removal fails
+	}
+
+	// Connect to Vault and remove the LB entry
+	client, err := vault.NewClient()
+	if err != nil {
+		return fmt.Errorf("failed to create Vault client: %w", err)
+	}
+
+	// Remove this node from the LB list in Vault
+	fmt.Print("🔄 Removing load balancer entry from Vault... \n")
+	if err := client.RemoveLBNode(clusterID, hostname); err != nil {
+		return fmt.Errorf("failed to remove load balancer info from Vault: %w", err)
+	}
+
+	fmt.Printf("✅ Load balancer for cluster %s has been cleaned up successfully\n", clusterID)
+	return nil
+}
+
+// disableService disables a systemd service with --now flag to also stop it
+func disableService(name string) error {
+	cmd := exec.Command("systemctl", "disable", "--now", name)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}

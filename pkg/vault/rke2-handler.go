@@ -291,3 +291,17 @@ func (c *Client) RetrieveFirstMasterIP(clusterID string) (string, error) {
 
 	return "", fmt.Errorf("no master IP information found for cluster %s", clusterID)
 }
+
+// RemoveLBNode removes a load balancer node from the Vault storage
+func (c *Client) RemoveLBNode(clusterID, hostname string) error {
+	// Delete the LB node entry
+	path := fmt.Sprintf("kv/metadata/rke2/%s/lb/%s", clusterID, hostname)
+	if err := c.DeleteSecret(path); err != nil {
+		// If the entry doesn't exist, don't return an error
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return nil
+		}
+		return fmt.Errorf("failed to delete load balancer node %s for cluster %s: %w", hostname, clusterID, err)
+	}
+	return nil
+}
