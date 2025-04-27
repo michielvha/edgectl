@@ -7,6 +7,7 @@
 A CLI tool to manage the edge cloud. Comparable to `awscli` or `azure-cli`.
 
 ## features
+**TODO: Provide proper list of commands & purposes**
 
 - Auto Create an edge cloud kubernetes cluster powered by rke2
     - Fetch & Add kubeconfig file to current context
@@ -26,9 +27,9 @@ edgectl version
 
 - [x] Create pipeline to auto release with goreleaser.
 - [x] Create version command using cobra and the variable is dynamically set at build time, in pipeline this is integrated with GitVersion.
-- [ ] Ensure scalable file structure.
+- [x] Ensure scalable file structure.
 - [ ] Add support for fedora based architectures.
-- [ ] write some kind of var or file to determine which system is which role ( server, agent, lb ) or find another way.
+- [ ] write some kind of var or file to determine which system is which role ( server, agent, lb ) or find another way. VIPER?
 - [ ] Create unit/integration tests file so we can test before release
   
 ### Logging
@@ -40,8 +41,8 @@ edgectl version
   - [ ] Add support for `--dry-run` to all commands
   
 ### managed rke2
-- [ ] Create commands to call bash scripts for admin tasks, rke2 install etc.
-- [ ] Integrate HashiCorp Vault for secret management. 
+- [x] Create commands to call bash scripts for admin tasks, rke2 install etc.
+- [x] Integrate HashiCorp Vault for secret management. 
   - [x] Auto save & fetch secrets to Add agents to workers automatically
   - [x] add some kind of clusterID generation to be able to tell what to join with what.. I'm thinking based of hostname and then handle the hostname per customer. so create an id on master creation if cluster id provided don't create new one. Always ask for the cluster id when joining a worker, all other logic can be handled based of that in the background.
   
