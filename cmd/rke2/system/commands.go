@@ -5,9 +5,11 @@ package system
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/logger"
+	"github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -18,8 +20,10 @@ var Cmd = &cobra.Command{
 	Long: `The "system" command provides operations for RKE2 system management.
 	
 Examples:
-  edgectl rke2 system status   # Check status of RKE2
-  edgectl rke2 system purge    # Uninstall RKE2 from the host
+  edgectl rke2 system status      # Check status of RKE2
+  edgectl rke2 system purge       # Uninstall RKE2 from the host
+  edgectl rke2 system kubeconfig  # Fetch kubeconfig from Vault
+  edgectl rke2 system bash        # Configure bash environment for RKE2
 `,
 }
 
@@ -46,9 +50,59 @@ var purgeCmd = &cobra.Command{
 	},
 }
 
+// kubeconfigCmd represents the "system kubeconfig" command
+var kubeconfigCmd = &cobra.Command{
+	Use:   "kubeconfig",
+	Short: "Fetch kubeconfig from Vault and store it on the host",
+	Run: func(cmd *cobra.Command, args []string) {
+		logger.Debug("system kubeconfig command executed")
+
+		clusterID, _ := cmd.Flags().GetString("cluster-id")
+		outputPath, _ := cmd.Flags().GetString("output")
+
+		vaultClient, err := vault.NewClient()
+		if err != nil {
+			fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
+			os.Exit(1)
+		}
+
+		err = vaultClient.RetrieveKubeConfig(clusterID, outputPath)
+		if err != nil {
+			fmt.Printf("❌ Failed to retrieve kubeconfig: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("✅ Kubeconfig successfully written to: %s\n", outputPath)
+
+		// Configure bash shell to use the kubeconfig
+		common.RunBashFunction("rke2.sh", "configure_rke2_bash")
+	},
+}
+
+// bashCmd represents the "system bash" command
+var bashCmd = &cobra.Command{
+	Use:   "bash",
+	Short: "Configure the bash environment for RKE2",
+	Long:  `Configures the bash environment to use RKE2 binaries and kubeconfig.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		logger.Debug("system bash command executed")
+
+		fmt.Println("🔧 Configuring bash environment for RKE2...")
+		common.RunBashFunction("rke2.sh", "configure_rke2_bash")
+		fmt.Println("✅ Bash environment configured for RKE2")
+	},
+}
+
 // Initialize and register subcommands
 func init() {
+	// Kubeconfig command flags
+	kubeconfigCmd.Flags().String("cluster-id", "", "The ID of the cluster to fetch the kubeconfig for")
+	kubeconfigCmd.Flags().String("output", "/etc/rancher/rke2/rke2.yaml", "Destination path to store the kubeconfig")
+	_ = kubeconfigCmd.MarkFlagRequired("cluster-id")
+
 	// Register subcommands
 	Cmd.AddCommand(statusCmd)
 	Cmd.AddCommand(purgeCmd)
+	Cmd.AddCommand(kubeconfigCmd)
+	Cmd.AddCommand(bashCmd)
 }

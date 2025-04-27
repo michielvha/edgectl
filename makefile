@@ -49,7 +49,7 @@ purge:
 
 .PHONY: config
 config:
-	$(GO_RUN) rke2 config kubeconfig --cluster-id $(CLUSTER_ID)
+	$(GO_RUN) rke2 system kubeconfig --cluster-id $(CLUSTER_ID)
 
 .PHONY: config
 status:
