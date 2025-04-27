@@ -1,3 +1,4 @@
+#!/bin/bash
 # RKE2 module for RKE2 installation and configuration
 # purpose: bootstrap RKE2 nodes.
 # usage: quickly source this module with the following command:
@@ -39,9 +40,12 @@ install_rke2_server() {
   done
 
   # environment
-  local ARCH=$(uname -m | cut -c1-3)
-  local FQDN=$(hostname -f)
-  local HOST=$(hostname -s) # hostname without domain
+  local ARCH
+  ARCH=$(uname -m | cut -c1-3)
+  local FQDN
+  FQDN=$(hostname -f)
+  local HOST
+  HOST=$(hostname -s) # hostname without domain
   local TS="$HOST.tail6948f.ts.net" # get tailscale domain for internal management interface, will be needed to add to SAN.
 
   # perform default bootstrap configurations required on each RKE2 node.
@@ -164,9 +168,12 @@ install_rke2_agent() {
   done
 
   # environment
-  local ARCH=$(uname -m | cut -c1-3)
-  local FQDN=$(hostname -f)
-  local HOST=$(hostname -s) # hostname without domain
+  local ARCH
+  ARCH=$(uname -m | cut -c1-3)
+  local FQDN
+  FQDN=$(hostname -f)
+  local HOST
+  HOST=$(hostname -s) # hostname without domain
   local TS="$HOST.tail6948f.ts.net" # get tailscale domain for internal management interface, will be needed to add to SAN.
   # Default purpose for agent nodes if not set
   local PURPOSE=${PURPOSE:-"worker"}
@@ -206,7 +213,6 @@ EOF
   echo "✅ RKE2 Agent node bootstrapped."
 }
 
-# TODO: Check if we can make this more user scoped
 # configure the shell for administration on an RKE2 bootstrapped node
 configure_rke2_bash() {
   local profile_file="/etc/profile.d/rke2.sh"
@@ -221,7 +227,27 @@ configure_rke2_bash() {
   grep -q 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml' "$profile_file" || echo "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml" | sudo tee -a "$profile_file" > /dev/null
 
   # Source the profile file to apply changes immediately
+  # shellcheck source=/dev/null
   source "$profile_file"
+}
+
+configure_rke2_user_scoped_bash() {
+  local profile_file="$HOME/.bashrc"
+  local user_home="$HOME/.kube/config"
+
+  # Ensure the file exists
+  sudo touch "$profile_file"
+  
+  # Ensure .kube directory exists
+  mkdir -p ~/.kube
+
+  # Add KUBECONFIG if not already present
+  grep -q "export KUBECONFIG=$user_home" "$profile_file" || echo "export KUBECONFIG=$user_home" | sudo tee -a "$profile_file" > /dev/null
+
+  # Source the profile file to apply changes immediately
+  # shellcheck source=/dev/null
+  source "$profile_file"
+  echo "🔧 User-specific Kubernetes configuration set up for $(whoami)"
 }
 
 # perform default bootstrap configurations required on each RKE2 node.

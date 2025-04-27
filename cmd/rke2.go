@@ -17,11 +17,12 @@ import (
 var rke2Cmd = &cobra.Command{
 	Use:   "rke2",
 	Short: "Manage RKE2 cluster",
-	Long: `The "rke2" command allows you to install, manage, and uninstall RKE2.
+	Long: `The "rke2" command allows you to install, manage, and uninstall RKE2 components.
 
 Examples:
   edgectl rke2 server install        # Install RKE2 Server
   edgectl rke2 agent install         # Install RKE2 Agent
+  edgectl rke2 lb create             # Create a load balancer for RKE2
   edgectl rke2 system purge          # Uninstall RKE2
   edgectl rke2 system kubeconfig     # Fetch kubeconfig from Vault
   edgectl rke2 system bash           # Configure bash environment
