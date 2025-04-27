@@ -29,7 +29,8 @@ edgectl version
 - [ ] Ensure scalable file structure.
 - [ ] Add support for fedora based architectures.
 - [ ] write some kind of var or file to determine which system is which role ( server, agent, lb ) or find another way.
-
+- [ ] Create unit/integration tests file so we can test before release
+  
 ### Logging
 -  Changed to a logging library (zerolog) and wrote log.go pkg to support log levels and better logging. Supporting a `--verbose` flag to enable debug logging. **We'll only use `logger.debug` for debug logging everything else will be stdout on cli.**
 - Integrated viper for environment variables and config file support
