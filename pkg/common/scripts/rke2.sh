@@ -215,42 +215,7 @@ EOF
   echo "✅ RKE2 Agent node bootstrapped."
 }
 
-# configure the shell for administration on an RKE2 bootstrapped node
-configure_rke2_bash() {
-  local profile_file="/etc/profile.d/rke2.sh"
 
-  # Ensure the file exists
-  sudo touch "$profile_file"
-
-  # Add RKE2 to the PATH if not already present
-  grep -q 'export PATH=.*:/var/lib/rancher/rke2/bin' "$profile_file" || echo "export PATH=\$PATH:/var/lib/rancher/rke2/bin" | sudo tee -a "$profile_file" > /dev/null
-
-  # Add KUBECONFIG if not already present
-  grep -q 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml' "$profile_file" || echo "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml" | sudo tee -a "$profile_file" > /dev/null
-
-  # Source the profile file to apply changes immediately
-  # shellcheck source=/dev/null
-  source "$profile_file"
-}
-
-configure_rke2_user_scoped_bash() {
-  local profile_file="$HOME/.bashrc"
-  local user_home="$HOME/.kube/config"
-
-  # Ensure the file exists
-  sudo touch "$profile_file"
-  
-  # Ensure .kube directory exists
-  mkdir -p ~/.kube
-
-  # Add KUBECONFIG if not already present
-  grep -q "export KUBECONFIG=$user_home" "$profile_file" || echo "export KUBECONFIG=$user_home" | sudo tee -a "$profile_file" > /dev/null
-
-  # Source the profile file to apply changes immediately
-  # shellcheck source=/dev/null
-  source "$profile_file"
-  echo "🔧 User-specific Kubernetes configuration set up for $(whoami)"
-}
 
 # perform default bootstrap configurations required on each RKE2 node.
 configure_rke2_host() {
@@ -343,65 +308,6 @@ configure_ufw_rke2_agent() {
   sudo ufw allow proto tcp from any to any port 30000:32767 comment "Kubernetes NodePort range"
 
   echo "✅ UFW rules configured for RKE2 Agent Node."
-}
-
-# 🗑️ Purge RKE2 install from the current system
-purge_rke2() {
-  echo "🛑 Stopping and disabling RKE2..."
-
-  if systemctl is-active --quiet rke2-server; then
-    echo "🧹 Running official RKE2 server uninstall script..."
-    if [ -f "/usr/local/bin/rke2-uninstall.sh" ]; then
-      sudo /usr/local/bin/rke2-uninstall.sh
-    else
-      echo "❌ Server uninstall script not found!"
-    fi
-  elif systemctl is-active --quiet rke2-agent; then
-    echo "🧹 Running official RKE2 agent uninstall script..."
-    if [ -f "/usr/local/bin/rke2-agent-uninstall.sh" ]; then
-      sudo /usr/local/bin/rke2-agent-uninstall.sh
-    else
-      echo "❌ Agent uninstall script not found!"
-    fi
-  else
-    echo "ℹ️ Neither rke2-server nor rke2-agent are currently active."
-  fi
-
-  echo "🗑️ Cleaning up leftover systemd service files..."
-  sudo rm -f /usr/local/lib/systemd/system/rke2-server.service
-  sudo rm -f /usr/local/lib/systemd/system/rke2-agent.service
-
-  echo "🔁 Rexecuting systemd daemon..."
-  if ! sudo systemctl daemon-reexec; then
-    echo "❌ Failed to Rexecute systemd daemon."
-    return 1
-  fi
-
-  echo "🔁 Reloading systemd daemon..."
-  if ! sudo systemctl daemon-reload; then
-    echo "❌ Failed to reload systemd daemon."
-    return 1
-  fi
-
-  echo "🔄 Resetting failed systemd services..."
-  if ! sudo systemctl reset-failed; then
-    echo "❌ Failed to reset failed systemd services."
-    return 1
-  fi
-
-  echo "✅ RKE2 completely purged from this system."
-}
-
-# TODO: expand this status check, possibly with some details about the cluster state in vault provided by the vault client.
-rke2_status() {
-  # Check the status of RKE2 services
-  if systemctl is-active --quiet rke2-server; then
-    sudo systemctl status rke2-server
-  elif systemctl is-active --quiet rke2-agent; then
-    sudo systemctl status rke2-agent
-  else
-    echo "Neither rke2-server nor rke2-agent are running."
-  fi
 }
 
 # Dispatcher: allows calling the function by name

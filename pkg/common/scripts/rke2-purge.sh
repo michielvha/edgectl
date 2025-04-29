@@ -49,6 +49,7 @@ purge_rke2() {
   echo "✅ RKE2 completely purged from this system."
 }
 
+# Required or `CommonGoHelper` will not be able to call the function by name
 if declare -f "$1" > /dev/null; then
   "$@"
 else

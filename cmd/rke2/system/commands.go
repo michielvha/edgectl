@@ -39,7 +39,7 @@ var statusCmd = &cobra.Command{
 	Short: "Show status of RKE2",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("system status command executed")
-		common.RunBashFunction("rke2.sh", "rke2_status")
+		common.RunBashFunction("rke2-status.sh", "rke2_status")
 	},
 }
 
@@ -94,7 +94,7 @@ var bashCmd = &cobra.Command{
 		logger.Debug("system bash command executed")
 
 		fmt.Println("🔧 Configuring bash environment for RKE2...")
-		common.RunBashFunction("rke2.sh", "configure_rke2_bash")
+		common.RunBashFunction("rke2-bash.sh", "configure_rke2_bash")
 		fmt.Println("✅ Bash environment configured for RKE2")
 	},
 }
