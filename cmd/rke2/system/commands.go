@@ -44,6 +44,7 @@ var statusCmd = &cobra.Command{
 }
 
 // purgeCmd represents the "system purge" command
+// TODO: Enhance function to remove all state from vault via `GoVaultClient`
 var purgeCmd = &cobra.Command{
 	Use:   "purge",
 	Short: "Purge RKE2 install from host",

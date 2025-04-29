@@ -62,7 +62,7 @@ install_rke2_server() {
   # https://docs.rke2.io/reference/server_config
   cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 write-kubeconfig-mode: "0644"
-#profile: "cis"
+profile: "cis"
 node-label:
   - "environment=production"
   - "arch=${ARCH}"

@@ -1,6 +1,8 @@
 #!/bin/bash
 # Usage: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/edgectl/main/pkg/common/scripts/rke2-bash.sh) ` 
 
+# TODO: rename functions to something more meaningful
+
 # Function: configure_rke2_bash
 # Description: Configures the shell environment for RKE2 administration on a server or agent node. This config is only available to the root account.
 configure_rke2_bash() {
