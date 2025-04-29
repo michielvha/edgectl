@@ -9,6 +9,7 @@
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 1000,
   "cSpell.words": [
+    "awscli",
     "bpftool",
     "cerr",
     "dontlognull",
@@ -20,6 +21,7 @@
     "goarch",
     "GOFLAGS",
     "goreleaser",
+    "goreleaserbot",
     "hostnames",
     "HOSTNAMES",
     "iface",
