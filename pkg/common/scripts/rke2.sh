@@ -195,7 +195,7 @@ install_rke2_agent() {
   cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 server: "https://$LB_HOSTNAME:9345"
 token: $RKE2_TOKEN
-#profile: "cis"
+profile: "cis"
 node-label:
   - "environment=production"
   - "arch=${ARCH}"
@@ -264,6 +264,10 @@ configure_rke2_cis() {
   else
     echo "⚠️  CIS sysctl config not found at $cis_sysctl. Skipping."
   fi
+
+  # Check if etcd user and group exist, if not create them
+  getent group etcd >/dev/null || sudo groupadd --system etcd
+  id -u etcd >/dev/null 2>&1 || sudo useradd --system --no-create-home --shell /sbin/nologin --gid etcd etcd
 }
 
 # configure the firewall for a RKE2 server node
