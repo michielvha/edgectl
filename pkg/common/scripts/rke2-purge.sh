@@ -49,9 +49,9 @@ purge_rke2() {
   echo "✅ RKE2 completely purged from this system."
 }
 
-# if declare -f "$1" > /dev/null; then
-#   "$@"
-# else
-#   echo "❌ Unknown function: $1"
-#   exit 1
-# fi
+if declare -f "$1" > /dev/null; then
+  "$@"
+else
+  echo "❌ Unknown function: $1"
+  exit 1
+fi

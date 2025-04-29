@@ -15,6 +15,7 @@ import (
 //go:embed scripts/*.sh
 var embeddedScripts embed.FS
 
+// TODO: Fix the issue where script not available to another user when called before by other user.
 // Extracts an embedded script to /tmp
 func ExtractEmbeddedScript(scriptName string) string {
 	scriptPath := filepath.Join("/tmp", scriptName)
