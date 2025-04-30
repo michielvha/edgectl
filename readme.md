@@ -1,5 +1,7 @@
 # edge-cli
 
+[![Build and Release](https://github.com/michielvha/edgectl/actions/workflows/binary-release.yaml/badge.svg)](https://github.com/michielvha/edgectl/actions/workflows/binary-release.yaml)
+
 <div align="center">
   <img src="./docs/edge-cloud.png" alt="EdgeCloud Logo" width="250"/>
 </div>
