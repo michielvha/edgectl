@@ -11,6 +11,7 @@
 # code snippets added but currently failing, check what's going wrong.
 # TODO: Add support for Fedora based systems.
 # TODO: Refactor tailscale management plane into GO CLI so i can be passed to the script.
+# TODO: we should write purposev (agent/server) env var to a file so we can check if the host is a worker or server node and based on that apply appropriate cis config.
 # bootstrap a RKE2 server node
 install_rke2_server() {
   # usage: install_rke2_server [-l <loadbalancer-hostname>]
@@ -95,7 +96,7 @@ EOF
   # check if bpf is enabled
   # bpftool feature  | zgrep CONFIG_BPF /proc/config.gz if available.
 
-
+  # TODO: we should make cilium the default but provide a fallback. and then use kube-proxy config else skip it probably wrap this in it's own function.
   sudo mkdir -p /var/lib/rancher/rke2/server/manifests/
   cat <<EOF | sudo tee /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
 apiVersion: helm.cattle.io/v1
@@ -226,7 +227,9 @@ configure_rke2_host() {
     echo "✅ Swap is already disabled."
   fi
 
-  # TODO: add check if cilium ebpf is enabled, this config is only needed in kube-proxy mode.
+# TODO: we should make cilium the default but provide a fallback. and then use kube-proxy config else skip it probably 
+# wrap this in it's own function. and bring helmchart config into that function aswell, so 1 for cilium 1 for kube-proxy.
+
   local sysctl_file="/etc/sysctl.d/k8s.conf"
 
   # Load br_netfilter kernel module
@@ -261,6 +264,7 @@ configure_rke2_cis() {
   fi
 
   # Check if etcd user and group exist, if not create them
+  # TODO: This should only be done on server nodes, not agent nodes.
   getent group etcd >/dev/null || sudo groupadd --system etcd
   id -u etcd >/dev/null 2>&1 || sudo useradd --system --no-create-home --shell /sbin/nologin --gid etcd etcd
 }
@@ -291,8 +295,8 @@ configure_ufw_rke2_server() {
   # Allow NodePort range (30000-32767) between all nodes
   sudo ufw allow proto tcp from any to any port 30000:32767 comment "Kubernetes NodePort range"
 
+  sudo ufw enable || { echo "❌ Failed to enable UFW. Rules were created, manually troubleshoot & enable ufw."; return 1; }
   echo "✅ UFW rules configured for RKE2 Server Node."
-  # TODO: enable ufw with ``sudo ufw enable`` wait until config is refined and add port 22.
  }
 
 # configure the firewall for a RKE2 agent node
@@ -306,6 +310,7 @@ configure_ufw_rke2_agent() {
   # Allow NodePort range (30000-32767) between all nodes
   sudo ufw allow proto tcp from any to any port 30000:32767 comment "Kubernetes NodePort range"
 
+  sudo ufw enable || { echo "❌ Failed to enable UFW. Rules were created, manually troubleshoot & enable ufw."; return 1; }
   echo "✅ UFW rules configured for RKE2 Agent Node."
 }
 
