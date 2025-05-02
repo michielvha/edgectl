@@ -11,19 +11,19 @@
 # code snippets added but currently failing, check what's going wrong.
 # TODO: Add support for Fedora based systems.
 # TODO: Refactor tailscale management plane into GO CLI so i can be passed to the script.
-# TODO: we should write purposev (agent/server) env var to a file so we can check if the host is a worker or server node and based on that apply appropriate cis config.
+# TODO: we should write purpose (agent/server) env var to a file so we can check if the host is a worker or server node and based on that apply appropriate cis config.
+
 # bootstrap a RKE2 server node
 install_rke2_server() {
   # usage: install_rke2_server [-l <loadbalancer-hostname>]
 
   # Pre checks
-  if systemctl list-unit-files | grep -q "^rke2-server.service"; then
-    echo "❌ RKE2 Server service already exists. Exiting."
+  systemctl list-unit-files | grep -q "^rke2-server.service" && {
+    echo "❌ RKE2 Server service already exists. Use 'edgectl rke2 system purge' Exiting."
     return 1
-  fi
-  # TODO: Check for ``/etc/rancher/rke2`` and ``/var/lib/kubelet`` and ``/var/lib/etcd`` folders to see if RKE2 is already installed. If so recommend to run rke2_status or purge_rke2.
+  }
 
-  echo "🚀 Configuring RKE2 Server Node..."
+  echo "📦 Configuring RKE2 Server Node..."
 
   # Default parameter values
   local LB_HOSTNAME="loadbalancer.example.com"
@@ -31,7 +31,7 @@ install_rke2_server() {
   # Parse options using getopts
   while getopts "l:" opt; do
     case "$opt" in
-      l) LB_HOSTNAME="$OPTARG" ;;  # -l <loadbalancer-hostname>
+      l) LB_HOSTNAME="$OPTARG" ;;
       \?)
         echo "❌ Invalid option: -$OPTARG"
         echo "Usage: install_rke2_server [-l <loadbalancer-hostname>]"
@@ -48,6 +48,7 @@ install_rke2_server() {
   local HOST
   HOST=$(hostname -s) # hostname without domain
   local TS="$HOST.tail6948f.ts.net" # get tailscale domain for internal management interface, will be needed to add to SAN.
+  local PURPOSE=${PURPOSE:-"server"}
 
   # perform default bootstrap configurations required on each RKE2 node.
   configure_rke2_host
@@ -66,19 +67,14 @@ write-kubeconfig-mode: "0644"
 profile: "cis"
 node-label:
   - "environment=production"
-  - "arch=${ARCH}"
-  - "purpose=system"
+  - "arch=$ARCH"
+  - "purpose=$PURPOSE"
 
 cni: cilium
 disable-kube-proxy: true    # Disable kube-proxy (since eBPF replaces it)
 disable-cloud-controller: true # disable cloud controller since we are onprem.
 
-tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]  
-
-# reference: https://docs.rke2.io/reference/server_config#listener
-
-# node-ip: 192.168.1.241 # we should not have to hardcode this, change tailscale from hostname and use internal dns.
-
+tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]
 EOF
 
   # Add token and server IP to config if they are set as environment variables - for secondary server installations.
@@ -92,12 +88,12 @@ EOF
     echo "🌐 Added server URL to config: $RKE2_SERVER_IP"
   fi
 
-  # Cilium debug
-  # check if bpf is enabled
+  # Cilium debug - check if bpf is enabled
   # bpftool feature  | zgrep CONFIG_BPF /proc/config.gz if available.
 
   # TODO: we should make cilium the default but provide a fallback. and then use kube-proxy config else skip it probably wrap this in it's own function.
   sudo mkdir -p /var/lib/rancher/rke2/server/manifests/
+  echo "🛠️  Writing Cilium Helm Chart Config..."
   cat <<EOF | sudo tee /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
@@ -135,20 +131,18 @@ EOF
 install_rke2_agent() {
   # usage: install_rke2_agent [-l <loadbalancer-hostname>]
   # Pre checks
-  if systemctl list-unit-files | grep -q "^rke2-agent.service"; then
-    echo "❌ RKE2 Server service already exists. Exiting."
+  systemctl list-unit-files | grep -q "^rke2-agent.service" && {
+    echo "❌ RKE2 Agent service already exists. Exiting."
     return 1
-  fi
+  }
 
-  # Check if token is available via environment variable
-  if [ -n "$RKE2_TOKEN" ]; then
-    echo "🔑 Using RKE2_TOKEN from environment variable"
-  else
+  # Check for token, this check could be removed or moved up into the Go wrapper
+  [ -z "$RKE2_TOKEN" ] && {
     echo "❌ RKE2_TOKEN environment variable not set. Token is required."
     return 1
-  fi
+  } || echo "🔑 Using RKE2_TOKEN from environment variable"
 
-  echo "🚀 Configuring RKE2 Agent Node..."
+    echo "📦 Configuring RKE2 Agent Node..."
 
   # Default parameter values
   local LB_HOSTNAME="loadbalancer.example.com"
@@ -156,7 +150,7 @@ install_rke2_agent() {
   # Parse options using getopts
   while getopts "l:" opt; do
     case "$opt" in
-      l) LB_HOSTNAME="$OPTARG" ;;  # -l <loadbalancer-hostname>
+      l) LB_HOSTNAME="$OPTARG" ;;
       \?)
         echo "❌ Invalid option: -$OPTARG"
         echo "Usage: install_rke2_agent [-l <loadbalancer-hostname>]"
@@ -194,7 +188,7 @@ token: $RKE2_TOKEN
 profile: "cis"
 node-label:
   - "environment=production"
-  - "arch=${ARCH}"
+  - "arch=$ARCH"
   - "purpose=$PURPOSE"
 tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]
 EOF
@@ -216,7 +210,7 @@ EOF
 # perform default bootstrap configurations required on each RKE2 node.
 configure_rke2_host() {
   # TODO: maybe write to a file after config to check if already configured. When running another command that calls this command.
-  echo "🚀 Default RKE2 Node Config..."
+  echo "🔧 Default RKE2 Node Config..."
 
   # Disable swap if not already disabled
   if free | awk '/^Swap:/ {exit !$2}'; then
@@ -228,7 +222,7 @@ configure_rke2_host() {
   fi
 
 # TODO: we should make cilium the default but provide a fallback. and then use kube-proxy config else skip it probably 
-# wrap this in it's own function. and bring helmchart config into that function aswell, so 1 for cilium 1 for kube-proxy.
+# wrap this in it's own function. and bring helm chart config into that function as well, so 1 for cilium 1 for kube-proxy.
 
   local sysctl_file="/etc/sysctl.d/k8s.conf"
 
@@ -269,52 +263,50 @@ configure_rke2_cis() {
   id -u etcd >/dev/null 2>&1 || sudo useradd --system --no-create-home --shell /sbin/nologin --gid etcd etcd
 }
 
+# Function: ufw_allow_ports - Helper function to configure UFW rules
+# Description: This function takes a array of ports and their descriptions as arguments
+# Example usage: ufw_allow_ports "${server_ports[@]}"
+ufw_allow_ports() {
+  local ports=("$@")
+  for port_info in "${ports[@]}"; do
+    local port="${port_info%% *}"
+    local comment="${port_info#* }"
+    sudo ufw allow proto tcp from any to any port "$port" comment "$comment" || { echo "❌ Failed to create rule for $port"; return 1;}
+  done
+}
+
 # configure the firewall for a RKE2 server node
 configure_ufw_rke2_server() {
-  # Allow ssh access (22) for administration
-  sudo ufw allow proto tcp from any to any port 22 comment "SSH server access"
+  local server_ports=(
+    "22 SSH server access"
+    "6443 RKE2 API Server"
+    "9345 RKE2 Supervisor API"
+    "10250 kubelet metrics"
+    "2379 etcd client port"
+    "2380 etcd peer port"
+    "2381 etcd metrics port"
+    "30000:32767 Kubernetes NodePort range"
+  )
+  ufw_allow_ports "${server_ports[@]}"
 
-  # Allow Kubernetes API (6443) from agent nodes
-  sudo ufw allow proto tcp from any to any port 6443 comment "RKE2 API Server"
-
-  # Allow RKE2 supervisor API (9345) from agent nodes
-  sudo ufw allow proto tcp from any to any port 9345 comment "RKE2 Supervisor API"
-
-  # Allow kubelet metrics (10250) from all nodes
-  sudo ufw allow proto tcp from any to any port 10250 comment "kubelet metrics"
-
-  # Allow etcd client port (2379) between RKE2 server nodes
-  sudo ufw allow proto tcp from any to any port 2379 comment "etcd client port"
-
-  # Allow etcd peer port (2380) between RKE2 server nodes
-  sudo ufw allow proto tcp from any to any port 2380 comment "etcd peer port"
-
-  # Allow etcd metrics port (2381) between RKE2 server nodes
-  sudo ufw allow proto tcp from any to any port 2381 comment "etcd metrics port"
-
-  # Allow NodePort range (30000-32767) between all nodes
-  sudo ufw allow proto tcp from any to any port 30000:32767 comment "Kubernetes NodePort range"
-
-  sudo ufw enable || { echo "❌ Failed to enable UFW. Rules were created, manually troubleshoot & enable ufw."; return 1; }
+  sudo ufw enable || { echo "❌ Failed to enable UFW."; return 1; }
   echo "✅ UFW rules configured for RKE2 Server Node."
- }
+}
 
 # configure the firewall for a RKE2 agent node
 configure_ufw_rke2_agent() {
-  # Allow ssh access (22) for administration
-  sudo ufw allow proto tcp from any to any port 22 comment "SSH server access"
+  local agent_ports=(
+    "22 SSH server access"
+    "10250 kubelet metrics"
+    "30000:32767 Kubernetes NodePort range"
+  )
+  ufw_allow_ports "${agent_ports[@]}"
 
-  # Allow kubelet metrics (10250) from all nodes
-  sudo ufw allow proto tcp from any to any port 10250 comment "kubelet metrics"
-
-  # Allow NodePort range (30000-32767) between all nodes
-  sudo ufw allow proto tcp from any to any port 30000:32767 comment "Kubernetes NodePort range"
-
-  sudo ufw enable || { echo "❌ Failed to enable UFW. Rules were created, manually troubleshoot & enable ufw."; return 1; }
+  sudo ufw enable || { echo "❌ Failed to enable UFW."; return 1; }
   echo "✅ UFW rules configured for RKE2 Agent Node."
 }
 
-# Dispatcher: allows calling the function by name
+# Required or `CommonGoHelper` will not be able to call the function by name
 if declare -f "$1" > /dev/null; then
   "$@"
 else
