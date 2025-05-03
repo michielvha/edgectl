@@ -117,14 +117,14 @@ spec:
       replicas: 1
 EOF
 
-  # Hardening RKE2 with CIS benchmarks
-  configure_rke2_cis
+  
+  enable_rke2_addons_reloader   # enabling the reloader addon by default
+  
+  configure_rke2_cis            # Hardening RKE2 with CIS benchmarks
 
-  # Configure UFW for RKE2 server
-  configure_ufw_rke2_server
+  configure_ufw_rke2_server     # Configure UFW for RKE2 server
 
-  # Enable and start RKE2 server
-  echo "⚙️  Starting RKE2 server..."
+  echo "⚙️  Enabling RKE2 server..."
   sudo systemctl enable --now rke2-server || { echo "❌ RKE2 Server node bootstrap failed."; return 1; }
   echo "✅ RKE2 Server node bootstrapped."
 }
@@ -144,7 +144,7 @@ install_rke2_agent() {
     return 1
   } || echo "🔑 Using RKE2_TOKEN from environment variable"
 
-    echo "📦 Configuring RKE2 Agent Node..."
+  echo "📦 Configuring RKE2 Agent Node..."
 
   # Default parameter values
   local LB_HOSTNAME="loadbalancer.example.com"
@@ -169,11 +169,9 @@ install_rke2_agent() {
   local HOST
   HOST=$(hostname -s) # hostname without domain
   local TS="$HOST.tail6948f.ts.net" # get tailscale domain for internal management interface, will be needed to add to SAN.
-  # Default purpose for agent nodes if not set
   local PURPOSE=${PURPOSE:-"worker"}
 
-  # perform default bootstrap configurations required on each RKE2 node.
-  configure_rke2_host
+  configure_rke2_host         # perform common bootstrap configurations.
 
   # Install RKE2
   echo "⬇️  Downloading and installing RKE2..."
@@ -195,19 +193,35 @@ node-label:
 tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]
 EOF
 
-  # Hardening RKE2 with CIS benchmarks
-  configure_rke2_cis
+  configure_rke2_cis          # Hardening RKE2 with CIS benchmarks
+
+  configure_ufw_rke2_agent    # Configure UFW for RKE2 agent
+
 
   # Enable and start RKE2 agent
-  echo "⚙️  Starting RKE2 agent..."
+  echo "⚙️  Enabling RKE2 agent..."
   sudo systemctl enable --now rke2-agent || { echo "❌ RKE2 Agent node bootstrap failed."; return 1; }
-
-  configure_ufw_rke2_agent
 
   echo "✅ RKE2 Agent node bootstrapped."
 }
 
-
+enable_rke2_addons_reloader(){
+  echo "📦 Enabling RKE2 Addon: Stakater's Reloader"
+  cat <<EOF | sudo tee /var/lib/rancher/rke2/server/manifests/reloader.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: reloader
+  namespace: kube-system
+spec:
+  chart: stakater/reloader
+  repo: https://stakater.github.io/stakater-charts
+  targetNamespace: kube-system
+  valuesContent: |-
+    reloader:
+      autoReloadAll: true
+EOF
+}
 
 # perform default bootstrap configurations required on each RKE2 node.
 configure_rke2_host() {

@@ -1,8 +1,10 @@
 # edge-cli
 
 [![Build and Release](https://github.com/michielvha/edgectl/actions/workflows/binary-release.yaml/badge.svg)](https://github.com/michielvha/edgectl/actions/workflows/binary-release.yaml)
-[![Go Report Card]][go-report-card]
 [![CodeQL]][code-ql]
+[![Release](https://img.shields.io/github/release/michielvha/edgectl.svg?style=flat-square)](https://github.com/michielvha/edgectl/releases/latest)
+[![Go Report Card]][go-report-card]
+
 
 <!-- [![codecov]][code-cov] When we have testing we should include something like codecov to help scan -->
 
@@ -77,6 +79,10 @@ Check what should be retained in the features list & remove everything else:
 -  Changed to a logging library (zerolog) and wrote log.go pkg to support log levels and better logging. Supporting a `--verbose` flag to enable debug logging. **We'll only use `logger.debug` for debug logging everything else will be stdout on cli.**
 
 ---
+
+
+[![Go Doc](https://pkg.go.dev/badge/github.com/michielvha/edgectl.svg)](https://pkg.go.dev/github.com/michielvha/edgectl)
+[![license](https://img.shields.io/github/license/michielvha/edgectl.svg?style=flat-square)](LICENSE)
 
 [Go Report Card]: https://goreportcard.com/badge/github.com/michielvha/edgectl
 [go-report-card]: https://goreportcard.com/report/github.com/michielvha/edgectl
