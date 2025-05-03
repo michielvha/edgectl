@@ -1,10 +1,10 @@
 # 📦 Build and Release Pipeline Documentation
 
-This document describes the structure, workflow, and key dependencies of the **Go binary release pipeline** for the `edgectl` project.
+This document describes the structure, workflow, and key dependencies of the **Go binary Build & release pipeline** for the `edgectl` project.
 
 ## 🧪 Workflow Overview
 
-The GitHub Actions workflow (`binary-release.yaml`) automates the build and release process of a Go-based CLI tool. It is triggered by:
+The GitHub Actions workflow (`binary-release.yaml`) automates the build and release process of a Go Binary. It is triggered by:
 
 - **Pushes** to the `main` branch (excluding changes to `docs/`, `readme.md`, `.gitignore`, etc.).
 - **Manual workflow dispatches** via the GitHub UI.
