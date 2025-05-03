@@ -1,27 +1,20 @@
 #!/bin/bash
 # Usage: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/edgectl/main/pkg/common/scripts/rke2-purge.sh) ` 
 
-# Function: purge_rke2
+# Function: rke2_purge
 # Description: 🗑️ Purge RKE2 install from the current system
-purge_rke2() {
+rke2_purge() {
   echo "🛑 Stopping and disabling RKE2..."
 
-  if systemctl is-active --quiet rke2-server; then
-    echo "🧹 Running official RKE2 server uninstall script..."
-    if [ -f "/usr/local/bin/rke2-uninstall.sh" ]; then
-      sudo /usr/local/bin/rke2-uninstall.sh
-    else
-      echo "❌ Server uninstall script not found!"
-    fi
-  elif systemctl is-active --quiet rke2-agent; then
-    echo "🧹 Running official RKE2 agent uninstall script..."
-    if [ -f "/usr/local/bin/rke2-agent-uninstall.sh" ]; then
-      sudo /usr/local/bin/rke2-agent-uninstall.sh
-    else
-      echo "❌ Agent uninstall script not found!"
-    fi
+  # check if rke2 uninstall script exists
+  [ -f "/usr/local/bin/rke2-uninstall.sh" ] || { echo "❌ RKE2 uninstall script not found!"; return 1; }
+
+  # Check if any RKE2 service exists and remove it
+  if systemctl list-unit-files | grep -q "^rke2-server.service" || systemctl list-unit-files | grep -q "^rke2-agent.service"; then
+    echo "🧹 Running official RKE2 uninstall script..."
+    sudo /usr/local/bin/rke2-uninstall.sh
   else
-    echo "ℹ️ Neither rke2-server nor rke2-agent are currently active."
+    echo "ℹ️ Neither rke2-server nor rke2-agent service exists."
   fi
 
   echo "🗑️ Cleaning up leftover systemd service files..."
@@ -32,18 +25,24 @@ purge_rke2() {
   if ! sudo systemctl daemon-reexec; then
     echo "❌ Failed to Rexecute systemd daemon."
     return 1
+  else
+    echo "✅ Systemd daemon re-executed successfully."
   fi
 
   echo "🔁 Reloading systemd daemon..."
   if ! sudo systemctl daemon-reload; then
     echo "❌ Failed to reload systemd daemon."
     return 1
+  else
+    echo "✅ Systemd daemon reloaded successfully."  
   fi
 
   echo "🔄 Resetting failed systemd services..."
   if ! sudo systemctl reset-failed; then
     echo "❌ Failed to reset failed systemd services."
     return 1
+  else
+    echo "✅ Failed systemd services reset successfully."  
   fi
 
   echo "✅ RKE2 completely purged from this system."

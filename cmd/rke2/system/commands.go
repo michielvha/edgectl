@@ -52,7 +52,7 @@ var purgeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("system purge command executed")
 		fmt.Println("🗑️  Purging RKE2 from the host...")
-		common.RunBashFunction("rke2-purge.sh", "purge_rke2")
+		common.RunBashFunction("rke2-purge.sh", "rke2_purge")
 		fmt.Println("✅ RKE2 purged successfully")
 	},
 }

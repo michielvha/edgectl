@@ -77,11 +77,13 @@ disable-cloud-controller: true # disable cloud controller since we are onprem.
 tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]
 EOF
 
+  # TODO: Decide to use long or shorthand syntax
   # Add token and server IP to config if they are set as environment variables - for secondary server installations.
-  if [ -n "$RKE2_TOKEN" ]; then
-    echo "token: \"$RKE2_TOKEN\"" | sudo tee -a /etc/rancher/rke2/config.yaml
-    echo "🔑 Added token to config"
-  fi
+  # if [ -n "$RKE2_TOKEN" ]; then
+  #   echo "token: \"$RKE2_TOKEN\"" | sudo tee -a /etc/rancher/rke2/config.yaml
+  #   echo "🔑 Added token to config"
+  # fi
+  [ -n "$RKE2_TOKEN" ] && echo "token: \"$RKE2_TOKEN\"" | sudo tee -a /etc/rancher/rke2/config.yaml && echo "🔑 Added token to config"
 
   if [ -n "$RKE2_SERVER_IP" ]; then
     echo "server: \"https://$RKE2_SERVER_IP:9345\"" | sudo tee -a /etc/rancher/rke2/config.yaml
