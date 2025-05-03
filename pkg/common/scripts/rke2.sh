@@ -77,7 +77,7 @@ disable-cloud-controller: true # disable cloud controller since we are onprem.
 tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]
 EOF
 
-  # TODO: Decide to use long or shorthand syntax
+  # TODO: Decide to use long or shorthand syntax, check again if we cannot just add this above in the config.yaml, had some issues with it before but might not have been related to the way we create the config file.
   # Add token and server IP to config if they are set as environment variables - for secondary server installations.
   # if [ -n "$RKE2_TOKEN" ]; then
   #   echo "token: \"$RKE2_TOKEN\"" | sudo tee -a /etc/rancher/rke2/config.yaml
@@ -214,7 +214,7 @@ metadata:
   name: reloader
   namespace: kube-system
 spec:
-  chart: stakater/reloader
+  chart: reloader
   repo: https://stakater.github.io/stakater-charts
   targetNamespace: kube-system
   valuesContent: |-
