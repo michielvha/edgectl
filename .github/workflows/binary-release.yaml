@@ -1,6 +1,6 @@
 # TODO: Add codeQL to check for security vulnerabilities via platform.
 # TODO: only release on merge with main branch
-name: Build and Release Go Binary
+name: Build and Release
 
 permissions:
   id-token: write

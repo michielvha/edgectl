@@ -1,6 +1,7 @@
 # edge-cli
 
 [![Build and Release](https://github.com/michielvha/edgectl/actions/workflows/binary-release.yaml/badge.svg)](https://github.com/michielvha/edgectl/actions/workflows/binary-release.yaml)
+[![Go Report Card]][go-report-card]
 
 <div align="center">
   <img src="./docs/edge-cloud.png" alt="EdgeCloud Logo" width="250"/>
@@ -67,3 +68,8 @@ Hashicorp vault is not able to be provided by us as a managed service because of
 For a fully managed service look into [infisical](https://github.com/Infisical/infisical?tab=License-1-ov-file) via the [infisical go sdk](https://infisical.com/docs/sdks/languages/go).
 
 We'll have to redesign the code with an interface to easily allow for bringing your own secretManagement tool.
+
+---
+
+[Go Report Card]: https://goreportcard.com/badge/github.com/michielvha/edgectl
+[go-report-card]: https://goreportcard.com/report/github.com/michielvha/edgectl
