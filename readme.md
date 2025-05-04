@@ -86,7 +86,7 @@ Check what should be retained in the features list & remove everything else:
 
 [Go Report Card]: https://goreportcard.com/badge/github.com/michielvha/edgectl
 [go-report-card]: https://goreportcard.com/report/github.com/michielvha/edgectl
-[CodeQL]: https://github.com/Azure/peerd/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main
-[code-ql]: https://github.com/Azure/peerd/actions/workflows/github-code-scanning/codeql
+[CodeQL]: https://github.com/michielvha/edgectl/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main
+[code-ql]: https://github.com/michielvha/edgectl/actions/workflows/github-code-scanning/codeql
 [codecov]: https://codecov.io/gh/michielvha/edgectl/branch/main/graph/badge.svg
 [code-cov]: https://codecov.io/gh/michielvha/edgectl
