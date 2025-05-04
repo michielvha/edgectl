@@ -91,4 +91,3 @@ brews:
       email: goreleaserbot@edgeforge.eu
     commit_msg_template: "Brew formula update for edgectl version {{ .Version }}"
     directory: Formula
-    github_token: "{{ .Env.HOMEBREW_GITHUB_TOKEN }}"
