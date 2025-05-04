@@ -1,11 +1,10 @@
 # edge-cli
 
 [![Build and Release](https://github.com/michielvha/edgectl/actions/workflows/binary-release.yaml/badge.svg)](https://github.com/michielvha/edgectl/actions/workflows/binary-release.yaml)
-[![CodeQL]][code-ql]
 [![Release](https://img.shields.io/github/release/michielvha/edgectl.svg?style=flat-square)](https://github.com/michielvha/edgectl/releases/latest)
 [![Go Report Card]][go-report-card]
 
-
+<!-- CodeQL]][code-ql] -->
 <!-- [![codecov]][code-cov] When we have testing we should include something like codecov to help scan -->
 
 <div align="center">
