@@ -1,5 +1,18 @@
 /*
 Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+
+Package vault provides a client for interacting with HashiCorp Vault.
+
+This file implements the generic Vault client that provides basic CRUD operations
+for secrets management. It offers a clean abstraction over the Vault API for:
+- Creating and initializing a Vault client
+- Storing secrets at specific paths
+- Retrieving secrets from paths
+- Listing keys under a path
+- Deleting a secret under a given path
+
+This generic implementation serves as the foundation for more specialized
+Vault interactions defined elsewhere in the package.
 */
 package vault
 
@@ -83,4 +96,13 @@ func (c *Client) ListKeys(fullVaultPath string) ([]string, error) {
 	}
 
 	return keys, nil
+}
+
+// DeleteSecret deletes a secret at a specific Vault path
+func (c *Client) DeleteSecret(fullVaultPath string) error {
+	_, err := c.VaultClient.Logical().Delete(fullVaultPath)
+	if err != nil {
+		return fmt.Errorf("failed to delete secret at path '%s': %w", fullVaultPath, err)
+	}
+	return nil
 }

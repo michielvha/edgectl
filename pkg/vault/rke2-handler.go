@@ -1,5 +1,17 @@
 /*
 Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+
+Package vault provides specialized handlers for RKE2 cluster secrets management.
+
+This file extends the generic Vault client with RKE2-specific functionality for:
+- Managing RKE2 join tokens for server and agent nodes
+- Storing and retrieving cluster kubeconfig files
+- Managing load balancer configuration and VIPs
+- Tracking master node information and IP addresses
+
+It implements a structured approach to secret storage with a path hierarchy
+organized by cluster ID, creating a consistent and navigable secret storage
+schema for multi-cluster environments.
 */
 package vault
 
@@ -56,6 +68,7 @@ func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath string, vip string) e
 }
 
 // RetrieveKubeConfig fetches the kubeconfig from Vault and saves it to the host
+// TODO: save to a path that is users home directory instead of the default directory which is only accessible by root & this won't work if the host is not part of the rke2 setup
 func (c *Client) RetrieveKubeConfig(clusterID, destinationPath string) error {
 	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/kubeconfig", clusterID))
 	if err != nil {
@@ -97,7 +110,16 @@ func (c *Client) RetrieveLBInfo(clusterID string) ([]map[string]interface{}, str
 	path := fmt.Sprintf("kv/metadata/rke2/%s/lb", clusterID)
 	keys, err := c.ListKeys(path)
 	if err != nil {
+		// Return an empty list instead of an error when no LBs exist yet
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return []map[string]interface{}{}, "", nil
+		}
 		return nil, "", fmt.Errorf("failed to list load balancers for cluster %s: %w", clusterID, err)
+	}
+
+	// If keys list is empty, we have no load balancers yet
+	if len(keys) == 0 {
+		return []map[string]interface{}{}, "", nil
 	}
 
 	lbNodes := []map[string]interface{}{}
@@ -124,8 +146,9 @@ func (c *Client) RetrieveLBInfo(clusterID string) ([]map[string]interface{}, str
 		}
 	}
 
+	// Return empty list instead of error when no load balancer nodes are found
 	if len(lbNodes) == 0 {
-		return nil, "", fmt.Errorf("no load balancers found for cluster %s", clusterID)
+		return []map[string]interface{}{}, "", nil
 	}
 
 	return lbNodes, vip, nil
@@ -205,15 +228,15 @@ func getHostIP(hostname string) (string, error) {
 }
 
 // RetrieveMasterInfo retrieves RKE2 master nodes information
-func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) {
+func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, map[string]string, error) {
 	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/masters", clusterID))
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
 	hostsRaw, ok := data["hosts"]
 	if !ok {
-		return nil, "", fmt.Errorf("hosts information not found for cluster %s", clusterID)
+		return nil, "", nil, fmt.Errorf("hosts information not found for cluster %s", clusterID)
 	}
 
 	// Convert interface{} to string slice
@@ -228,7 +251,17 @@ func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, error) 
 
 	vip, _ := data["vip"].(string)
 
-	return hosts, vip, nil
+	// Extract host_ips map if available
+	hostIPs := make(map[string]string)
+	if hostIPsRaw, ok := data["host_ips"].(map[string]interface{}); ok {
+		for hostname, ipRaw := range hostIPsRaw {
+			if ip, ok := ipRaw.(string); ok {
+				hostIPs[hostname] = ip
+			}
+		}
+	}
+
+	return hosts, vip, hostIPs, nil
 }
 
 // RetrieveFirstMasterIP retrieves the IP address of the first master node in the cluster
@@ -257,4 +290,18 @@ func (c *Client) RetrieveFirstMasterIP(clusterID string) (string, error) {
 	}
 
 	return "", fmt.Errorf("no master IP information found for cluster %s", clusterID)
+}
+
+// RemoveLBNode removes a load balancer node from the Vault storage
+func (c *Client) RemoveLBNode(clusterID, hostname string) error {
+	// Delete the LB node entry
+	path := fmt.Sprintf("kv/metadata/rke2/%s/lb/%s", clusterID, hostname)
+	if err := c.DeleteSecret(path); err != nil {
+		// If the entry doesn't exist, don't return an error
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return nil
+		}
+		return fmt.Errorf("failed to delete load balancer node %s for cluster %s: %w", hostname, clusterID, err)
+	}
+	return nil
 }

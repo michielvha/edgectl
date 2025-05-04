@@ -73,3 +73,21 @@ changelog:
       order: 2
 # To check deprecations:
 # https://goreleaser.com/deprecations/
+# automate brew releases
+brews:
+  - name: edgectl
+    homepage: "https://github.com/michielvha/edgectl"
+    description: "A CLI for edge-cloud"
+    license: "MIT"
+    install: |
+      bin.install "edgectl"
+    test: |
+      system "#{bin}/edgectl", "--version"
+    repository:
+      owner: michielvha
+      name: homebrew-tap
+    commit_author:
+      name: goreleaserbot
+      email: goreleaserbot@edgeforge.eu
+    commit_msg_template: "Brew formula update for edgectl version {{ .Version }}"
+    directory: Formula

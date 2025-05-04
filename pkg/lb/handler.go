@@ -1,3 +1,6 @@
+/*
+Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+*/
 package lb
 
 import (
@@ -11,19 +14,22 @@ import (
 	vault "github.com/michielvha/edgectl/pkg/vault"
 )
 
+// LoadBalancerConfig struct defines the configuration for a load balancer
 type LoadBalancerConfig struct {
 	ClusterID string
 	IsMain    bool
 	Interface string
 	VIP       string
 	Hostnames []string
+	HostIPs   map[string]string
 }
 
 // CreateLoadBalancer creates a new load balancer for the RKE2 cluster
 // It determines if this node should be the primary or backup LB node
 // and configures HAProxy and Keepalived accordingly
 func CreateLoadBalancer(clusterID, vip string) error {
-	logger.Info("Creating load balancer for RKE2 cluster")
+	logger.Debug("Creating load balancer for RKE2 cluster")
+	fmt.Printf("Creating load balancer for RKE2 cluster %s\n", clusterID)
 
 	// Get the current hostname
 	hostname, err := os.Hostname()
@@ -37,31 +43,45 @@ func CreateLoadBalancer(clusterID, vip string) error {
 		return fmt.Errorf("failed to create Vault client: %w", err)
 	}
 
-	// Retrieve server nodes from Vault or set up initial config if this is the first LB
-	hosts, existingVIP, err := client.RetrieveMasterInfo(clusterID)
-	isFirst := err != nil || existingVIP == ""
+	// First check if there are any existing load balancers
+	existingLBs, existingVIP, err := client.RetrieveLBInfo(clusterID)
 
-	// If no VIP was provided and no existing VIP was found, error out
-	if vip == "" && existingVIP == "" {
+	// isFirst is true if there are no existing load balancers
+	isFirst := err != nil || len(existingLBs) == 0
+
+	logger.Debug("Load balancer first node check: isFirst=%v, error=%v, existingLBCount=%d",
+		isFirst, err, len(existingLBs))
+
+	// Retrieve server nodes from Vault for HAProxy configuration
+	hosts, masterVIP, hostIPs, err := client.RetrieveMasterInfo(clusterID)
+	if err != nil {
+		logger.Debug("No master nodes found, this might be a new cluster: %v", err)
+	}
+
+	// Determine which VIP to use (priority: provided VIP > existing LB VIP > master VIP)
+	effectiveVIP := vip
+	if effectiveVIP == "" && existingVIP != "" {
+		effectiveVIP = existingVIP
+	} else if effectiveVIP == "" && masterVIP != "" {
+		effectiveVIP = masterVIP
+	}
+
+	// If no VIP was determined, error out
+	if effectiveVIP == "" {
 		return fmt.Errorf("no VIP provided and no existing VIP found in Vault")
 	}
 
-	// Use existing VIP if none provided
-	if vip == "" {
-		vip = existingVIP
-	}
-
 	// Determine network interface for VIP
-	iface, err := detectInterfaceForVIP(vip)
+	iface, err := detectInterfaceForVIP(effectiveVIP)
 	if err != nil {
-		return fmt.Errorf("could not detect network interface for VIP %s: %w", vip, err)
+		return fmt.Errorf("could not detect network interface for VIP %s: %w", effectiveVIP, err)
 	}
 
 	// Configure this node as the main LB if it's the first one
 	isMain := isFirst
 
 	// Store the current LB info in Vault
-	err = client.StoreLBInfo(clusterID, hostname, vip, isMain)
+	err = client.StoreLBInfo(clusterID, hostname, effectiveVIP, isMain)
 	if err != nil {
 		return fmt.Errorf("failed to store load balancer info in Vault: %w", err)
 	}
@@ -71,8 +91,9 @@ func CreateLoadBalancer(clusterID, vip string) error {
 		ClusterID: clusterID,
 		IsMain:    isMain,
 		Interface: iface,
-		VIP:       vip,
+		VIP:       effectiveVIP,
 		Hostnames: hosts,
+		HostIPs:   hostIPs,
 	})
 }
 
@@ -82,7 +103,7 @@ func BootstrapLBFromVault(clusterID string, isMain bool) error {
 		return fmt.Errorf("failed to create Vault client: %w", err)
 	}
 
-	hosts, vip, err := client.RetrieveMasterInfo(clusterID)
+	hosts, vip, hostIPs, err := client.RetrieveMasterInfo(clusterID)
 	if err != nil {
 		return fmt.Errorf("failed to fetch master info from Vault: %w", err)
 	}
@@ -98,6 +119,7 @@ func BootstrapLBFromVault(clusterID string, isMain bool) error {
 		Interface: iface,
 		VIP:       vip,
 		Hostnames: hosts,
+		HostIPs:   hostIPs,
 	})
 }
 
@@ -109,13 +131,13 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		state = "MASTER"
 	}
 
-	logger.Info("🔧 Installing HAProxy and KeepAlived...")
+	fmt.Print("🔧 Installing HAProxy and KeepAlived... \n")
 	if err := installPackages(); err != nil {
 		return fmt.Errorf("failed to install dependencies: %w", err)
 	}
 
-	logger.Info("📄 Generating HAProxy config...")
-	haproxyConfig, err := generateHAProxyConfig(cfg.Hostnames)
+	fmt.Print("📄 Generating HAProxy config... \n")
+	haproxyConfig, err := generateHAProxyConfig(cfg.Hostnames, cfg.HostIPs)
 	if err != nil {
 		return err
 	}
@@ -123,13 +145,13 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		return fmt.Errorf("failed to write haproxy config: %w", err)
 	}
 
-	logger.Info("📄 Generating Keepalived config...")
+	fmt.Print("📄 Generating Keepalived config... \n")
 	keepalivedConfig := generateKeepalivedConfig(cfg.Interface, cfg.VIP, state, priority)
 	if err := os.WriteFile("/etc/keepalived/keepalived.conf", []byte(keepalivedConfig), 0o644); err != nil {
 		return fmt.Errorf("failed to write keepalived config: %w", err)
 	}
 
-	logger.Info("🚀 Restarting services...")
+	fmt.Print("🚀 Restarting services... \n")
 	if err := restartService("haproxy"); err != nil {
 		return err
 	}
@@ -137,7 +159,7 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 		return err
 	}
 
-	logger.Info("%s", fmt.Sprintf("✅ Load balancer stack configured with VIP %s", cfg.VIP))
+	fmt.Printf("✅ Load balancer stack configured with VIP %s \n", cfg.VIP)
 	return nil
 }
 
@@ -148,7 +170,7 @@ func installPackages() error {
 	return cmd.Run()
 }
 
-func generateHAProxyConfig(hostnames []string) (string, error) {
+func generateHAProxyConfig(hostnames []string, hostIPs map[string]string) (string, error) {
 	var b strings.Builder
 	b.WriteString(`# HAProxy Configuration for RKE2 Load Balancing
 global
@@ -198,26 +220,38 @@ backend k3s-backend
 
 `)
 
-	for _, host := range hostnames {
-		ip, err := net.LookupIP(host)
-		if err != nil || len(ip) == 0 {
-			return "", fmt.Errorf("could not resolve IP for host %s: %v", host, err)
-		}
-		b.WriteString(fmt.Sprintf("    server %s %s:6443 check\n", host, ip[0].String()))
-	}
+	// Add servers to the k3s backend (port 6443)
+	addServersToBackend(&b, hostnames, hostIPs, 6443)
 
 	// Add supervisor API backend
 	b.WriteString("\nbackend rke2-supervisor-backend\n    mode tcp\n    option tcp-check\n    balance roundrobin\n    default-server inter 10s downinter 5s rise 3 fall 3\n")
 
-	for _, host := range hostnames {
-		ip, err := net.LookupIP(host)
-		if err != nil || len(ip) == 0 {
-			return "", fmt.Errorf("could not resolve IP for host %s: %v", host, err)
-		}
-		b.WriteString(fmt.Sprintf("    server %s %s:9345 check\n", host, ip[0].String()))
-	}
+	// Add servers to the supervisor backend (port 9345)
+	addServersToBackend(&b, hostnames, hostIPs, 9345)
 
 	return b.String(), nil
+}
+
+// Helper function to add servers to a HAProxy backend
+func addServersToBackend(b *strings.Builder, hostnames []string, hostIPs map[string]string, port int) {
+	for _, host := range hostnames {
+		// First try to get IP from the hostIPs map (cached IPs from Vault)
+		if ip, ok := hostIPs[host]; ok {
+			fmt.Fprintf(b, "    server %s %s:%d check\n", host, ip, port)
+			logger.Debug("Using IP %s from Vault for host %s", ip, host)
+			continue
+		}
+
+		// Fallback to DNS lookup if IP not found in Vault
+		ipAddrs, err := net.LookupIP(host)
+		if err != nil || len(ipAddrs) == 0 {
+			logger.Warn("Could not resolve IP for host %s via DNS, skipping: %v", host, err)
+			// Instead of failing, skip this host and continue
+			continue
+		}
+		fmt.Fprintf(b, "    server %s %s:%d check\n", host, ipAddrs[0].String(), port)
+		logger.Debug("Using IP %s from DNS for host %s", ipAddrs[0].String(), host)
+	}
 }
 
 func generateKeepalivedConfig(iface, vip, state, priority string) string {
@@ -267,4 +301,62 @@ func detectInterfaceForVIP(vip string) (string, error) {
 		}
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// CleanupLoadBalancer removes the load balancer configuration for a RKE2 cluster
+// It disables the services, removes configuration files, and cleans up the Vault entry
+func CleanupLoadBalancer(clusterID string) error {
+	logger.Debug("Cleaning up load balancer for RKE2 cluster %s", clusterID)
+	fmt.Printf("Cleaning up load balancer for RKE2 cluster %s\n", clusterID)
+
+	// Get the current hostname
+	hostname, err := os.Hostname()
+	if err != nil {
+		return fmt.Errorf("failed to get hostname: %w", err)
+	}
+
+	// Disable the services (this will also stop them)
+	fmt.Print("🛑 Disabling HAProxy and Keepalived services... \n")
+	if err := disableService("haproxy"); err != nil {
+		logger.Warn("Failed to disable HAProxy service: %v", err)
+		// Continue execution even if service disable fails
+	}
+	if err := disableService("keepalived"); err != nil {
+		logger.Warn("Failed to disable Keepalived service: %v", err)
+		// Continue execution even if service disable fails
+	}
+
+	// Remove configuration files
+	fmt.Print("🗑️ Removing configuration files... \n")
+	if err := os.Remove("/etc/haproxy/haproxy.cfg"); err != nil && !os.IsNotExist(err) {
+		logger.Warn("Failed to remove HAProxy config: %v", err)
+		// Continue execution even if file removal fails
+	}
+	if err := os.Remove("/etc/keepalived/keepalived.conf"); err != nil && !os.IsNotExist(err) {
+		logger.Warn("Failed to remove Keepalived config: %v", err)
+		// Continue execution even if file removal fails
+	}
+
+	// Connect to Vault and remove the LB entry
+	client, err := vault.NewClient()
+	if err != nil {
+		return fmt.Errorf("failed to create Vault client: %w", err)
+	}
+
+	// Remove this node from the LB list in Vault
+	fmt.Print("🔄 Removing load balancer entry from Vault... \n")
+	if err := client.RemoveLBNode(clusterID, hostname); err != nil {
+		return fmt.Errorf("failed to remove load balancer info from Vault: %w", err)
+	}
+
+	fmt.Printf("✅ Load balancer for cluster %s has been cleaned up successfully\n", clusterID)
+	return nil
+}
+
+// disableService disables a systemd service with --now flag to also stop it
+func disableService(name string) error {
+	cmd := exec.Command("systemctl", "disable", "--now", name)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

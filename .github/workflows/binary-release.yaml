@@ -1,6 +1,6 @@
 # TODO: Add codeQL to check for security vulnerabilities via platform.
 # TODO: only release on merge with main branch
-name: Build and Release Go Binary
+name: Build and Release
 
 permissions:
   id-token: write
@@ -66,7 +66,7 @@ jobs:
           key: goreleaser-${{ runner.os }}-latest
           restore-keys: goreleaser-${{ runner.os }}-
 
-      # 5: Import PGP Key for signing
+      # 6: Import PGP Key for signing
       - name: Import PGP Private Key
         run: |
           mkdir -p ~/.gnupg
@@ -89,7 +89,7 @@ jobs:
 #        run: env | sort
 
       # 8: Run GoReleaser to build and release binaries
-      # https://github.com/goreleaser/goreleaser-actionw
+      # https://github.com/goreleaser/goreleaser-action
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
