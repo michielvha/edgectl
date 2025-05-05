@@ -6,7 +6,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/michielvha/edgectl/pkg/common"
+	"github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ var vaultUploadCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("🔐 Uploading token to Vault...")
 
-		vaultClient := common.InitVaultClient()
+		vaultClient := vault.InitVaultClient()
 		if vaultClient == nil {
 			return
 		}
@@ -45,7 +45,7 @@ var vaultFetchCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("🔎 Fetching token from Vault...")
 
-		vaultClient := common.InitVaultClient()
+		vaultClient := vault.InitVaultClient()
 		if vaultClient == nil {
 			return
 		}

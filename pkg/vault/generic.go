@@ -21,6 +21,7 @@ import (
 	"os"
 
 	vault "github.com/hashicorp/vault/api"
+	"github.com/michielvha/edgectl/pkg/logger"
 )
 
 type Client struct {
@@ -39,6 +40,19 @@ func NewClient() (*Client, error) {
 	}
 	client.SetToken(token)
 	return &Client{VaultClient: client}, nil
+}
+
+// InitVaultClient centralizes Vault client creation and error handling
+// Returns nil if the client initialization failed
+// TODO: implement this everywhere we create vault client, example call in cmd/vault.go on line 48
+func InitVaultClient() *Client {
+	logger.Debug("initializing Vault client")
+	vaultClient, err := NewClient()
+	if err != nil {
+		fmt.Printf("❌ failed to initialize Vault client: %v\n", err)
+		return nil
+	}
+	return vaultClient
 }
 
 // StoreSecret stores any secret (key-value map) under a Vault path

@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/michielvha/edgectl/pkg/logger"
-	"github.com/michielvha/edgectl/pkg/vault"
 )
 
 // CheckRoot checks if the current process is running as root.
@@ -22,17 +21,4 @@ func CheckRoot() error {
 		return err
 	}
 	return nil
-}
-
-// InitVaultClient centralizes Vault client creation and error handling
-// Returns nil if the client initialization failed
-// TODO: implement this everywhere we create vaultclient, example call in cmd/vault.go on line 48
-func InitVaultClient() *vault.Client {
-	logger.Debug("initializing Vault client")
-	vaultClient, err := vault.NewClient()
-	if err != nil {
-		fmt.Printf("❌ failed to initialize Vault client: %v\n", err)
-		return nil
-	}
-	return vaultClient
 }
