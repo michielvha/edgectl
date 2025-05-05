@@ -6,22 +6,12 @@ package cmd
 import (
 	"fmt"
 
-	vault "github.com/michielvha/edgectl/pkg/vault"
+	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/spf13/cobra"
 )
 
 // TODO: Rework this package to be less specific for rke2, more like in general for using edge vault.
 // handler done in pkg/vault/handler.go todo implement here after rke2 testing.
-
-// initVaultClient centralizes Vault client creation and error handling
-func initVaultClient() *vault.Client {
-	client, err := vault.NewClient()
-	if err != nil {
-		fmt.Printf("❌ Vault client error: %v\n", err)
-		return nil
-	}
-	return client
-}
 
 // Upload command
 var vaultUploadCmd = &cobra.Command{
@@ -30,15 +20,15 @@ var vaultUploadCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("🔐 Uploading token to Vault...")
 
-		client := initVaultClient()
-		if client == nil {
+		vaultClient := common.InitVaultClient()
+		if vaultClient == nil {
 			return
 		}
 
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		token, _ := cmd.Flags().GetString("token")
 
-		err := client.StoreJoinToken(clusterID, token)
+		err := vaultClient.StoreJoinToken(clusterID, token)
 		if err != nil {
 			fmt.Printf("❌ Failed to store token: %v\n", err)
 			return
@@ -55,13 +45,13 @@ var vaultFetchCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("🔎 Fetching token from Vault...")
 
-		client := initVaultClient()
-		if client == nil {
+		vaultClient := common.InitVaultClient()
+		if vaultClient == nil {
 			return
 		}
 
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
-		token, err := client.RetrieveJoinToken(clusterID)
+		token, err := vaultClient.RetrieveJoinToken(clusterID)
 		if err != nil {
 			fmt.Printf("❌ Failed to retrieve token: %v\n", err)
 			return

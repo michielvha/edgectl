@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Cmd represents the "lb" command
 var Cmd = &cobra.Command{
 	Use:   "lb",
 	Short: "Manage RKE2 load balancer",
@@ -26,23 +25,20 @@ Examples:
 `,
 }
 
-// createCmd represents the "lb create" command
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a load balancer for RKE2",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("lb create command executed")
 
-		// Check if user is root
 		if common.CheckRoot() != nil {
 			os.Exit(1)
 		}
 
-		// Extract values
+		logger.Debug("Extracting values from command line arguments")
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		vip, _ := cmd.Flags().GetString("vip")
 
-		// Create load balancer
 		err := lb.CreateLoadBalancer(clusterID, vip)
 		if err != nil {
 			fmt.Printf("❌ Failed to create load balancer: %v\n", err)
@@ -53,12 +49,13 @@ var createCmd = &cobra.Command{
 	},
 }
 
-// statusCmd represents the "lb status" command
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show status of RKE2 load balancer",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("lb status command executed")
+
+		// TODO: Wrap this and add it to lb/handler.go package
 
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		if clusterID == "" {
@@ -74,7 +71,7 @@ var statusCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Get LB info
+		logger.Debug("executing RetrieveLBInfo function")
 		lbNodes, vip, err := client.RetrieveLBInfo(clusterID)
 		if err != nil {
 			fmt.Printf("❌ Failed to retrieve load balancer info: %v\n", err)
@@ -98,7 +95,6 @@ var statusCmd = &cobra.Command{
 	},
 }
 
-// cleanupCmd represents the "lb cleanup" command
 var cleanupCmd = &cobra.Command{
 	Use:   "cleanup",
 	Short: "Clean up a load balancer for RKE2",
@@ -111,16 +107,13 @@ Example:
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("lb cleanup command executed")
 
-		// Check if user is root
-		if os.Geteuid() != 0 {
-			fmt.Println("❌ This command must be run as root. Try using `sudo`.")
+		if common.CheckRoot() != nil {
 			os.Exit(1)
 		}
 
-		// Extract values
+		logger.Debug("Extracting values from command line arguments")
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 
-		// Cleanup load balancer
 		err := lb.CleanupLoadBalancer(clusterID)
 		if err != nil {
 			fmt.Printf("❌ Failed to clean up load balancer: %v\n", err)

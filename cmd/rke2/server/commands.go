@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Cmd represents the "server" command
 var Cmd = &cobra.Command{
 	Use:   "server",
 	Short: "Manage RKE2 server installation",
@@ -37,7 +36,7 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Extract values and call logic
+		logger.Debug("Extracting values from command line arguments")
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		isExisting := cmd.Flags().Changed("cluster-id")
 		vip, _ := cmd.Flags().GetString("vip")

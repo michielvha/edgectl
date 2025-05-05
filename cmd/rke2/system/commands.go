@@ -19,7 +19,6 @@ var (
 	userHomeDir, _ = os.UserHomeDir()
 )
 
-// Cmd represents the "system" command
 var Cmd = &cobra.Command{
 	Use:   "system",
 	Short: "Manage RKE2 system operations",
@@ -33,7 +32,6 @@ Examples:
 `,
 }
 
-// statusCmd represents the "system status" command
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show status of RKE2",
@@ -43,7 +41,6 @@ var statusCmd = &cobra.Command{
 	},
 }
 
-// purgeCmd represents the "system purge" command
 // TODO: Enhance function to remove all state from vault via `GoVaultClient`
 var purgeCmd = &cobra.Command{
 	Use:   "purge",
@@ -57,13 +54,13 @@ var purgeCmd = &cobra.Command{
 	},
 }
 
-// kubeconfigCmd represents the "system kubeconfig" command
 var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig",
 	Short: "Fetch kubeconfig from Vault and store it on the host",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("system kubeconfig command executed")
 
+		logger.Debug("Extracting values from command line arguments")
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		outputPath, _ := cmd.Flags().GetString("output")
 
@@ -86,7 +83,6 @@ var kubeconfigCmd = &cobra.Command{
 	},
 }
 
-// bashCmd represents the "system bash" command
 var bashCmd = &cobra.Command{
 	Use:   "bash",
 	Short: "Configure the bash environment for RKE2",

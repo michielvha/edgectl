@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Cmd represents the agent command
 var Cmd = &cobra.Command{
 	Use:   "agent",
 	Short: "Manage RKE2 agent installation",
@@ -24,7 +23,6 @@ Examples:
 `,
 }
 
-// installCmd represents the "agent install" command
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install RKE2 Agent",
@@ -36,6 +34,7 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		logger.Debug("Extracting values from command line arguments")
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 
 		err := agent.Install(clusterID)
