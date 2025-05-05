@@ -49,7 +49,7 @@ jobs:
       # 4: Install Linter (golangci-lint)
       # https://github.com/golangci/golangci-lint-action
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v8
 
 #      # TODO: Run Unit Tests with Coverage
 #      - name: Run Tests with gotestsum
