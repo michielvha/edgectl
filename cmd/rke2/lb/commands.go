@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/lb"
 	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/michielvha/edgectl/pkg/vault"
@@ -33,8 +34,7 @@ var createCmd = &cobra.Command{
 		logger.Debug("lb create command executed")
 
 		// Check if user is root
-		if os.Geteuid() != 0 {
-			fmt.Println("❌ This command must be run as root. Try using `sudo`.")
+		if common.CheckRoot() != nil {
 			os.Exit(1)
 		}
 

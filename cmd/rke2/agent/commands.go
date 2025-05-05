@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/michielvha/edgectl/pkg/rke2/agent"
 	"github.com/spf13/cobra"
@@ -31,8 +32,7 @@ var installCmd = &cobra.Command{
 		logger.Debug("agent install command executed")
 
 		// Check if user is root
-		if os.Geteuid() != 0 {
-			fmt.Println("❌ This command must be run as root. Try using `sudo`.")
+		if common.CheckRoot() != nil {
 			os.Exit(1)
 		}
 

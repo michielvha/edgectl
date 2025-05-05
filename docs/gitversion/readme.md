@@ -101,34 +101,17 @@ GitVersion can be integrated into CI/CD pipelines to automatically:
 - Tag releases
 - Provide version information for artifacts
 
-which we've ofcourse done in our [workflow](../../.github/workflows/binary-release.yaml) you can use my [custom action](https://github.com/michielvha/gitversion-tag-action)
+which we've provided in our [workflow](../../.github/workflows/binary-release.yaml) you can use my [custom action](https://github.com/michielvha/gitversion-tag-action)
 
-<!-- ## Sample Output
+## Our versioning strategy
 
-When running `gitversion`, you will get JSON output similar to:
+- **Patch**: For runtime fixes or small adjustments (e.g., bug fixes or performance improvements). (RUN)
+- **Minor**: For introducing new features or changes that are backward-compatible. (CHANGE)
+- **Major**: For breaking changes that are not backward-compatible. (BREAKING)
 
-```json
-{
-  "MajorMinorPatch": "0.2.0",
-  "SemVer": "0.2.0-45",
-  "BranchName": "release/0.2.0",
-  "Sha": "dba550f2c2bd7bfd4e4c56c5ee920a41dab5d866",
-  "ShortSha": "dba550f",
-  "UncommittedChanges": 1
-}
-``` -->
 
 ## References
 
 - [GitVersion Documentation](https://gitversion.net/docs/)
 - [Configuration Options](https://gitversion.net/docs/reference/configuration)
 - [Version Strategies](https://gitversion.net/docs/reference/version-increments)
-
-<!-- ## Troubleshooting
-
-If GitVersion is not behaving as expected:
-
-1. Use `gitversion /showconfig` to verify the current configuration
-2. Check that your branch naming follows the expected patterns
-3. Verify that Git tags are properly formatted
-4. Ensure your commit messages use the correct format if you're using commit message versioning -->
