@@ -40,7 +40,7 @@ configure_rke2_user_scoped_bash() {
 
   # Source the profile file to apply changes immediately
   # shellcheck source=/dev/null
-  source "$profile_file"
+  source "$HOME/.bashrc"
   echo "🔧 User-specific Kubernetes configuration set up for $(whoami)"
 }
 
