@@ -37,6 +37,8 @@ configure_rke2_user_scoped_bash() {
 
   # Add KUBECONFIG if not already present
   grep -q "export KUBECONFIG=$user_home" "$profile_file" || echo "export KUBECONFIG=$user_home" | sudo tee -a "$profile_file" > /dev/null
+  # enable bash completion for kubectl
+  grep -q 'source <(kubectl completion bash)' "$profile_file" || echo "source <(kubectl completion bash)" | sudo tee -a "$profile_file" > /dev/null
 
   # Source the profile file to apply changes immediately
   # shellcheck source=/dev/null
