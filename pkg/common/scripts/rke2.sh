@@ -207,6 +207,7 @@ EOF
 enable_rke2_addons_reloader(){
   echo "📦 Enabling RKE2 Addon: Stakater's Reloader"
   cat <<EOF | sudo tee /var/lib/rancher/rke2/server/manifests/reloader.yaml
+# Reference: https://docs.k3s.io/helm  
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
