@@ -46,7 +46,8 @@ install_rke2_server() {
   FQDN=$(hostname -f)
   local HOST
   HOST=$(hostname -s) # hostname without domain
-  local TS="$HOST.tail6948f.ts.net" # get tailscale domain for internal management interface, will be needed to add to SAN.
+  local TS_DOMAIN="tail6948f.ts.net" # TODO: this should be set in the environment or passed as a parameter.
+  local TS="$HOST.$TS_DOMAIN" # get tailscale domain for internal management interface, will be needed to add to SAN.
   local PURPOSE=${PURPOSE:-"server"}
 
   configure_rke2_host   # perform default bootstrap configurations required on each RKE2 node.
@@ -161,7 +162,7 @@ install_rke2_agent() {
   FQDN=$(hostname -f)
   local HOST
   HOST=$(hostname -s) # hostname without domain
-  local TS="$HOST.tail6948f.ts.net" # get tailscale domain for internal management interface, will be needed to add to SAN.
+  local TS="$HOST.$TS_DOMAIN" # get tailscale domain for internal management interface, will be needed to add to SAN.
   local PURPOSE=${PURPOSE:-"worker"}
 
   configure_rke2_host         # perform common bootstrap configurations.
