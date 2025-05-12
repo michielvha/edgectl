@@ -49,19 +49,15 @@ install_rke2_server() {
   local TS="$HOST.tail6948f.ts.net" # get tailscale domain for internal management interface, will be needed to add to SAN.
   local PURPOSE=${PURPOSE:-"server"}
 
-  # perform default bootstrap configurations required on each RKE2 node.
-  configure_rke2_host
+  configure_rke2_host   # perform default bootstrap configurations required on each RKE2 node.
 
  # Install RKE2
   echo "⬇️  Downloading and installing RKE2..."
   curl -sfL https://get.rke2.io | sudo sh - || { echo "❌ Failed to download RKE2. Exiting."; return 1; }
 
-  # Ensure the config directory exists
-  sudo mkdir -p /etc/rancher/rke2
-
   # Write configuration to /etc/rancher/rke2/config.yaml
   # https://docs.rke2.io/reference/server_config
-  cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
+  sudo mkdir -p /etc/rancher/rke2 && cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 write-kubeconfig-mode: "0644"
 profile: "cis"
 node-label:
@@ -93,9 +89,8 @@ EOF
   # bpftool feature  | zgrep CONFIG_BPF /proc/config.gz if available.
 
   # TODO: we should make cilium the default but provide a fallback. and then use kube-proxy config else skip it probably wrap this in it's own function.
-  sudo mkdir -p /var/lib/rancher/rke2/server/manifests/
   echo "🛠️  Writing Cilium Helm Chart Config..."
-  cat <<EOF | sudo tee /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+  sudo mkdir -p /var/lib/rancher/rke2/server/manifests/ && cat <<EOF | sudo tee /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
 metadata:
@@ -116,7 +111,6 @@ spec:
       replicas: 1
 EOF
 
-  
   enable_rke2_addons_reloader   # enabling the reloader addon by default
   
   configure_rke2_cis            # Hardening RKE2 with CIS benchmarks
@@ -176,12 +170,9 @@ install_rke2_agent() {
   echo "⬇️  Downloading and installing RKE2..."
   curl -sfL https://get.rke2.io | sudo sh - || { echo "❌ Failed to download RKE2. Exiting."; return 1; }
 
-  # Ensure the config directory exists
-  sudo mkdir -p /etc/rancher/rke2
-
   # Write configuration to /etc/rancher/rke2/config.yaml
   # https://docs.rke2.io/reference/linux_agent_config
-  cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
+  sudo mkdir -p /etc/rancher/rke2 && cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 server: "https://$LB_HOSTNAME:9345"
 token: $RKE2_TOKEN
 profile: "cis"
@@ -196,11 +187,9 @@ EOF
 
   configure_ufw_rke2_agent    # Configure UFW for RKE2 agent
 
-
   # Enable and start RKE2 agent
   echo "⚙️  Enabling RKE2 agent..."
   sudo systemctl enable --now rke2-agent || { echo "❌ RKE2 Agent node bootstrap failed."; return 1; }
-
   echo "✅ RKE2 Agent node bootstrapped."
 }
 
@@ -245,7 +234,7 @@ configure_rke2_host() {
   # Load br_netfilter kernel module
   echo "🛠️  Loading br_netfilter kernel module..."
   sudo modprobe br_netfilter || { echo "❌ Failed to load br_netfilter kernel module. Exiting."; return 1; }
-  lsmod | grep br_netfilter
+  lsmod | grep br_netfilter # TODO: Showing the loaded module could be removed ?
   # make the config persistent
   echo "br_netfilter" | sudo tee /etc/modules-load.d/br_netfilter.conf
 

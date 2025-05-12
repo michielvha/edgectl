@@ -5,6 +5,9 @@
 # Description: ℹ️ Get detailed information about rke2 installation
 # TODO: expand this status check, possibly with some details about the cluster state in vault provided by the vault client.
 rke2_status() {
+  # output cluster-id
+  [ -s /etc/edgectl/cluster-id ] && echo "🔑 Cluster ID: $(cat /etc/edgectl/cluster-id)" || echo "❌ Cluster ID not found. Please check if the cluster is initialized."
+
   # Check the status of RKE2 services
   if systemctl is-active --quiet rke2-server; then
     sudo systemctl status rke2-server
@@ -14,7 +17,6 @@ rke2_status() {
     echo "Neither rke2-server nor rke2-agent are running."
   fi
 
-  # TODO: output the cluster-id
 }
 
 # Required or `RunBashFunction` will not be able to call the function by name
