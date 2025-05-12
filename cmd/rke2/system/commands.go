@@ -79,7 +79,7 @@ var kubeconfigCmd = &cobra.Command{
 		fmt.Printf("✅ Kubeconfig successfully written to: %s\n", outputPath)
 
 		// Configure bash shell to use the kubeconfig
-		common.RunBashFunction("rke2-bash.sh", "configure_rke2_user_scoped_bash")
+		common.RunBashFunction("rke2-bash.sh", "setup_kubectl_bash_env")
 	},
 }
 
@@ -91,7 +91,7 @@ var bashCmd = &cobra.Command{
 		logger.Debug("system bash command executed")
 
 		fmt.Println("🔧 Configuring bash environment for RKE2...")
-		common.RunBashFunction("rke2-bash.sh", "configure_rke2_bash")
+		common.RunBashFunction("rke2-bash.sh", "setup_rke2_node_bash_env")
 		fmt.Println("✅ Bash environment configured for RKE2")
 	},
 }

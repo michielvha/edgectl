@@ -322,7 +322,7 @@ configure_ufw_rke2_agent() {
   echo "✅ UFW rules configured for RKE2 Agent Node."
 }
 
-# Required or `CommonGoHelper` will not be able to call the function by name
+# Required or `RunBashFunction` will not be able to call the function by name
 if declare -f "$1" > /dev/null; then
   "$@"
 else

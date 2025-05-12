@@ -17,7 +17,7 @@ rke2_status() {
   # TODO: output the cluster-id
 }
 
-# Required or `CommonGoHelper` will not be able to call the function by name
+# Required or `RunBashFunction` will not be able to call the function by name
 if declare -f "$1" > /dev/null; then
   "$@"
 else
