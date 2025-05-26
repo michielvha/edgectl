@@ -31,7 +31,7 @@ The GitHub Actions workflow (`binary-release.yaml`) automates the build and rele
    - Extracts the fingerprint and sets it as an env variable for signing.
 
 > [!IMPORTANT]
-> You need to manually generate a fingerprint using ``and add it to repo secrets.
+> You need to manually generate a fingerprint using [this guide]() and add it to repo secrets.
 
 7. **Release with GoReleaser**
    - Runs `goreleaser/goreleaser-action@v6` to:
@@ -88,6 +88,37 @@ Configuration for `golangci-lint`.
 - `gofmt`, `goimports`, `gosimple`, `gocritic`
 
 > Intended as a basic config. Consider expanding in the future.
+
+## Generate PGP Private Key
+
+1. Create config file
+   ```sh
+   cat > gen-key.conf <<EOF
+   %no-protection
+   Key-Type: RSA
+   Key-Length: 2048
+   Name-Real: Test User
+   Name-Email: test@example.com
+   Expire-Date: 0
+   %commit
+   EOF
+   ```
+2. Generate the key
+   ```sh
+   gpg --batch --gen-key gen-key.conf
+   ```
+3. List the key fingerprint (optional)
+   ```sh
+   gpg --list-secret-keys --keyid-format=long
+   ```
+4. List the key fingerprint (optional)
+   ```sh
+   gpg --armor --export-secret-keys test@example.com
+   ```
+5. Clean up
+   ```sh
+   rm gen-key.conf
+   ```
 
 ## 🧩 Secrets & Environment Variables
 
