@@ -30,10 +30,16 @@ The GitHub Actions workflow (`binary-release.yaml`) automates the build and rele
    - Imports the GPG private key from a GitHub secret.
    - Extracts the fingerprint and sets it as an env variable for signing.
 
+> [!IMPORTANT]
+> You need to manually generate a fingerprint using ``and add it to repo secrets.
+
 7. **Release with GoReleaser**
    - Runs `goreleaser/goreleaser-action@v6` to:
      - Build binaries across multiple OS/architecture targets.
      - Package, checksum, sign, and publish the release.
+
+> [!IMPORTANT]
+> You need to manually create a token  with `repo` and `workflow` permissions and add it to repo secrets
 
 ## 🧷 Dependent Files
 
