@@ -34,7 +34,7 @@ jobs:
       # 2: Call our custom `GitVersion action` to tag the repo
       - name: Tag with GitVersion
         id: gitversion
-        uses: michielvha/gitversion-tag-action@v4
+        uses: michielvha/gitversion-tag-action@v5
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
@@ -50,7 +50,7 @@ jobs:
       # 4: Install Linter (golangci-lint)
       # https://github.com/golangci/golangci-lint-action
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v8
 
 #      # TODO: Run Unit Tests with Coverage
 #      - name: Run Tests with gotestsum
