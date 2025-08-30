@@ -32,7 +32,7 @@ edgectl version
 
 ## Changelog & TODO
 
-
+- [ ] Enable [encryption at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) for secrets
 - [ ] [#31](https://github.com/michielvha/edgectl/issues/31) - Add support for fedora based architectures.
 - [ ] write some kind of var or file to determine which system is which role ( server, agent, lb ) or find another way. VIPER?
 - [ ] [#35](https://github.com/michielvha/edgectl/issues/35) - Create unit/integration tests file so we can test before release
