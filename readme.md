@@ -56,7 +56,7 @@ edgectl version
 
 Hashicorp vault is not able to be provided by us as a managed service because of it's license. We can keep it as a bring your own vault thing.
 
-For a fully managed service look into [infisical](https://github.com/Infisical/infisical?tab=License-1-ov-file) via the [infisical go sdk](https://infisical.com/docs/sdks/languages/go).
+For a fully managed service look into [infisical](https://github.com/Infisical/infisical?tab=License-1-ov-file) via the [infisical go sdk](https://infisical.com/docs/sdks/languages/go). Alternatively, there is a fork of hashicorp vault called [openbao](https://openbao.org/) which might prove useful.
 
 We'll have to redesign the code with an interface to easily allow for bringing your own secretManagement tool.
 
