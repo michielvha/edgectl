@@ -26,7 +26,7 @@ jobs:
     steps:
       # 1: Checkout code
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Fetch all history to use GitVersion
           persist-credentials: true
@@ -50,7 +50,7 @@ jobs:
       # 4: Install Linter (golangci-lint)
       # https://github.com/golangci/golangci-lint-action
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
 
 #      # TODO: Run Unit Tests with Coverage
 #      - name: Run Tests with gotestsum
