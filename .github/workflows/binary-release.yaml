@@ -26,7 +26,7 @@ jobs:
     steps:
       # 1: Checkout code
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Fetch all history to use GitVersion
           persist-credentials: true
@@ -34,7 +34,7 @@ jobs:
       # 2: Call our custom `GitVersion action` to tag the repo
       - name: Tag with GitVersion
         id: gitversion
-        uses: michielvha/gitversion-tag-action@v5
+        uses: michielvha/gitversion-tag-action@v6
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
@@ -50,7 +50,7 @@ jobs:
       # 4: Install Linter (golangci-lint)
       # https://github.com/golangci/golangci-lint-action
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
 
 #      # TODO: Run Unit Tests with Coverage
 #      - name: Run Tests with gotestsum
@@ -61,7 +61,7 @@ jobs:
       # 5: Cache GoReleaser installation
       - name: Cache GoReleaser
         id: goreleaser-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.goreleaser
           key: goreleaser-${{ runner.os }}-latest
