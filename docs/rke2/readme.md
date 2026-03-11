@@ -2,7 +2,6 @@
 
 so the wrapper should handle all edgecloud logic and the bash scripts should be able to be operated on their own as well. if possible lol.
 
-
 # 🧱 EdgeCTL RKE2 Architecture Overview
 
 ## 🧭 Overview

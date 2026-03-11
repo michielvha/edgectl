@@ -42,9 +42,9 @@ func NewClient() (*Client, error) {
 	return &Client{VaultClient: client}, nil
 }
 
-// InitVaultClient centralizes Vault client creation and error handling
-// Returns nil if the client initialization failed
-// TODO: implement this everywhere we create vault client, example call in cmd/vault.go on line 48
+// InitVaultClient centralizes Vault client creation and error handling.
+// Returns nil if the client initialization failed.
+// Use this in cmd/ handlers; use NewClient() in pkg/ code that propagates errors.
 func InitVaultClient() *Client {
 	logger.Debug("initializing Vault client")
 	vaultClient, err := NewClient()

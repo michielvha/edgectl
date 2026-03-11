@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strings"
 )
@@ -15,10 +16,21 @@ import (
 //go:embed scripts/*.sh
 var embeddedScripts embed.FS
 
-// TODO: Fix the issue where script not available to another user when called before by other user.
-// Extracts an embedded script to /tmp
+// ExtractEmbeddedScript extracts an embedded script to a user-namespaced temp directory.
+// Each user gets their own /tmp/edgectl-{uid}/ directory to avoid permission conflicts.
 func ExtractEmbeddedScript(scriptName string) string {
-	scriptPath := filepath.Join("/tmp", scriptName)
+	uid := "unknown"
+	if u, err := user.Current(); err == nil {
+		uid = u.Uid
+	}
+
+	dir := filepath.Join("/tmp", "edgectl-"+uid)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		fmt.Printf("❌ Failed to create script dir: %v\n", err)
+		os.Exit(1)
+	}
+
+	scriptPath := filepath.Join(dir, scriptName)
 
 	// Read script from embedded FS
 	data, err := embeddedScripts.ReadFile("scripts/" + scriptName)
@@ -28,7 +40,7 @@ func ExtractEmbeddedScript(scriptName string) string {
 	}
 
 	// Write to a temp file
-	if err := os.WriteFile(scriptPath, data, 0o777); err != nil {
+	if err := os.WriteFile(scriptPath, data, 0o700); err != nil {
 		fmt.Printf("❌ Failed to write script: %v\n", err)
 		os.Exit(1)
 	}

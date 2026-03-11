@@ -41,16 +41,32 @@ var statusCmd = &cobra.Command{
 	},
 }
 
-// TODO: Enhance function to remove all state from vault via `GoVaultClient`
 var purgeCmd = &cobra.Command{
 	Use:   "purge",
 	Short: "Purge RKE2 install from host",
-	Long:  `Completely removes RKE2 installation from the host.`,
+	Long: `Completely removes RKE2 installation from the host.
+If --cluster-id is provided, also removes all cluster data from Vault.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("system purge command executed")
 		fmt.Println("🗑️  Purging RKE2 from the host...")
 		common.RunBashFunction("rke2-purge.sh", "rke2_purge")
 		fmt.Println("✅ RKE2 purged successfully")
+
+		// If cluster-id is provided, also clean up Vault data
+		clusterID, _ := cmd.Flags().GetString("cluster-id")
+		if clusterID != "" {
+			fmt.Printf("🔄 Removing cluster data from Vault for %s...\n", clusterID)
+			vaultClient := vault.InitVaultClient()
+			if vaultClient == nil {
+				fmt.Println("⚠️  Could not connect to Vault — skipping remote cleanup")
+				return
+			}
+			if err := vaultClient.DeleteClusterData(clusterID); err != nil {
+				fmt.Printf("⚠️  Vault cleanup completed with warnings: %v\n", err)
+			} else {
+				fmt.Println("✅ Cluster data removed from Vault")
+			}
+		}
 	},
 }
 
@@ -64,13 +80,12 @@ var kubeconfigCmd = &cobra.Command{
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		outputPath, _ := cmd.Flags().GetString("output")
 
-		vaultClient, err := vault.NewClient()
-		if err != nil {
-			fmt.Printf("❌ Failed to initialize Vault client: %v\n", err)
+		vaultClient := vault.InitVaultClient()
+		if vaultClient == nil {
 			os.Exit(1)
 		}
 
-		err = vaultClient.RetrieveKubeConfig(clusterID, outputPath)
+		err := vaultClient.RetrieveKubeConfig(clusterID, outputPath)
 		if err != nil {
 			fmt.Printf("❌ Failed to retrieve kubeconfig: %v\n", err)
 			os.Exit(1)
@@ -105,6 +120,9 @@ func init() {
 	kubeconfigCmd.Flags().String("output", homeBasedKubeconfig, "Destination path to store the kubeconfig")
 
 	_ = kubeconfigCmd.MarkFlagRequired("cluster-id")
+
+	// Purge command flags
+	purgeCmd.Flags().String("cluster-id", "", "Cluster ID to also remove data from Vault (optional)")
 
 	// Register subcommands
 	Cmd.AddCommand(statusCmd)

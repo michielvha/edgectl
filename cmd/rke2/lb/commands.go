@@ -10,7 +10,6 @@ import (
 	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/lb"
 	"github.com/michielvha/edgectl/pkg/logger"
-	"github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -55,24 +54,9 @@ var statusCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("lb status command executed")
 
-		// TODO: Wrap this and add it to lb/handler.go package
-
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
-		if clusterID == "" {
-			fmt.Println("❌ Cluster ID is required.")
-			_ = cmd.Help()
-			os.Exit(1)
-		}
 
-		// Connect to Vault
-		client, err := vault.NewClient()
-		if err != nil {
-			fmt.Printf("❌ Failed to create Vault client: %v\n", err)
-			os.Exit(1)
-		}
-
-		logger.Debug("executing RetrieveLBInfo function")
-		lbNodes, vip, err := client.RetrieveLBInfo(clusterID)
+		vip, nodes, err := lb.GetStatus(clusterID)
 		if err != nil {
 			fmt.Printf("❌ Failed to retrieve load balancer info: %v\n", err)
 			os.Exit(1)
@@ -81,16 +65,12 @@ var statusCmd = &cobra.Command{
 		fmt.Printf("ℹ️ RKE2 Load balancer VIP: %s\n", vip)
 		fmt.Println("ℹ️ Load balancer nodes:")
 
-		for _, node := range lbNodes {
-			hostname := node["hostname"].(string)
-			isMain := node["is_main"].(bool)
-
+		for _, node := range nodes {
 			role := "BACKUP"
-			if isMain {
+			if node.IsMain {
 				role = "MASTER"
 			}
-
-			fmt.Printf("  - %s (%s)\n", hostname, role)
+			fmt.Printf("  - %s (%s)\n", node.Hostname, role)
 		}
 	},
 }

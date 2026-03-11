@@ -14,6 +14,35 @@ import (
 	vault "github.com/michielvha/edgectl/pkg/vault"
 )
 
+// LBNode represents a load balancer node with its role
+type LBNode struct {
+	Hostname string
+	IsMain   bool
+}
+
+// GetStatus retrieves the load balancer status for a cluster from Vault
+func GetStatus(clusterID string) (string, []LBNode, error) {
+	client, err := vault.NewClient()
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to create Vault client: %w", err)
+	}
+
+	logger.Debug("executing RetrieveLBInfo function")
+	rawNodes, vip, err := client.RetrieveLBInfo(clusterID)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to retrieve load balancer info: %w", err)
+	}
+
+	nodes := make([]LBNode, 0, len(rawNodes))
+	for _, node := range rawNodes {
+		hostname, _ := node["hostname"].(string)
+		isMain, _ := node["is_main"].(bool)
+		nodes = append(nodes, LBNode{Hostname: hostname, IsMain: isMain})
+	}
+
+	return vip, nodes, nil
+}
+
 // LoadBalancerConfig struct defines the configuration for a load balancer
 type LoadBalancerConfig struct {
 	ClusterID string

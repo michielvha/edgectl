@@ -5,6 +5,7 @@ package agent
 
 import (
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/michielvha/edgectl/pkg/common"
@@ -14,7 +15,8 @@ import (
 
 // Install sets up the RKE2 agent on the host.
 // It fetches the join token from Vault using the supplied clusterID.
-func Install(clusterID string) error {
+// VIP resolution priority: Vault > --vip flag > --lb-hostname flag (DNS resolved).
+func Install(clusterID, vip, lbHostname string) error {
 	vaultClient, err := vault.NewClient()
 	if err != nil {
 		return fmt.Errorf("failed to initialize Vault client: %w", err)
@@ -24,19 +26,31 @@ func Install(clusterID string) error {
 		return err
 	}
 
-	// fetch the VIP from Master Info in Vault
+	// Priority 1: fetch the VIP from Master Info in Vault
 	_, storedVIP, _, err := vaultClient.RetrieveMasterInfo(clusterID)
 	if err == nil && storedVIP != "" {
+		vip = storedVIP
 		fmt.Printf("🔍 VIP fetched from Vault: %s\n", storedVIP)
 	}
 
+	// Priority 2: --vip flag is already set via the parameter
+
+	// Priority 3: resolve --lb-hostname to an IP as fallback
+	if vip == "" && lbHostname != "" {
+		addrs, err := net.LookupHost(lbHostname)
+		if err != nil || len(addrs) == 0 {
+			return fmt.Errorf("failed to resolve load balancer hostname %s: %w", lbHostname, err)
+		}
+		vip = addrs[0]
+		fmt.Printf("🔍 Resolved LB hostname %s to %s\n", lbHostname, vip)
+	}
+
 	installOptions := ""
-	if storedVIP != "" {
-		installOptions = fmt.Sprintf("-l %s", storedVIP)
-		fmt.Printf("🌐 Using VIP %s for load balancer TLS SANs\n", storedVIP)
+	if vip != "" {
+		installOptions = fmt.Sprintf("-l %s", vip)
+		fmt.Printf("🌐 Using VIP %s for load balancer TLS SANs\n", vip)
 	} else {
-		// TODO: add fallback ?
-		logger.Debug("No VIP found in Vault, using default settings")
+		logger.Debug("No VIP found via Vault, --vip, or --lb-hostname, using default settings")
 	}
 	// Run the installation script with options
 	common.RunBashFunction("rke2.sh", fmt.Sprintf("install_rke2_agent %s", installOptions))

@@ -13,7 +13,7 @@ help:
 	@echo "  make lb-status             Run 'rke2 lb status --cluster-id rke2-03db202f'"
 	@echo "  make purge        		    Run 'rke2 purge'"
 	@echo "  make config                Run 'rke2 config'"
-	@echo "  make test func             Test a Go function with a sample input"
+	@echo "  make test-func             Test a Go function with a sample input"
 	@echo "  make clean                 Remove temporary files (optional)"
 
 # Commands
@@ -25,7 +25,7 @@ server:
 server-join:
 	$(GO_RUN) rke2 server install --cluster-id $(CLUSTER_ID)
 
-.PHONY: server-test
+.PHONY: server-verify
 server-verify:
 	sudo cat /etc/rancher/rke2/config.yaml # | grep 'token:'
 
@@ -51,12 +51,12 @@ purge:
 config:
 	$(GO_RUN) rke2 system kubeconfig --cluster-id $(CLUSTER_ID)
 
-.PHONY: config
+.PHONY: status
 status:
 	$(GO_RUN) rke2 system status
 
 .PHONY: test-func
-test func:
+test-func:
 	@echo "🔍 Testing individual function..."
 	go run ./cmd/debug/test.go
 
