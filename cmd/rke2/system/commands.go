@@ -23,11 +23,11 @@ var Cmd = &cobra.Command{
 	Use:   "system",
 	Short: "Manage RKE2 system operations",
 	Long: `The "system" command provides operations for RKE2 system management.
-	
+
 Examples:
   edgectl rke2 system status      # Check status of RKE2
   edgectl rke2 system purge       # Uninstall RKE2 from the host
-  edgectl rke2 system kubeconfig  # Fetch kubeconfig from Vault
+  edgectl rke2 system kubeconfig  # Fetch kubeconfig from secret store
   edgectl rke2 system bash        # Configure bash environment for RKE2
 `,
 }
@@ -45,26 +45,26 @@ var purgeCmd = &cobra.Command{
 	Use:   "purge",
 	Short: "Purge RKE2 install from host",
 	Long: `Completely removes RKE2 installation from the host.
-If --cluster-id is provided, also removes all cluster data from Vault.`,
+If --cluster-id is provided, also removes all cluster data from the secret store.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("system purge command executed")
 		fmt.Println("🗑️  Purging RKE2 from the host...")
 		common.RunBashFunction("rke2-purge.sh", "rke2_purge")
 		fmt.Println("✅ RKE2 purged successfully")
 
-		// If cluster-id is provided, also clean up Vault data
+		// If cluster-id is provided, also clean up secret store data
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		if clusterID != "" {
-			fmt.Printf("🔄 Removing cluster data from Vault for %s...\n", clusterID)
+			fmt.Printf("🔄 Removing cluster data from secret store for %s...\n", clusterID)
 			vaultClient := vault.InitVaultClient()
 			if vaultClient == nil {
-				fmt.Println("⚠️  Could not connect to Vault — skipping remote cleanup")
+				fmt.Println("⚠️  Could not connect to secret store — skipping remote cleanup")
 				return
 			}
 			if err := vaultClient.DeleteClusterData(clusterID); err != nil {
-				fmt.Printf("⚠️  Vault cleanup completed with warnings: %v\n", err)
+				fmt.Printf("⚠️  Secret store cleanup completed with warnings: %v\n", err)
 			} else {
-				fmt.Println("✅ Cluster data removed from Vault")
+				fmt.Println("✅ Cluster data removed from secret store")
 			}
 		}
 	},
@@ -72,7 +72,7 @@ If --cluster-id is provided, also removes all cluster data from Vault.`,
 
 var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig",
-	Short: "Fetch kubeconfig from Vault and store it on the host",
+	Short: "Fetch kubeconfig from the secret store and store it on the host",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("system kubeconfig command executed")
 
@@ -122,7 +122,7 @@ func init() {
 	_ = kubeconfigCmd.MarkFlagRequired("cluster-id")
 
 	// Purge command flags
-	purgeCmd.Flags().String("cluster-id", "", "Cluster ID to also remove data from Vault (optional)")
+	purgeCmd.Flags().String("cluster-id", "", "Cluster ID to also remove data from the secret store (optional)")
 
 	// Register subcommands
 	Cmd.AddCommand(statusCmd)

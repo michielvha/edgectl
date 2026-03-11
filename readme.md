@@ -54,11 +54,9 @@ edgectl version
 
 ### Secret Management
 
-Hashicorp vault is not able to be provided by us as a managed service because of it's license. We can keep it as a bring your own vault thing.
+Secret management is powered by [OpenBao](https://openbao.org/), the Linux Foundation community fork of HashiCorp Vault. OpenBao is open-source (MPL-2.0) and wire-compatible with Vault's KV v2 API.
 
-For a fully managed service look into [infisical](https://github.com/Infisical/infisical?tab=License-1-ov-file) via the [infisical go sdk](https://infisical.com/docs/sdks/languages/go). Alternatively, there is a fork of hashicorp vault called [openbao](https://openbao.org/) which might prove useful.
-
-We'll have to redesign the code with an interface to easily allow for bringing your own secretManagement tool.
+Future goal: redesign the code with an interface to easily allow bringing your own secret management backend. (infisical,secretsmanager,azurekeyvault,...)
 
 ---
 
@@ -70,7 +68,7 @@ Check what should be retained in the features list & remove everything else:
 - [x] Create version command using cobra and the variable is dynamically set at build time, in pipeline this is integrated with GitVersion.
 - [x] Ensure scalable file structure.
 - [x] Create commands to call bash scripts for admin tasks, rke2 install etc.
-- [x] Integrate HashiCorp Vault for secret management. 
+- [x] Integrate OpenBao for secret management.
   - [x] Auto save & fetch secrets to Add agents to workers automatically
   - [x] add some kind of clusterID generation to be able to tell what to join with what.. I'm thinking based of hostname and then handle the hostname per customer. so create an id on master creation if cluster id provided don't create new one. Always ask for the cluster id when joining a worker, all other logic can be handled based of that in the background.
 - [x] Fetch kubeconfig automatically. like in ``azure-cli``

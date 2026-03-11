@@ -20,11 +20,11 @@ type LBNode struct {
 	IsMain   bool
 }
 
-// GetStatus retrieves the load balancer status for a cluster from Vault
+// GetStatus retrieves the load balancer status for a cluster from the secret store
 func GetStatus(clusterID string) (string, []LBNode, error) {
 	client, err := vault.NewClient()
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to create Vault client: %w", err)
+		return "", nil, fmt.Errorf("failed to create secret store client: %w", err)
 	}
 
 	logger.Debug("executing RetrieveLBInfo function")
@@ -66,10 +66,10 @@ func CreateLoadBalancer(clusterID, vip string) error {
 		return fmt.Errorf("failed to get hostname: %w", err)
 	}
 
-	// Connect to Vault
+	// Connect to the secret store
 	client, err := vault.NewClient()
 	if err != nil {
-		return fmt.Errorf("failed to create Vault client: %w", err)
+		return fmt.Errorf("failed to create secret store client: %w", err)
 	}
 
 	// First check if there are any existing load balancers
@@ -81,7 +81,7 @@ func CreateLoadBalancer(clusterID, vip string) error {
 	logger.Debug("Load balancer first node check: isFirst=%v, error=%v, existingLBCount=%d",
 		isFirst, err, len(existingLBs))
 
-	// Retrieve server nodes from Vault for HAProxy configuration
+	// Retrieve server nodes from the secret store for HAProxy configuration
 	hosts, masterVIP, hostIPs, err := client.RetrieveMasterInfo(clusterID)
 	if err != nil {
 		logger.Debug("No master nodes found, this might be a new cluster: %v", err)
@@ -97,7 +97,7 @@ func CreateLoadBalancer(clusterID, vip string) error {
 
 	// If no VIP was determined, error out
 	if effectiveVIP == "" {
-		return fmt.Errorf("no VIP provided and no existing VIP found in Vault")
+		return fmt.Errorf("no VIP provided and no existing VIP found in secret store")
 	}
 
 	// Determine network interface for VIP
@@ -109,10 +109,10 @@ func CreateLoadBalancer(clusterID, vip string) error {
 	// Configure this node as the main LB if it's the first one
 	isMain := isFirst
 
-	// Store the current LB info in Vault
+	// Store the current LB info in the secret store
 	err = client.StoreLBInfo(clusterID, hostname, effectiveVIP, isMain)
 	if err != nil {
-		return fmt.Errorf("failed to store load balancer info in Vault: %w", err)
+		return fmt.Errorf("failed to store load balancer info in secret store: %w", err)
 	}
 
 	// Bootstrap the load balancer
@@ -126,15 +126,15 @@ func CreateLoadBalancer(clusterID, vip string) error {
 	})
 }
 
-func BootstrapLBFromVault(clusterID string, isMain bool) error {
+func BootstrapLBFromSecretStore(clusterID string, isMain bool) error {
 	client, err := vault.NewClient()
 	if err != nil {
-		return fmt.Errorf("failed to create Vault client: %w", err)
+		return fmt.Errorf("failed to create secret store client: %w", err)
 	}
 
 	hosts, vip, hostIPs, err := client.RetrieveMasterInfo(clusterID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch master info from Vault: %w", err)
+		return fmt.Errorf("failed to fetch master info from secret store: %w", err)
 	}
 
 	iface, err := detectInterfaceForVIP(vip)
@@ -264,14 +264,14 @@ backend k3s-backend
 // Helper function to add servers to a HAProxy backend
 func addServersToBackend(b *strings.Builder, hostnames []string, hostIPs map[string]string, port int) {
 	for _, host := range hostnames {
-		// First try to get IP from the hostIPs map (cached IPs from Vault)
+		// First try to get IP from the hostIPs map (cached IPs from the secret store)
 		if ip, ok := hostIPs[host]; ok {
 			fmt.Fprintf(b, "    server %s %s:%d check\n", host, ip, port)
-			logger.Debug("Using IP %s from Vault for host %s", ip, host)
+			logger.Debug("Using IP %s from secret store for host %s", ip, host)
 			continue
 		}
 
-		// Fallback to DNS lookup if IP not found in Vault
+		// Fallback to DNS lookup if IP not found in the secret store
 		ipAddrs, err := net.LookupIP(host)
 		if err != nil || len(ipAddrs) == 0 {
 			logger.Warn("Could not resolve IP for host %s via DNS, skipping: %v", host, err)
@@ -333,7 +333,7 @@ func detectInterfaceForVIP(vip string) (string, error) {
 }
 
 // CleanupLoadBalancer removes the load balancer configuration for a RKE2 cluster
-// It disables the services, removes configuration files, and cleans up the Vault entry
+// It disables the services, removes configuration files, and cleans up the secret store entry
 func CleanupLoadBalancer(clusterID string) error {
 	logger.Debug("Cleaning up load balancer for RKE2 cluster %s", clusterID)
 	fmt.Printf("Cleaning up load balancer for RKE2 cluster %s\n", clusterID)
@@ -366,16 +366,16 @@ func CleanupLoadBalancer(clusterID string) error {
 		// Continue execution even if file removal fails
 	}
 
-	// Connect to Vault and remove the LB entry
+	// Connect to the secret store and remove the LB entry
 	client, err := vault.NewClient()
 	if err != nil {
-		return fmt.Errorf("failed to create Vault client: %w", err)
+		return fmt.Errorf("failed to create secret store client: %w", err)
 	}
 
-	// Remove this node from the LB list in Vault
-	fmt.Print("🔄 Removing load balancer entry from Vault... \n")
+	// Remove this node from the LB list in the secret store
+	fmt.Print("🔄 Removing load balancer entry from secret store... \n")
 	if err := client.RemoveLBNode(clusterID, hostname); err != nil {
-		return fmt.Errorf("failed to remove load balancer info from Vault: %w", err)
+		return fmt.Errorf("failed to remove load balancer info from secret store: %w", err)
 	}
 
 	fmt.Printf("✅ Load balancer for cluster %s has been cleaned up successfully\n", clusterID)

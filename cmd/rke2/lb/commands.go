@@ -83,7 +83,7 @@ This includes disabling services (which also stops them) and removing configurat
 The HAProxy and Keepalived packages will remain installed.
 
 Example:
-  edgectl rke2 lb cleanup --cluster-id my-cluster  # Clean up LB and remove from Vault`,
+  edgectl rke2 lb cleanup --cluster-id my-cluster  # Clean up LB and remove from secret store`,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug("lb cleanup command executed")
 

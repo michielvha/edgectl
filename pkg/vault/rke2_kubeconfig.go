@@ -5,8 +5,8 @@ Package vault provides specialized handlers for RKE2 cluster secrets management.
 
 This file handles the kubeconfig management for RKE2 clusters:
   - StoreKubeConfig: Reads the kubeconfig from a server, updates the API endpoint with VIP if provided,
-    and stores it in Vault
-  - RetrieveKubeConfig: Fetches a kubeconfig from Vault and writes it to a specified path on the host
+    and stores it in the secret store
+  - RetrieveKubeConfig: Fetches a kubeconfig from the secret store and writes it to a specified path on the host
 
 These functions enable secure kubeconfig sharing between cluster members and administrators
 without requiring direct SSH access to the control plane nodes.
@@ -20,7 +20,7 @@ import (
 	"strings"
 )
 
-// StoreKubeConfig reads the kubeconfig from the host, modifies it to use VIP if provided, and uploads it to Vault
+// StoreKubeConfig reads the kubeconfig from the host, modifies it to use VIP if provided, and uploads it to the secret store
 func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath string, vip string) error {
 	kubeconfig, err := os.ReadFile(kubeconfigPath)
 	if err != nil {
@@ -43,7 +43,7 @@ func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath string, vip string) e
 	})
 }
 
-// RetrieveKubeConfig fetches the kubeconfig from Vault and saves it to the host
+// RetrieveKubeConfig fetches the kubeconfig from the secret store and saves it to the host
 func (c *Client) RetrieveKubeConfig(clusterID, destinationPath string) error {
 	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/kubeconfig", clusterID))
 	if err != nil {

@@ -24,7 +24,7 @@ Examples:
   edgectl rke2 agent install         # Install RKE2 Agent
   edgectl rke2 lb create             # Create a load balancer for RKE2
   edgectl rke2 system purge          # Uninstall RKE2
-  edgectl rke2 system kubeconfig     # Fetch kubeconfig from Vault
+  edgectl rke2 system kubeconfig     # Fetch kubeconfig from secret store
   edgectl rke2 system bash           # Configure bash environment
 `,
 }

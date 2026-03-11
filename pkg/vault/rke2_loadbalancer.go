@@ -6,7 +6,7 @@ Package vault provides specialized handlers for RKE2 cluster secrets management.
 This file handles the load balancer configuration for RKE2 clusters:
 - StoreLBInfo: Stores information about a load balancer node, including its hostname, VIP, and primary/backup status
 - RetrieveLBInfo: Gets information about all load balancer nodes for a cluster
-- RemoveLBNode: Removes a load balancer node from the Vault storage when it's decommissioned
+- RemoveLBNode: Removes a load balancer node from the secret store when it's decommissioned
 
 These functions enable high-availability load balancer configuration with primary/backup
 relationships between nodes, tracking of virtual IPs (VIPs), and automatic failover capability.
@@ -78,7 +78,7 @@ func (c *Client) RetrieveLBInfo(clusterID string) ([]map[string]interface{}, str
 	return lbNodes, vip, nil
 }
 
-// RemoveLBNode removes a load balancer node from the Vault storage
+// RemoveLBNode removes a load balancer node from the secret store
 func (c *Client) RemoveLBNode(clusterID, hostname string) error {
 	// Delete the LB node entry
 	path := fmt.Sprintf("kv/metadata/rke2/%s/lb/%s", clusterID, hostname)

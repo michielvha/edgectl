@@ -12,14 +12,14 @@ import (
 
 // --- Generic commands ---
 
-// Get a specific key from a Vault KV v2 path
-var vaultGetCmd = &cobra.Command{
+// Get a specific key from a KV v2 path
+var secretsGetCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get a secret value from Vault",
-	Long: `Retrieve a specific key from a Vault KV v2 path.
+	Short: "Get a secret value from the secret store",
+	Long: `Retrieve a specific key from a KV v2 path.
 
 Example:
-  edgectl vault get --path kv/data/rke2/my-cluster/token --key token`,
+  edgectl secrets get --path kv/data/rke2/my-cluster/token --key token`,
 	Run: func(cmd *cobra.Command, args []string) {
 		vaultClient := vault.InitVaultClient()
 		if vaultClient == nil {
@@ -51,14 +51,14 @@ Example:
 	},
 }
 
-// Set a key-value pair at a Vault KV v2 path
-var vaultSetCmd = &cobra.Command{
+// Set a key-value pair at a KV v2 path
+var secretsSetCmd = &cobra.Command{
 	Use:   "set",
-	Short: "Set a secret value in Vault",
-	Long: `Store a key-value pair at a Vault KV v2 path.
+	Short: "Set a secret value in the secret store",
+	Long: `Store a key-value pair at a KV v2 path.
 
 Example:
-  edgectl vault set --path kv/data/myapp/config --key api_url --value https://example.com`,
+  edgectl secrets set --path kv/data/myapp/config --key api_url --value https://example.com`,
 	Run: func(cmd *cobra.Command, args []string) {
 		vaultClient := vault.InitVaultClient()
 		if vaultClient == nil {
@@ -83,11 +83,11 @@ Example:
 
 // --- RKE2-specific convenience commands ---
 
-var vaultUploadCmd = &cobra.Command{
+var secretsUploadCmd = &cobra.Command{
 	Use:   "upload",
-	Short: "Upload an RKE2 join token to Vault",
+	Short: "Upload an RKE2 join token to the secret store",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("🔐 Uploading token to Vault...")
+		fmt.Println("🔐 Uploading token to secret store...")
 
 		vaultClient := vault.InitVaultClient()
 		if vaultClient == nil {
@@ -103,15 +103,15 @@ var vaultUploadCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Println("✅ Token successfully stored in Vault.")
+		fmt.Println("✅ Token successfully stored in secret store.")
 	},
 }
 
-var vaultFetchCmd = &cobra.Command{
+var secretsFetchCmd = &cobra.Command{
 	Use:   "fetch",
-	Short: "Fetch an RKE2 join token from Vault",
+	Short: "Fetch an RKE2 join token from the secret store",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("🔎 Fetching token from Vault...")
+		fmt.Println("🔎 Fetching token from secret store...")
 
 		vaultClient := vault.InitVaultClient()
 		if vaultClient == nil {
@@ -130,35 +130,35 @@ var vaultFetchCmd = &cobra.Command{
 }
 
 func init() {
-	// Parent command: edgectl vault
-	vaultCmd := &cobra.Command{
-		Use:   "vault",
-		Short: "Interact with Edge Vault",
+	// Parent command: edgectl secrets
+	secretsCmd := &cobra.Command{
+		Use:   "secrets",
+		Short: "Interact with the secret store",
 	}
 
 	// get flags
-	vaultGetCmd.Flags().String("path", "", "Vault KV v2 path (e.g. kv/data/myapp/config)")
-	vaultGetCmd.Flags().String("key", "", "Specific key to retrieve (omit to list all keys)")
-	_ = vaultGetCmd.MarkFlagRequired("path")
+	secretsGetCmd.Flags().String("path", "", "KV v2 path (e.g. kv/data/myapp/config)")
+	secretsGetCmd.Flags().String("key", "", "Specific key to retrieve (omit to list all keys)")
+	_ = secretsGetCmd.MarkFlagRequired("path")
 
 	// set flags
-	vaultSetCmd.Flags().String("path", "", "Vault KV v2 path (e.g. kv/data/myapp/config)")
-	vaultSetCmd.Flags().String("key", "", "Key to store")
-	vaultSetCmd.Flags().String("value", "", "Value to store")
-	_ = vaultSetCmd.MarkFlagRequired("path")
-	_ = vaultSetCmd.MarkFlagRequired("key")
-	_ = vaultSetCmd.MarkFlagRequired("value")
+	secretsSetCmd.Flags().String("path", "", "KV v2 path (e.g. kv/data/myapp/config)")
+	secretsSetCmd.Flags().String("key", "", "Key to store")
+	secretsSetCmd.Flags().String("value", "", "Value to store")
+	_ = secretsSetCmd.MarkFlagRequired("path")
+	_ = secretsSetCmd.MarkFlagRequired("key")
+	_ = secretsSetCmd.MarkFlagRequired("value")
 
 	// upload flags (RKE2 convenience)
-	vaultUploadCmd.Flags().String("cluster-id", "test-cluster", "Cluster ID to store the token under")
-	vaultUploadCmd.Flags().String("token", "dummy-token", "The token to upload")
+	secretsUploadCmd.Flags().String("cluster-id", "test-cluster", "Cluster ID to store the token under")
+	secretsUploadCmd.Flags().String("token", "dummy-token", "The token to upload")
 
 	// fetch flags (RKE2 convenience)
-	vaultFetchCmd.Flags().String("cluster-id", "test-cluster", "Cluster ID to fetch the token from")
+	secretsFetchCmd.Flags().String("cluster-id", "test-cluster", "Cluster ID to fetch the token from")
 
-	vaultCmd.AddCommand(vaultGetCmd)
-	vaultCmd.AddCommand(vaultSetCmd)
-	vaultCmd.AddCommand(vaultUploadCmd)
-	vaultCmd.AddCommand(vaultFetchCmd)
-	rootCmd.AddCommand(vaultCmd)
+	secretsCmd.AddCommand(secretsGetCmd)
+	secretsCmd.AddCommand(secretsSetCmd)
+	secretsCmd.AddCommand(secretsUploadCmd)
+	secretsCmd.AddCommand(secretsFetchCmd)
+	rootCmd.AddCommand(secretsCmd)
 }

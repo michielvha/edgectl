@@ -4,7 +4,7 @@ Copyright © 2025 EDGEFORGE contact@edgeforge.eu
 Package vault provides specialized handlers for RKE2 cluster secrets management.
 
 This file handles cluster-level operations:
-- DeleteClusterData: Removes all Vault data for a given cluster (token, kubeconfig, masters, LB entries)
+- DeleteClusterData: Removes all secret store data for a given cluster (token, kubeconfig, masters, LB entries)
 */
 package vault
 
@@ -14,7 +14,7 @@ import (
 	"github.com/michielvha/edgectl/pkg/logger"
 )
 
-// DeleteClusterData permanently removes all Vault data for a cluster.
+// DeleteClusterData permanently removes all secret store data for a cluster.
 // Uses kv/metadata/ prefix for permanent deletion of all KV v2 versions.
 // Errors are logged as warnings and do not stop the cleanup — best-effort deletion.
 func (c *Client) DeleteClusterData(clusterID string) error {

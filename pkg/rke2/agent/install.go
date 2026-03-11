@@ -14,23 +14,23 @@ import (
 )
 
 // Install sets up the RKE2 agent on the host.
-// It fetches the join token from Vault using the supplied clusterID.
-// VIP resolution priority: Vault > --vip flag > --lb-hostname flag (DNS resolved).
+// It fetches the join token from the secret store using the supplied clusterID.
+// VIP resolution priority: secret store > --vip flag > --lb-hostname flag (DNS resolved).
 func Install(clusterID, vip, lbHostname string) error {
 	vaultClient, err := vault.NewClient()
 	if err != nil {
-		return fmt.Errorf("failed to initialize Vault client: %w", err)
+		return fmt.Errorf("failed to initialize secret store client: %w", err)
 	}
 
 	if _, err := FetchToken(clusterID); err != nil {
 		return err
 	}
 
-	// Priority 1: fetch the VIP from Master Info in Vault
+	// Priority 1: fetch the VIP from Master Info in the secret store
 	_, storedVIP, _, err := vaultClient.RetrieveMasterInfo(clusterID)
 	if err == nil && storedVIP != "" {
 		vip = storedVIP
-		fmt.Printf("🔍 VIP fetched from Vault: %s\n", storedVIP)
+		fmt.Printf("🔍 VIP fetched from secret store: %s\n", storedVIP)
 	}
 
 	// Priority 2: --vip flag is already set via the parameter
@@ -50,7 +50,7 @@ func Install(clusterID, vip, lbHostname string) error {
 		installOptions = fmt.Sprintf("-l %s", vip)
 		fmt.Printf("🌐 Using VIP %s for load balancer TLS SANs\n", vip)
 	} else {
-		logger.Debug("No VIP found via Vault, --vip, or --lb-hostname, using default settings")
+		logger.Debug("No VIP found via secret store, --vip, or --lb-hostname, using default settings")
 	}
 	// Run the installation script with options
 	common.RunBashFunction("rke2.sh", fmt.Sprintf("install_rke2_agent %s", installOptions))
@@ -58,11 +58,11 @@ func Install(clusterID, vip, lbHostname string) error {
 	return nil
 }
 
-// Fetch token from Vault & set as env variable
+// FetchToken fetches token from the secret store & sets as env variable
 func FetchToken(clusterID string) (string, error) {
 	vaultClient, err := vault.NewClient()
 	if err != nil {
-		return "", fmt.Errorf("failed to initialize Vault client: %w", err)
+		return "", fmt.Errorf("failed to initialize secret store client: %w", err)
 	}
 
 	token, err := vaultClient.RetrieveJoinToken(clusterID)
