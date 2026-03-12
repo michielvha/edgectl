@@ -33,7 +33,7 @@ func CheckRoot() error {
 	}
 
 	// Build args: sudo -E <executable> <original args...>
-	// -E preserves environment variables (BAO_ADDR, BAO_TOKEN, etc.)
+	// -E preserves environment variables (VAULT_ADDR, BAO_TOKEN, etc.)
 	args := append([]string{"sudo", "-E", execPath}, os.Args[1:]...)
 
 	return syscall.Exec(sudoPath, args, os.Environ())

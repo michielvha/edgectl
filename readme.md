@@ -41,7 +41,7 @@ Or download a pre-built binary from the [releases page](https://github.com/michi
 
 ```bash
 # Set up secret store connection
-export BAO_ADDR="https://your-openbao-instance:8200"
+export VAULT_ADDR="https://your-openbao-instance:8200"
 export BAO_TOKEN="your-token"
 
 # Bootstrap a new cluster

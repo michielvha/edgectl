@@ -29,7 +29,7 @@ edgectl uses OpenBao to store and retrieve cluster secrets (join tokens, kubecon
 Set the following environment variables:
 
 ```bash
-export BAO_ADDR="https://your-openbao-instance:8200"
+export VAULT_ADDR="https://your-openbao-instance:8200"
 export BAO_TOKEN="your-token"
 ```
 
@@ -44,7 +44,7 @@ docker run --cap-add=IPC_LOCK \
 
 Then:
 ```bash
-export BAO_ADDR="http://127.0.0.1:8200"
+export VAULT_ADDR="http://127.0.0.1:8200"
 export BAO_TOKEN="root"
 ```
 

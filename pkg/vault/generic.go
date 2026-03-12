@@ -29,14 +29,8 @@ type Client struct {
 }
 
 func NewClient() (*Client, error) {
+	// The OpenBao SDK reads VAULT_ADDR from the environment automatically.
 	config := vault.DefaultConfig()
-
-	// The OpenBao SDK reads VAULT_ADDR by default, but we use BAO_ADDR.
-	// Explicitly override if BAO_ADDR is set (VAULT_ADDR still works as fallback).
-	if addr := os.Getenv("BAO_ADDR"); addr != "" {
-		config.Address = addr
-	}
-
 	client, err := vault.NewClient(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create secret store client: %w", err)

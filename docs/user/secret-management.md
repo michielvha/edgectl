@@ -58,6 +58,8 @@ docker compose exec openbao bao operator unseal    # paste key 3
 # 3. Enable KV v2
 export BAO_TOKEN="<root-token-from-init>"
 docker compose exec openbao env BAO_TOKEN="$BAO_TOKEN" bao secrets enable -path=kv -version=2 kv
+# docker exec -e BAO_TOKEN=your-token openbao bao secrets enable -path=kv -version=2 kv
+
 ```
 
 </details>
@@ -71,10 +73,10 @@ docker run --cap-add=IPC_LOCK \
   openbao/openbao:2.3.1 server -dev
 ```
 
-Dev mode is auto-unsealed, runs fully in-memory, and mounts a KV v2 engine at `secret/` by default. You still need to enable the `kv/` path that edgectl uses:
+Dev mode is auto-unsealed, runs fully in-memory, and mounts a KV v1 engine at `secret/` by default (just like the prod). You still need to enable the `kv/` path that edgectl uses:
 
 ```bash
-export BAO_ADDR="http://127.0.0.1:8200"
+export VAULT_ADDR="http://127.0.0.1:8200"
 export BAO_TOKEN="root"
 bao secrets enable -path=kv -version=2 kv
 ```
@@ -94,7 +96,7 @@ OpenBao replaces the `vault` binary with `bao`. All CLI commands are identical t
 Set these environment variables so edgectl can reach your OpenBao instance:
 
 ```bash
-export BAO_ADDR="https://your-openbao-instance:8200"
+export VAULT_ADDR="https://your-openbao-instance:8200"
 export BAO_TOKEN="<your-token>"
 ```
 
@@ -136,7 +138,7 @@ edgectl vault fetch --cluster-id <id>    # Fetch join token
 
 ## Verify your setup
 
-If `bao` is installed on your host, you can run commands directly (with `BAO_ADDR` and `BAO_TOKEN` set). Otherwise, exec into the container:
+If `bao` is installed on your host, you can run commands directly (with `VAULT_ADDR` and `BAO_TOKEN` set). Otherwise, exec into the container:
 
 ```bash
 # Check connectivity
