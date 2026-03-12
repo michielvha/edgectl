@@ -13,70 +13,61 @@
 
 A CLI tool to manage the edge cloud. Comparable to `awscli` or `azure-cli`.
 
-## features
-**TODO: Provide proper list of commands & purposes**
+## Features
 
-- Auto Create an edge cloud kubernetes cluster powered by rke2
-    - Fetch & Add kubeconfig file to current context
-    - Auto setup ArgoCD - Add helm chart to directory on host with rke2 helm integration
-    - Automated lifecycle management of edge cloud
-- Use Cobra for cli
+- **RKE2 Cluster Management** — Bootstrap, join, and manage Kubernetes clusters powered by RKE2
+  - Automated server and agent installation with embedded bash scripts
+  - Cluster ID-based node joining (no manual token handling)
+  - Fetch & merge kubeconfig into your local context
+- **Secret Management** — Powered by [OpenBao](https://openbao.org/) (Linux Foundation fork of HashiCorp Vault, MPL-2.0)
+  - Automatic token storage and retrieval for cluster operations
+  - Generic `get`/`set` commands for ad-hoc secret management
+- **Load Balancer** — Automated HAProxy + Keepalived setup for HA clusters
+  - Primary/backup node configuration with VIP failover
+  - Status monitoring and cleanup commands
+- **Logging** — Structured logging with `zerolog`, `--verbose` flag for debug output
+- **Cross-platform releases** — GoReleaser with Homebrew tap support
 
-## Use edgectl
+## Install
 
-install the cli with the following commands:
-```shell
+```bash
 go install github.com/michielvha/edgectl@latest
 edgectl version
 ```
 
-## Changelog & TODO
+Or download a pre-built binary from the [releases page](https://github.com/michielvha/edgectl/releases/latest).
+
+## Quick Start
+
+```bash
+# Set up secret store connection
+export BAO_ADDR="https://your-openbao-instance:8200"
+export BAO_TOKEN="your-token"
+
+# Bootstrap a new cluster
+sudo edgectl rke2 server install --vip 172.16.12.232
+
+# Join worker nodes
+sudo edgectl rke2 agent install --cluster-id <cluster-id>
+
+# Fetch kubeconfig
+edgectl rke2 system kubeconfig --cluster-id <cluster-id>
+```
+
+## Documentation
+
+See [docs/README.md](docs/README.md) for full documentation including architecture, development setup, and project plans.
+
+## Roadmap
 
 - [ ] Enable [encryption at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) for secrets
-- [ ] [#31](https://github.com/michielvha/edgectl/issues/31) - Add support for fedora based architectures.
-- [ ] write some kind of var or file to determine which system is which role ( server, agent, lb ) or find another way. VIPER?
-- [ ] [#35](https://github.com/michielvha/edgectl/issues/35) - Create unit/integration tests file so we can test before release
-  
-### Logging
-
-- Integrated viper for environment variables and config file support
-  - [ ] Create logic to allow Adding ClusterID to the config file so you don't have to manually specify it
-  - [ ] Store Cluster-ID & role in `/etc/environment` so it's available everywhere.
-- using viper for global flags.
-  - [ ] Add support for `--dry-run` to all commands
-  
-### managed rke2
-
-- [ ] Auto Bootstrap ArgoCD for automated dev setup
-  - [ ] Add helm chart to directory on host with rke2 helm integration
-- [ ] Some kind of debug command that will verify connectivity etc, when an install fails..?
-- [ ] optionally Auto install rancher as a management interface.
-
-### Secret Management
-
-Secret management is powered by [OpenBao](https://openbao.org/), the Linux Foundation community fork of HashiCorp Vault. OpenBao is open-source (MPL-2.0) and wire-compatible with Vault's KV v2 API.
-
-Future goal: redesign the code with an interface to easily allow bringing your own secret management backend. (infisical,secretsmanager,azurekeyvault,...)
+- [ ] [#31](https://github.com/michielvha/edgectl/issues/31) — Add support for Fedora-based architectures
+- [ ] [#35](https://github.com/michielvha/edgectl/issues/35) — Create unit/integration tests
+- [ ] Auto-bootstrap ArgoCD for automated dev setup
+- [ ] Add `--dry-run` support to all commands
+- [ ] Interface pattern for pluggable secret backends (infisical, AWS Secrets Manager, Azure Key Vault, etc.)
 
 ---
-
-# Done features
-
-Check what should be retained in the features list & remove everything else:
-
-- [x] Create pipeline to auto release with goreleaser.
-- [x] Create version command using cobra and the variable is dynamically set at build time, in pipeline this is integrated with GitVersion.
-- [x] Ensure scalable file structure.
-- [x] Create commands to call bash scripts for admin tasks, rke2 install etc.
-- [x] Integrate OpenBao for secret management.
-  - [x] Auto save & fetch secrets to Add agents to workers automatically
-  - [x] add some kind of clusterID generation to be able to tell what to join with what.. I'm thinking based of hostname and then handle the hostname per customer. so create an id on master creation if cluster id provided don't create new one. Always ask for the cluster id when joining a worker, all other logic can be handled based of that in the background.
-- [x] Fetch kubeconfig automatically. like in ``azure-cli``
-- [x] update gitVersion to be like chartFetch with release branch strategy
--  Changed to a logging library (zerolog) and wrote log.go pkg to support log levels and better logging. Supporting a `--verbose` flag to enable debug logging. **We'll only use `logger.debug` for debug logging everything else will be stdout on cli.**
-
----
-
 
 [![Go Doc](https://pkg.go.dev/badge/github.com/michielvha/edgectl.svg)](https://pkg.go.dev/github.com/michielvha/edgectl)
 [![license](https://img.shields.io/github/license/michielvha/edgectl.svg?style=flat-square)](LICENSE)

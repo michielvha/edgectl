@@ -1,7 +1,7 @@
 # Architectural Overview of EdgeCTL
 
 ## Overview
-EdgeCTL is a CLI tool designed to manage edge cloud infrastructure. It provides functionality for provisioning Kubernetes clusters, managing secrets, and interacting with load balancers. The architecture is modular, leveraging Go packages and external tools like HashiCorp Vault and RKE2.
+EdgeCTL is a CLI tool designed to manage edge cloud infrastructure. It provides functionality for provisioning Kubernetes clusters, managing secrets, and interacting with load balancers. The architecture is modular, leveraging Go packages and external tools like OpenBao and RKE2.
 
 ---
 
@@ -52,7 +52,7 @@ graph TD;
 - **Directory:** `cmd/`
 - **Description:** Contains subcommands for managing RKE2, Vault, and load balancers.
   - `rke2.go`: Handles RKE2 cluster operations.
-  - `vault.go`: Manages secrets in HashiCorp Vault.
+  - `vault.go`: Manages secrets in OpenBao.
   - `version.go`: Displays CLI version.
   - `rke2/lb/commands.go`: Manages load balancer setup and status.
 
@@ -65,9 +65,9 @@ graph TD;
   - **File:** `pkg/common/`
   - **Description:** Contains shared utilities like embedded scripts and helper functions.
 
-- **Vault Integration**
+- **Secret Store Integration**
   - **File:** `pkg/vault/`
-  - **Description:** Handles interactions with HashiCorp Vault for secrets management.
+  - **Description:** Handles interactions with OpenBao for secrets management.
 
 - **RKE2 Server Logic**
   - **File:** `pkg/rke2/server/install.go`
@@ -81,8 +81,8 @@ graph TD;
 
 ## External Dependencies
 
-### 1. **HashiCorp Vault**
-- Used for secure storage and retrieval of secrets.
+### 1. **OpenBao**
+- Used for secure storage and retrieval of secrets (Linux Foundation fork of HashiCorp Vault).
 
 ### 2. **RKE2**
 - Lightweight Kubernetes distribution for edge environments.
@@ -95,7 +95,7 @@ graph TD;
 ## Future Enhancements
 - Add support for Fedora-based architectures.
 - Implement a debug command for connectivity verification.
-- Introduce multi-tenant support via Vault namespaces.
+- Introduce multi-tenant support via OpenBao namespaces.
 
 ---
 
