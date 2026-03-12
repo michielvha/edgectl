@@ -1,0 +1,25 @@
+services:
+  openbao:
+    image: openbao/openbao:2.3.1
+    container_name: openbao
+    command: ["server", "-config=/openbao/config/bao.hcl"]
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+      - "8201:8201"
+    environment:
+      - BAO_ADDR=http://127.0.0.1:8200
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8200/v1/sys/seal-status"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    volumes:
+      - ./config.hcl:/openbao/config/bao.hcl:ro
+      - openbao_data:/openbao/file
+    restart: unless-stopped
+
+volumes:
+  openbao_data:
