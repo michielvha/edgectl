@@ -26,24 +26,41 @@ docker compose up -d
 
 This runs OpenBao with **Raft integrated storage** (persistent, transactional, recommended over the file backend). Data is stored in a named Docker volume.
 
-After the first start, you need to initialize and unseal:
+After the first start, you need to initialize, unseal, and enable the KV engine. An init script is provided that does all three in one go:
 
 ```bash
-# Initialize — save the unseal keys and root token!
-docker compose exec openbao bao operator init
-
-# Unseal (repeat 3 times with different unseal keys)
-docker compose exec openbao bao operator unseal
-
-# Login with the root token
-export BAO_ADDR="http://127.0.0.1:8200"
-export BAO_TOKEN="<root-token-from-init>"
-
-# Enable KV v2 at the path edgectl expects
-bao secrets enable -path=kv -version=2 kv
+cd deploy/openbao
+docker compose up -d
+./init.sh
 ```
 
-> **Note:** After every container restart you must unseal again (3 of 5 keys). For unattended operation, configure [auto-unseal](https://openbao.org/docs/configuration/seal/) via Transit, AWS KMS, Azure Key Vault, or GCP Cloud KMS.
+The script will:
+1. Initialize OpenBao and print **5 unseal keys** + **1 root token**
+2. Auto-unseal using 3 of the 5 keys
+3. Enable the KV v2 engine at the `kv/` path that edgectl expects
+
+> **Save the unseal keys and root token.** The unseal keys are the only way to unlock OpenBao after a restart. If you lose them, you must wipe the volume and reinitialize (`docker compose down -v && docker compose up -d && ./init.sh`).
+
+> **After every container restart** you must unseal again (3 of 5 keys). For unattended operation, configure [auto-unseal](https://openbao.org/docs/configuration/seal/) via Transit, AWS KMS, Azure Key Vault, or GCP Cloud KMS.
+
+<details>
+<summary>Manual steps (if you prefer not to use the script)</summary>
+
+```bash
+# 1. Initialize — prints unseal keys + root token
+docker compose exec openbao bao operator init
+
+# 2. Unseal (repeat 3 times with different unseal keys)
+docker compose exec openbao bao operator unseal    # paste key 1
+docker compose exec openbao bao operator unseal    # paste key 2
+docker compose exec openbao bao operator unseal    # paste key 3
+
+# 3. Enable KV v2
+export BAO_TOKEN="<root-token-from-init>"
+docker compose exec openbao env BAO_TOKEN="$BAO_TOKEN" bao secrets enable -path=kv -version=2 kv
+```
+
+</details>
 
 ### Option 2: Dev mode (quick testing, no persistence)
 
@@ -119,16 +136,18 @@ edgectl vault fetch --cluster-id <id>    # Fetch join token
 
 ## Verify your setup
 
+If `bao` is installed on your host, you can run commands directly (with `BAO_ADDR` and `BAO_TOKEN` set). Otherwise, exec into the container:
+
 ```bash
 # Check connectivity
-bao status
+docker compose exec openbao bao status
 
 # Write a test secret
-bao kv put kv/test foo=bar
+docker compose exec openbao bao kv put kv/test foo=bar
 
 # Read it back
-bao kv get kv/test
+docker compose exec openbao bao kv get kv/test
 
 # Clean up
-bao kv metadata delete kv/test
+docker compose exec openbao bao kv metadata delete kv/test
 ```
