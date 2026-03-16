@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package server
 
@@ -18,12 +18,7 @@ import (
 // If `isExisting` is true, it pulls the token from the secret store using the supplied clusterID.
 // Otherwise, it generates a new clusterID and saves token + kubeconfig to the secret store.
 // If `vip` is provided, it will be used in the TLS SANs for the server. if a cluster id is provided, it will fetch VIP from the secret store.
-func Install(clusterID string, isExisting bool, vip string) error {
-	vaultClient, err := vault.NewClient()
-	if err != nil {
-		return fmt.Errorf("failed to initialize secret store client: %w", err)
-	}
-
+func Install(store vault.SecretStore, clusterID string, isExisting bool, vip string) error {
 	// Get current hostname
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -32,13 +27,13 @@ func Install(clusterID string, isExisting bool, vip string) error {
 
 	// If the cluster ID was provided (existing cluster), fetch the join token
 	if isExisting {
-		if _, err := FetchTokenFromSecretStore(clusterID); err != nil {
+		if _, err := FetchTokenFromSecretStore(store, clusterID); err != nil {
 			return err
 		}
 
 		// For existing clusters, try to fetch the VIP from the secret store if none was provided
 		if vip == "" {
-			_, storedVIP, _, err := vaultClient.RetrieveMasterInfo(clusterID)
+			_, storedVIP, _, err := store.RetrieveMasterInfo(clusterID)
 			if err == nil && storedVIP != "" {
 				fmt.Printf("🔍 VIP fetched from secret store: %s\n", storedVIP)
 				vip = storedVIP
@@ -70,7 +65,7 @@ func Install(clusterID string, isExisting bool, vip string) error {
 		}
 
 		token := strings.TrimSpace(string(tokenBytes))
-		if err := vaultClient.StoreJoinToken(clusterID, token); err != nil {
+		if err := store.StoreJoinToken(clusterID, token); err != nil {
 			return fmt.Errorf("failed to store token in secret store: %w", err)
 		}
 		fmt.Printf("🔐 Token successfully stored in secret store for cluster %s\n", clusterID)
@@ -80,7 +75,7 @@ func Install(clusterID string, isExisting bool, vip string) error {
 			return fmt.Errorf("kubeconfig file not found at path: %s", kubeconfigPath)
 		}
 
-		err = vaultClient.StoreKubeConfig(clusterID, kubeconfigPath, vip)
+		err = store.StoreKubeConfig(clusterID, kubeconfigPath, vip)
 		if err != nil {
 			return fmt.Errorf("failed to store kubeconfig in secret store: %w", err)
 		}
@@ -94,7 +89,7 @@ func Install(clusterID string, isExisting bool, vip string) error {
 	var hosts []string
 	existingVIP := vip // Use provided VIP as default
 
-	existingHosts, storedVIP, _, err := vaultClient.RetrieveMasterInfo(clusterID)
+	existingHosts, storedVIP, _, err := store.RetrieveMasterInfo(clusterID)
 	if err == nil {
 		// Successfully retrieved existing master info
 		hosts = existingHosts
@@ -125,7 +120,7 @@ func Install(clusterID string, isExisting bool, vip string) error {
 	}
 
 	// Store updated master info with the VIP
-	err = vaultClient.StoreMasterInfo(clusterID, hostname, hosts, existingVIP)
+	err = store.StoreMasterInfo(clusterID, hostname, hosts, existingVIP)
 	if err != nil {
 		return fmt.Errorf("failed to store master node info in secret store: %w", err)
 	}
@@ -140,13 +135,8 @@ func Install(clusterID string, isExisting bool, vip string) error {
 
 // FetchTokenFromSecretStore fetches token from the secret store & sets as env var.
 // Also retrieves the first master's IP if joining an existing cluster.
-func FetchTokenFromSecretStore(clusterID string) (string, error) {
-	vaultClient, err := vault.NewClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to initialize secret store client: %w", err)
-	}
-
-	token, err := vaultClient.RetrieveJoinToken(clusterID)
+func FetchTokenFromSecretStore(store vault.SecretStore, clusterID string) (string, error) {
+	token, err := store.RetrieveJoinToken(clusterID)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve join token: %w", err)
 	}
@@ -163,7 +153,7 @@ func FetchTokenFromSecretStore(clusterID string) (string, error) {
 	fmt.Println("✅ Set RKE2_TOKEN environment variable")
 
 	// For additional master nodes, get the first master's IP
-	firstMasterIP, ipErr := vaultClient.RetrieveFirstMasterIP(clusterID)
+	firstMasterIP, ipErr := store.RetrieveFirstMasterIP(clusterID)
 	if ipErr == nil && firstMasterIP != "" {
 		// Set server IP as environment variable if available
 		_ = os.Setenv("RKE2_SERVER_IP", firstMasterIP)

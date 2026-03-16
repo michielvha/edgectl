@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package agent
 
@@ -10,6 +10,7 @@ import (
 	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/michielvha/edgectl/pkg/rke2/agent"
+	"github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +40,12 @@ var installCmd = &cobra.Command{
 		vip, _ := cmd.Flags().GetString("vip")
 		lbHostname, _ := cmd.Flags().GetString("lb-hostname")
 
-		err := agent.Install(clusterID, vip, lbHostname)
+		store := vault.InitVaultClient()
+		if store == nil {
+			os.Exit(1)
+		}
+
+		err := agent.Install(store, clusterID, vip, lbHostname)
 		if err != nil {
 			fmt.Printf("❌ RKE2 agent install failed: %v\n", err)
 			os.Exit(1)

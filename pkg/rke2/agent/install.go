@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package agent
 
@@ -16,18 +16,13 @@ import (
 // Install sets up the RKE2 agent on the host.
 // It fetches the join token from the secret store using the supplied clusterID.
 // VIP resolution priority: secret store > --vip flag > --lb-hostname flag (DNS resolved).
-func Install(clusterID, vip, lbHostname string) error {
-	vaultClient, err := vault.NewClient()
-	if err != nil {
-		return fmt.Errorf("failed to initialize secret store client: %w", err)
-	}
-
-	if _, err := FetchToken(clusterID); err != nil {
+func Install(store vault.SecretStore, clusterID, vip, lbHostname string) error {
+	if _, err := FetchToken(store, clusterID); err != nil {
 		return err
 	}
 
 	// Priority 1: fetch the VIP from Master Info in the secret store
-	_, storedVIP, _, err := vaultClient.RetrieveMasterInfo(clusterID)
+	_, storedVIP, _, err := store.RetrieveMasterInfo(clusterID)
 	if err == nil && storedVIP != "" {
 		vip = storedVIP
 		fmt.Printf("🔍 VIP fetched from secret store: %s\n", storedVIP)
@@ -59,13 +54,8 @@ func Install(clusterID, vip, lbHostname string) error {
 }
 
 // FetchToken fetches token from the secret store & sets as env variable
-func FetchToken(clusterID string) (string, error) {
-	vaultClient, err := vault.NewClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to initialize secret store client: %w", err)
-	}
-
-	token, err := vaultClient.RetrieveJoinToken(clusterID)
+func FetchToken(store vault.SecretStore, clusterID string) (string, error) {
+	token, err := store.RetrieveJoinToken(clusterID)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve join token: %w", err)
 	}

@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package lb
 
@@ -10,6 +10,7 @@ import (
 	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/lb"
 	"github.com/michielvha/edgectl/pkg/logger"
+	"github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -38,7 +39,12 @@ var createCmd = &cobra.Command{
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		vip, _ := cmd.Flags().GetString("vip")
 
-		err := lb.CreateLoadBalancer(clusterID, vip)
+		store := vault.InitVaultClient()
+		if store == nil {
+			os.Exit(1)
+		}
+
+		err := lb.CreateLoadBalancer(store, clusterID, vip)
 		if err != nil {
 			fmt.Printf("❌ Failed to create load balancer: %v\n", err)
 			os.Exit(1)
@@ -56,7 +62,12 @@ var statusCmd = &cobra.Command{
 
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 
-		vip, nodes, err := lb.GetStatus(clusterID)
+		store := vault.InitVaultClient()
+		if store == nil {
+			os.Exit(1)
+		}
+
+		vip, nodes, err := lb.GetStatus(store, clusterID)
 		if err != nil {
 			fmt.Printf("❌ Failed to retrieve load balancer info: %v\n", err)
 			os.Exit(1)
@@ -94,7 +105,12 @@ Example:
 		logger.Debug("Extracting values from command line arguments")
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 
-		err := lb.CleanupLoadBalancer(clusterID)
+		store := vault.InitVaultClient()
+		if store == nil {
+			os.Exit(1)
+		}
+
+		err := lb.CleanupLoadBalancer(store, clusterID)
 		if err != nil {
 			fmt.Printf("❌ Failed to clean up load balancer: %v\n", err)
 			os.Exit(1)

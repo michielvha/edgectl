@@ -14,6 +14,9 @@ help:
 	@echo "  make lb-status             Run 'rke2 lb status --cluster-id rke2-03db202f'"
 	@echo "  make purge        		    Run 'rke2 purge'"
 	@echo "  make config                Run 'rke2 config'"
+	@echo "  make test                  Run all unit tests"
+	@echo "  make test-cover            Run unit tests with coverage report"
+	@echo "  make test-integration      Run integration tests (requires Docker)"
 	@echo "  make test-func             Test a Go function with a sample input"
 	@echo "  make clean                 Remove temporary files (optional)"
 
@@ -65,6 +68,24 @@ status:
 test-func:
 	@echo "🔍 Testing individual function..."
 	go run ./cmd/debug/test.go
+
+# Test targets
+.PHONY: test
+test:
+	@echo "🧪 Running unit tests..."
+	go test ./... -v
+
+.PHONY: test-cover
+test-cover:
+	@echo "🧪 Running unit tests with coverage..."
+	go test ./... -v -coverprofile=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "📊 Coverage report written to coverage.html"
+
+.PHONY: test-integration
+test-integration:
+	@echo "🧪 Running integration tests (requires Docker)..."
+	go test ./pkg/vault/ -tags=integration -v -count=1
 
 .PHONY: clean
 clean:
