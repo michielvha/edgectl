@@ -36,5 +36,5 @@ func CheckRoot() error {
 	// -E preserves environment variables (VAULT_ADDR, BAO_TOKEN, etc.)
 	args := append([]string{"sudo", "-E", execPath}, os.Args[1:]...)
 
-	return syscall.Exec(sudoPath, args, os.Environ())
+	return syscall.Exec(sudoPath, args, os.Environ()) //nolint:gosec // intentional sudo re-exec
 }

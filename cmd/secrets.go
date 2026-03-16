@@ -6,8 +6,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/michielvha/edgectl/pkg/vault"
 	"github.com/spf13/cobra"
+
+	"github.com/michielvha/edgectl/pkg/vault"
 )
 
 // --- Generic commands ---

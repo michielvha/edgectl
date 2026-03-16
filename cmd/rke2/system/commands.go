@@ -8,10 +8,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/michielvha/edgectl/pkg/vault"
-	"github.com/spf13/cobra"
 )
 
 // Get user home directory for storing kubeconfig
@@ -116,7 +117,7 @@ func init() {
 	// Kubeconfig command flags
 	kubeconfigCmd.Flags().String("cluster-id", "", "The ID of the cluster to fetch the kubeconfig for")
 	// Set default output path for kubeconfig generated from userHomeDir
-	homeBasedKubeconfig := filepath.Join(userHomeDir, ".kube/config")
+	homeBasedKubeconfig := filepath.Join(userHomeDir, ".kube", "config")
 	kubeconfigCmd.Flags().String("output", homeBasedKubeconfig, "Destination path to store the kubeconfig")
 
 	_ = kubeconfigCmd.MarkFlagRequired("cluster-id")

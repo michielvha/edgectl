@@ -29,7 +29,7 @@ func (c *Client) StoreLBInfo(clusterID, hostname, vip string, isMain bool) error
 }
 
 // RetrieveLBInfo retrieves information about load balancer nodes
-func (c *Client) RetrieveLBInfo(clusterID string) ([]map[string]interface{}, string, error) {
+func (c *Client) RetrieveLBInfo(clusterID string) (nodes []map[string]interface{}, vip string, err error) {
 	// List all LB entries for this cluster
 	path := fmt.Sprintf("kv/metadata/rke2/%s/lb", clusterID)
 	keys, err := c.ListKeys(path)
@@ -47,7 +47,6 @@ func (c *Client) RetrieveLBInfo(clusterID string) ([]map[string]interface{}, str
 	}
 
 	lbNodes := []map[string]interface{}{}
-	var vip string
 
 	// Retrieve details for each LB
 	for _, key := range keys {

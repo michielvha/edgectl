@@ -7,21 +7,21 @@ package vault
 // Each field is a function that, when set, overrides the default (zero-value) behavior.
 // Tests set only the methods they care about; unset methods panic with a clear message.
 type MockStore struct {
-	StoreSecretFunc        func(fullVaultPath string, data map[string]interface{}) error
-	RetrieveSecretFunc     func(fullVaultPath string) (map[string]interface{}, error)
-	ListKeysFunc           func(fullVaultPath string) ([]string, error)
-	DeleteSecretFunc       func(fullVaultPath string) error
-	StoreJoinTokenFunc     func(clusterID, token string) error
-	RetrieveJoinTokenFunc  func(clusterID string) (string, error)
-	StoreMasterInfoFunc    func(clusterID, hostname string, hosts []string, vip string) error
-	RetrieveMasterInfoFunc func(clusterID string) ([]string, string, map[string]string, error)
+	StoreSecretFunc           func(fullVaultPath string, data map[string]interface{}) error
+	RetrieveSecretFunc        func(fullVaultPath string) (map[string]interface{}, error)
+	ListKeysFunc              func(fullVaultPath string) ([]string, error)
+	DeleteSecretFunc          func(fullVaultPath string) error
+	StoreJoinTokenFunc        func(clusterID, token string) error
+	RetrieveJoinTokenFunc     func(clusterID string) (string, error)
+	StoreMasterInfoFunc       func(clusterID, hostname string, hosts []string, vip string) error
+	RetrieveMasterInfoFunc    func(clusterID string) ([]string, string, map[string]string, error)
 	RetrieveFirstMasterIPFunc func(clusterID string) (string, error)
-	StoreKubeConfigFunc    func(clusterID, kubeconfigPath string, vip string) error
-	RetrieveKubeConfigFunc func(clusterID, destinationPath string) error
-	StoreLBInfoFunc        func(clusterID, hostname, vip string, isMain bool) error
-	RetrieveLBInfoFunc     func(clusterID string) ([]map[string]interface{}, string, error)
-	RemoveLBNodeFunc       func(clusterID, hostname string) error
-	DeleteClusterDataFunc  func(clusterID string) error
+	StoreKubeConfigFunc       func(clusterID, kubeconfigPath, vip string) error
+	RetrieveKubeConfigFunc    func(clusterID, destinationPath string) error
+	StoreLBInfoFunc           func(clusterID, hostname, vip string, isMain bool) error
+	RetrieveLBInfoFunc        func(clusterID string) ([]map[string]interface{}, string, error)
+	RemoveLBNodeFunc          func(clusterID, hostname string) error
+	DeleteClusterDataFunc     func(clusterID string) error
 }
 
 // Compile-time check: *MockStore must satisfy SecretStore.
@@ -76,7 +76,7 @@ func (m *MockStore) StoreMasterInfo(clusterID, hostname string, hosts []string, 
 	panic("MockStore.StoreMasterInfo not set")
 }
 
-func (m *MockStore) RetrieveMasterInfo(clusterID string) ([]string, string, map[string]string, error) {
+func (m *MockStore) RetrieveMasterInfo(clusterID string) (hosts []string, vip string, hostIPs map[string]string, err error) {
 	if m.RetrieveMasterInfoFunc != nil {
 		return m.RetrieveMasterInfoFunc(clusterID)
 	}
@@ -90,7 +90,7 @@ func (m *MockStore) RetrieveFirstMasterIP(clusterID string) (string, error) {
 	panic("MockStore.RetrieveFirstMasterIP not set")
 }
 
-func (m *MockStore) StoreKubeConfig(clusterID, kubeconfigPath string, vip string) error {
+func (m *MockStore) StoreKubeConfig(clusterID, kubeconfigPath, vip string) error {
 	if m.StoreKubeConfigFunc != nil {
 		return m.StoreKubeConfigFunc(clusterID, kubeconfigPath, vip)
 	}
@@ -111,7 +111,7 @@ func (m *MockStore) StoreLBInfo(clusterID, hostname, vip string, isMain bool) er
 	panic("MockStore.StoreLBInfo not set")
 }
 
-func (m *MockStore) RetrieveLBInfo(clusterID string) ([]map[string]interface{}, string, error) {
+func (m *MockStore) RetrieveLBInfo(clusterID string) (nodes []map[string]interface{}, vip string, err error) {
 	if m.RetrieveLBInfoFunc != nil {
 		return m.RetrieveLBInfoFunc(clusterID)
 	}

@@ -105,7 +105,7 @@ func CreateLoadBalancer(store vault.SecretStore, clusterID, vip string) error {
 	}
 
 	// Bootstrap the load balancer
-	return BootstrapLB(LoadBalancerConfig{
+	return BootstrapLB(&LoadBalancerConfig{
 		ClusterID: clusterID,
 		IsMain:    isMain,
 		Interface: iface,
@@ -126,7 +126,7 @@ func BootstrapLBFromSecretStore(store vault.SecretStore, clusterID string, isMai
 		return fmt.Errorf("could not detect network interface for VIP %s: %w", vip, err)
 	}
 
-	return BootstrapLB(LoadBalancerConfig{
+	return BootstrapLB(&LoadBalancerConfig{
 		ClusterID: clusterID,
 		IsMain:    isMain,
 		Interface: iface,
@@ -136,7 +136,7 @@ func BootstrapLBFromSecretStore(store vault.SecretStore, clusterID string, isMai
 	})
 }
 
-func BootstrapLB(cfg LoadBalancerConfig) error {
+func BootstrapLB(cfg *LoadBalancerConfig) error {
 	priority := "100"
 	state := "BACKUP"
 	if cfg.IsMain {
@@ -297,7 +297,7 @@ vrrp_instance haproxy-vip {
 }
 
 func restartService(name string) error {
-	cmd := exec.Command("systemctl", "restart", name)
+	cmd := exec.Command("systemctl", "restart", name) //nolint:gosec // service name is trusted internal value
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -305,7 +305,7 @@ func restartService(name string) error {
 
 func detectInterfaceForVIP(vip string) (string, error) {
 	// Try to find the interface that would be used to reach the VIP
-	out, err := exec.Command("bash", "-c", fmt.Sprintf("ip route get %s | grep -o 'dev [^ ]*' | awk '{print $2}'", vip)).Output()
+	out, err := exec.Command("bash", "-c", fmt.Sprintf("ip route get %s | grep -o 'dev [^ ]*' | awk '{print $2}'", vip)).Output() //nolint:gosec // VIP is trusted CLI input
 	if err != nil {
 		// If that fails, try to find the primary interface
 		out, err = exec.Command("bash", "-c", "ip route | grep default | grep -o 'dev [^ ]*' | awk '{print $2}'").Output()
@@ -362,7 +362,7 @@ func CleanupLoadBalancer(store vault.SecretStore, clusterID string) error {
 
 // disableService disables a systemd service with --now flag to also stop it
 func disableService(name string) error {
-	cmd := exec.Command("systemctl", "disable", "--now", name)
+	cmd := exec.Command("systemctl", "disable", "--now", name) //nolint:gosec // service name is trusted internal value
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

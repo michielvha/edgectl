@@ -6,11 +6,12 @@ Only supported on linux because bash dependencies and containers on windows.. ye
 package cmd
 
 import (
+	"github.com/spf13/cobra"
+
 	agentcmd "github.com/michielvha/edgectl/cmd/rke2/agent"
 	lbcmd "github.com/michielvha/edgectl/cmd/rke2/lb"
 	servercmd "github.com/michielvha/edgectl/cmd/rke2/server"
 	systemcmd "github.com/michielvha/edgectl/cmd/rke2/system"
-	"github.com/spf13/cobra"
 )
 
 // rke2Cmd represents the "rke2" command

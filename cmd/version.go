@@ -6,8 +6,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/spf13/cobra"
+
+	"github.com/michielvha/edgectl/pkg/logger"
 )
 
 // Version is now set in `main.go`

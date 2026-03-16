@@ -8,21 +8,26 @@ import (
 	"github.com/michielvha/edgectl/pkg/vault"
 )
 
+const (
+	testSecretToken = "my-secret-token"
+	testClusterID   = "test-cluster"
+)
+
 // TestFetchTokenFromSecretStore_SetsEnvVars verifies that FetchTokenFromSecretStore
 // retrieves the token and first master IP, setting the expected env vars.
 // Note: This test requires write access to /etc/edgectl (root or writable path).
 func TestFetchTokenFromSecretStore_SetsEnvVars(t *testing.T) {
 	// Skip if we can't write to /etc/edgectl (non-root in CI)
-	if err := os.MkdirAll("/etc/edgectl", 0o755); err != nil {
+	if err := os.MkdirAll("/etc/edgectl", 0o750); err != nil {
 		t.Skip("skipping: cannot write to /etc/edgectl (requires root)")
 	}
 
 	mock := &vault.MockStore{
 		RetrieveJoinTokenFunc: func(clusterID string) (string, error) {
-			if clusterID != "test-cluster" {
+			if clusterID != testClusterID {
 				t.Errorf("unexpected clusterID: %s", clusterID)
 			}
-			return "my-secret-token", nil
+			return testSecretToken, nil
 		},
 		RetrieveFirstMasterIPFunc: func(clusterID string) (string, error) {
 			return "10.0.0.1", nil
@@ -33,31 +38,33 @@ func TestFetchTokenFromSecretStore_SetsEnvVars(t *testing.T) {
 	// Note: FetchTokenFromSecretStore writes to /etc/edgectl which needs root;
 	// in CI this test may need to run as root or the write can be skipped.
 
-	token, err := FetchTokenFromSecretStore(mock, "test-cluster")
+	token, err := FetchTokenFromSecretStore(mock, testClusterID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if token != "my-secret-token" {
-		t.Errorf("expected token 'my-secret-token', got %q", token)
+	if token != testSecretToken {
+		t.Errorf("expected token %q, got %q", testSecretToken, token)
 	}
 
 	// Check env vars were set
-	if got := os.Getenv("RKE2_TOKEN"); got != "my-secret-token" {
-		t.Errorf("expected RKE2_TOKEN='my-secret-token', got %q", got)
+	if got := os.Getenv("RKE2_TOKEN"); got != testSecretToken {
+		t.Errorf("expected RKE2_TOKEN=%q, got %q", testSecretToken, got)
 	}
 	if got := os.Getenv("RKE2_SERVER_IP"); got != "10.0.0.1" {
 		t.Errorf("expected RKE2_SERVER_IP='10.0.0.1', got %q", got)
 	}
 
 	// Cleanup
-	os.Unsetenv("RKE2_TOKEN")
-	os.Unsetenv("RKE2_SERVER_IP")
+	t.Cleanup(func() {
+		os.Unsetenv("RKE2_TOKEN")     //nolint:errcheck
+		os.Unsetenv("RKE2_SERVER_IP") //nolint:errcheck
+	})
 }
 
 // TestFetchTokenFromSecretStore_NoMasterIP verifies graceful handling
 // when no first master IP is available.
 func TestFetchTokenFromSecretStore_NoMasterIP(t *testing.T) {
-	if err := os.MkdirAll("/etc/edgectl", 0o755); err != nil {
+	if err := os.MkdirAll("/etc/edgectl", 0o750); err != nil {
 		t.Skip("skipping: cannot write to /etc/edgectl (requires root)")
 	}
 
@@ -79,7 +86,7 @@ func TestFetchTokenFromSecretStore_NoMasterIP(t *testing.T) {
 	}
 
 	// RKE2_SERVER_IP should not be set when master IP retrieval fails
-	os.Unsetenv("RKE2_TOKEN")
+	t.Cleanup(func() { os.Unsetenv("RKE2_TOKEN") }) //nolint:errcheck
 }
 
 // TestHostDeduplication verifies that adding an existing host doesn't duplicate it.

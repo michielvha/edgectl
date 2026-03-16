@@ -21,8 +21,8 @@ import (
 )
 
 // StoreKubeConfig reads the kubeconfig from the host, modifies it to use VIP if provided, and uploads it to the secret store
-func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath string, vip string) error {
-	kubeconfig, err := os.ReadFile(kubeconfigPath)
+func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath, vip string) error {
+	kubeconfig, err := os.ReadFile(kubeconfigPath) //nolint:gosec // path comes from trusted CLI input
 	if err != nil {
 		return fmt.Errorf("failed to read kubeconfig from path '%s': %w", kubeconfigPath, err)
 	}
@@ -57,7 +57,7 @@ func (c *Client) RetrieveKubeConfig(clusterID, destinationPath string) error {
 
 	// Create directory structure if it doesn't exist
 	dir := filepath.Dir(destinationPath)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return fmt.Errorf("failed to create directory '%s': %w", dir, err)
 	}
 

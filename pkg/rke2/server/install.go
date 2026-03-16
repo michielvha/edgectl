@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+
 	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/michielvha/edgectl/pkg/vault"
@@ -42,8 +43,8 @@ func Install(store vault.SecretStore, clusterID string, isExisting bool, vip str
 	} else {
 		// Generate a new cluster ID
 		clusterID = fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
-		_ = os.MkdirAll("/etc/edgectl", 0o755)
-		_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644)
+		_ = os.MkdirAll("/etc/edgectl", 0o750)
+		_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o600)
 		fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
 	}
 
@@ -142,9 +143,9 @@ func FetchTokenFromSecretStore(store vault.SecretStore, clusterID string) (strin
 	}
 
 	// ensure edgectl main directory exists
-	_ = os.MkdirAll("/etc/edgectl", 0o755)
+	_ = os.MkdirAll("/etc/edgectl", 0o750)
 
-	if err := os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644); err != nil {
+	if err := os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o600); err != nil {
 		return "", fmt.Errorf("failed to write cluster-id: %w", err)
 	}
 

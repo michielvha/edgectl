@@ -19,16 +19,16 @@ type SecretStore interface {
 
 	// RKE2 master/server management
 	StoreMasterInfo(clusterID, hostname string, hosts []string, vip string) error
-	RetrieveMasterInfo(clusterID string) ([]string, string, map[string]string, error)
+	RetrieveMasterInfo(clusterID string) (hosts []string, vip string, hostIPs map[string]string, err error)
 	RetrieveFirstMasterIP(clusterID string) (string, error)
 
 	// RKE2 kubeconfig management
-	StoreKubeConfig(clusterID, kubeconfigPath string, vip string) error
+	StoreKubeConfig(clusterID, kubeconfigPath, vip string) error
 	RetrieveKubeConfig(clusterID, destinationPath string) error
 
 	// RKE2 load balancer management
 	StoreLBInfo(clusterID, hostname, vip string, isMain bool) error
-	RetrieveLBInfo(clusterID string) ([]map[string]interface{}, string, error)
+	RetrieveLBInfo(clusterID string) (nodes []map[string]interface{}, vip string, err error)
 	RemoveLBNode(clusterID, hostname string) error
 
 	// RKE2 cluster management

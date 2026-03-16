@@ -24,7 +24,7 @@ func ExtractEmbeddedScript(scriptName string) string {
 		uid = u.Uid
 	}
 
-	dir := filepath.Join("/tmp", "edgectl-"+uid)
+	dir := filepath.Join("/tmp", "edgectl-"+uid) //nolint:gocritic // /tmp is the intended base for temp scripts
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		fmt.Printf("❌ Failed to create script dir: %v\n", err)
 		os.Exit(1)
@@ -40,7 +40,7 @@ func ExtractEmbeddedScript(scriptName string) string {
 	}
 
 	// Write to a temp file
-	if err := os.WriteFile(scriptPath, data, 0o700); err != nil {
+	if err := os.WriteFile(scriptPath, data, 0o700); err != nil { //nolint:gosec // scripts need execute permission
 		fmt.Printf("❌ Failed to write script: %v\n", err)
 		os.Exit(1)
 	}
@@ -63,7 +63,7 @@ func RunBashFunction(scriptName, commandString string) {
 	}
 
 	// Run the full script and pass the function name and arguments
-	cmd := exec.Command("bash", args...)
+	cmd := exec.Command("bash", args...) //nolint:gosec // args are from trusted embedded scripts
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin // Important to inherit input in case sudo or interactive steps exist

@@ -3,7 +3,7 @@ GO_RUN=go run .
 CLI=edgectl
 
 # Default target
-.PHONY: help
+.PHONY: help build server server-join agent lb-create lb-status purge config test test-cover test-integration test-func clean lint
 help:
 	@echo "Usage:"
 	@echo "  make build                 Build the edgectl binary"
@@ -19,6 +19,8 @@ help:
 	@echo "  make test-integration      Run integration tests (requires Docker)"
 	@echo "  make test-func             Test a Go function with a sample input"
 	@echo "  make clean                 Remove temporary files (optional)"
+	@echo "  make lint            		Run linter with auto-fix"
+
 
 # Build
 .PHONY: build
@@ -91,3 +93,9 @@ test-integration:
 clean:
 	@echo "🧹 Cleaning up..."
 	rm -rf output.log temp/
+
+.PHONY: lint
+lint:
+	@echo "Running golangci-lint with auto-fix on backend..."
+	@export PATH="$$(go env GOPATH)/bin:$$PATH" && \
+	golangci-lint run --fix

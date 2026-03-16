@@ -21,6 +21,7 @@ import (
 	"os"
 
 	vault "github.com/openbao/openbao/api/v2"
+
 	"github.com/michielvha/edgectl/pkg/logger"
 )
 
