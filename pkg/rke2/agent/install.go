@@ -13,6 +13,9 @@ import (
 	"github.com/michielvha/edgectl/pkg/vault"
 )
 
+// lookupHost is a package-level variable wrapping net.LookupHost so tests can inject a stub.
+var lookupHost = net.LookupHost
+
 // Install sets up the RKE2 agent on the host.
 // It fetches the join token from the secret store using the supplied clusterID.
 // VIP resolution priority: secret store > --vip flag > --lb-hostname flag (DNS resolved).
@@ -32,7 +35,7 @@ func Install(store vault.SecretStore, clusterID, vip, lbHostname string) error {
 
 	// Priority 3: resolve --lb-hostname to an IP as fallback
 	if vip == "" && lbHostname != "" {
-		addrs, err := net.LookupHost(lbHostname)
+		addrs, err := lookupHost(lbHostname)
 		if err != nil || len(addrs) == 0 {
 			return fmt.Errorf("failed to resolve load balancer hostname %s: %w", lbHostname, err)
 		}

@@ -4,6 +4,8 @@ Copyright © 2025 VH & Co - contact@vhco.pro
 package lb
 
 import (
+	"fmt"
+	"net"
 	"strings"
 	"testing"
 
@@ -113,6 +115,60 @@ func TestAddServersToBackend_HostNotInMap_FallsDNS(t *testing.T) {
 	result := b.String()
 	if strings.Contains(result, "nonexistent.invalid.test") {
 		t.Errorf("expected unresolvable host to be skipped, got: %q", result)
+	}
+}
+
+func TestAddServersToBackend_DNSFallback_Resolves(t *testing.T) {
+	// Inject a fake lookupIP that returns a known IP.
+	original := lookupIP
+	lookupIP = func(host string) ([]net.IP, error) {
+		if host == "dns-host" {
+			return []net.IP{net.ParseIP("10.99.99.1")}, nil
+		}
+		return nil, fmt.Errorf("not found")
+	}
+	t.Cleanup(func() { lookupIP = original })
+
+	var b strings.Builder
+	addServersToBackend(&b, []string{"dns-host"}, map[string]string{}, 6443)
+
+	result := b.String()
+	if !strings.Contains(result, "server dns-host 10.99.99.1:6443 check") {
+		t.Errorf("expected resolved DNS entry, got:\n%s", result)
+	}
+}
+
+func TestAddServersToBackend_DNSFallback_Error(t *testing.T) {
+	// Inject a failing lookupIP — host should be skipped.
+	original := lookupIP
+	lookupIP = func(host string) ([]net.IP, error) {
+		return nil, fmt.Errorf("DNS resolution failed")
+	}
+	t.Cleanup(func() { lookupIP = original })
+
+	var b strings.Builder
+	addServersToBackend(&b, []string{"fail-host"}, map[string]string{}, 9345)
+
+	if b.Len() != 0 {
+		t.Errorf("expected no output for failed DNS, got: %q", b.String())
+	}
+}
+
+func TestAddServersToBackend_MapTakesPrecedenceOverDNS(t *testing.T) {
+	// Even if lookupIP would return something, the hostIPs map should win.
+	original := lookupIP
+	lookupIP = func(host string) ([]net.IP, error) {
+		t.Error("lookupIP should not be called when host is in map")
+		return []net.IP{net.ParseIP("99.99.99.99")}, nil
+	}
+	t.Cleanup(func() { lookupIP = original })
+
+	var b strings.Builder
+	addServersToBackend(&b, []string{"cached-host"}, map[string]string{"cached-host": "10.0.0.5"}, 6443)
+
+	result := b.String()
+	if !strings.Contains(result, "10.0.0.5:6443") {
+		t.Errorf("expected cached IP, got:\n%s", result)
 	}
 }
 

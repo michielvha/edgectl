@@ -20,6 +20,9 @@ import (
 	"net"
 )
 
+// lookupHost is a package-level variable wrapping net.LookupHost so tests can inject a stub.
+var lookupHost = net.LookupHost
+
 // StoreMasterInfo stores information about RKE2 master nodes and their configuration
 func (c *Client) StoreMasterInfo(clusterID, hostname string, hosts []string, vip string) error {
 	// Get the IP address of this host
@@ -83,7 +86,7 @@ func getFirstMasterIP(hosts []string, hostIPs map[string]string, currentIP strin
 
 // Helper function to get the IP address of a hostname
 func getHostIP(hostname string) (string, error) {
-	addrs, err := net.LookupHost(hostname)
+	addrs, err := lookupHost(hostname)
 	if err != nil {
 		return "", err
 	}

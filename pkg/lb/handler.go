@@ -14,6 +14,9 @@ import (
 	vault "github.com/michielvha/edgectl/pkg/vault"
 )
 
+// lookupIP is a package-level variable wrapping net.LookupIP so tests can inject a stub.
+var lookupIP = net.LookupIP
+
 // LBNode represents a load balancer node with its role
 type LBNode struct {
 	Hostname string
@@ -256,7 +259,7 @@ func addServersToBackend(b *strings.Builder, hostnames []string, hostIPs map[str
 		}
 
 		// Fallback to DNS lookup if IP not found in the secret store
-		ipAddrs, err := net.LookupIP(host)
+		ipAddrs, err := lookupIP(host)
 		if err != nil || len(ipAddrs) == 0 {
 			logger.Warn("Could not resolve IP for host %s via DNS, skipping: %v", host, err)
 			// Instead of failing, skip this host and continue

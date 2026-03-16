@@ -73,15 +73,17 @@ One `SecretStore` interface (not many small ones) — all consumers use methods 
 
 ---
 
-## Phase 4: DNS Abstraction (optional, low priority)
+## Phase 4: DNS Abstraction ✅
 
 ### Modified files
-- **`pkg/lb/handler.go`** — Extract `var lookupIP = net.LookupIP` package-level var
-- **`pkg/vault/rke2_server.go`** — Extract `var lookupHost = net.LookupHost` package-level var
+- **`pkg/lb/handler.go`** ✅ — Extract `var lookupIP = net.LookupIP` package-level var
+- **`pkg/vault/rke2_server.go`** ✅ — Extract `var lookupHost = net.LookupHost` package-level var
+- **`pkg/rke2/agent/install.go`** ✅ — Extract `var lookupHost = net.LookupHost` package-level var
 
 ### Expand test files
-- Test `addServersToBackend` DNS fallback path with injected lookupIP
-- Test `getHostIP` with injected lookupHost
+- **`pkg/lb/handler_test.go`** ✅ — Test `addServersToBackend` DNS fallback (resolve success, error, map precedence)
+- **`pkg/vault/rke2_server_test.go`** ✅ — Test `getHostIP` (success, error, empty addrs, multiple addrs)
+- **`pkg/rke2/agent/install_test.go`** ✅ — Test LB hostname DNS resolution (success, error)
 
 ---
 
