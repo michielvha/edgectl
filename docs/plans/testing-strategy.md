@@ -55,17 +55,21 @@ One `SecretStore` interface (not many small ones) — all consumers use methods 
 
 ---
 
-## Phase 3: Integration Tests with Real OpenBao
+## Phase 3: Integration Tests with Real OpenBao ✅
 
 ### New files
-- **`pkg/vault/integration_test.go`** (`//go:build integration`)
-  - Uses `testcontainers-go` to spin up OpenBao in dev mode
+- **`pkg/vault/integration_test.go`** ✅ (`//go:build integration`)
+  - Uses `testcontainers-go` to spin up OpenBao in dev mode (shared container via `TestMain`)
   - Tests: generic CRUD round-trip, token store/retrieve, master info accumulation,
     kubeconfig VIP replacement, LB info with main/backup nodes, `DeleteClusterData` full cleanup
 
 ### Modified files
-- **`go.mod`** — Add `testcontainers-go` as test dependency
-- **`makefile`** — Add `test-integration` target
+- **`go.mod`** ✅ — Add `testcontainers-go` as test dependency
+- **`makefile`** ✅ — `test-integration` target (added in Phase 1)
+
+### CI/CD
+- **`.github/workflows/test.yaml`** ✅ — New workflow: unit tests + lint job, integration tests job (with Docker)
+- **`.github/workflows/binary-release.yaml`** ✅ — Added unit test step before GoReleaser
 
 ---
 
