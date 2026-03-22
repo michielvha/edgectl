@@ -1,10 +1,10 @@
 name: Test
 
 on:
-  push:
-    branches:
-      - main
-      - feat/**
+#  push:
+#    branches:
+#      - main
+#      - feat/**
     paths-ignore:
       - 'docs/**'
       - 'readme.md'
