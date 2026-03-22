@@ -56,8 +56,8 @@ func TestFetchTokenFromSecretStore_SetsEnvVars(t *testing.T) {
 
 	// Cleanup
 	t.Cleanup(func() {
-		os.Unsetenv("RKE2_TOKEN")     //nolint:errcheck
-		os.Unsetenv("RKE2_SERVER_IP") //nolint:errcheck
+		os.Unsetenv("RKE2_TOKEN")     //nolint:errcheck // error irrelevant in test cleanup
+		os.Unsetenv("RKE2_SERVER_IP") //nolint:errcheck // error irrelevant in test cleanup
 	})
 }
 

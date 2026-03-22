@@ -39,7 +39,7 @@ func TestFetchToken_SetsEnvVars(t *testing.T) {
 		t.Errorf("expected RKE2_TOKEN=%q, got %q", testAgentToken, got)
 	}
 
-	t.Cleanup(func() { os.Unsetenv("RKE2_TOKEN") }) //nolint:errcheck
+	t.Cleanup(func() { os.Unsetenv("RKE2_TOKEN") }) //nolint:errcheck // error irrelevant in test cleanup
 }
 
 func TestVIPResolutionPriority_StoreWins(t *testing.T) {

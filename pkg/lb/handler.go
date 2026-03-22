@@ -157,13 +157,13 @@ func BootstrapLB(cfg *LoadBalancerConfig) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile("/etc/haproxy/haproxy.cfg", []byte(haproxyConfig), 0o644); err != nil {
+	if err := os.WriteFile("/etc/haproxy/haproxy.cfg", []byte(haproxyConfig), 0o644); err != nil { //nolint:gosec // config must be readable by the haproxy service user
 		return fmt.Errorf("failed to write haproxy config: %w", err)
 	}
 
 	fmt.Print("📄 Generating Keepalived config... \n")
 	keepalivedConfig := generateKeepalivedConfig(cfg.Interface, cfg.VIP, state, priority)
-	if err := os.WriteFile("/etc/keepalived/keepalived.conf", []byte(keepalivedConfig), 0o644); err != nil {
+	if err := os.WriteFile("/etc/keepalived/keepalived.conf", []byte(keepalivedConfig), 0o644); err != nil { //nolint:gosec // config must be readable by the keepalived service user
 		return fmt.Errorf("failed to write keepalived config: %w", err)
 	}
 
