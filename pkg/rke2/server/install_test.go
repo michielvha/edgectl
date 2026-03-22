@@ -86,7 +86,7 @@ func TestFetchTokenFromSecretStore_NoMasterIP(t *testing.T) {
 	}
 
 	// RKE2_SERVER_IP should not be set when master IP retrieval fails
-	t.Cleanup(func() { os.Unsetenv("RKE2_TOKEN") }) //nolint:errcheck
+	t.Cleanup(func() { os.Unsetenv("RKE2_TOKEN") }) //nolint:errcheck // error irrelevant in test cleanup
 }
 
 // TestHostDeduplication verifies that adding an existing host doesn't duplicate it.
