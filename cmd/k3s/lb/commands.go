@@ -15,22 +15,23 @@ import (
 	"github.com/michielvha/edgectl/pkg/vault"
 )
 
+// Cmd is the top-level "k3s lb" command.
 var Cmd = &cobra.Command{
 	Use:   "lb",
-	Short: "Manage RKE2 load balancer",
-	Long: `The "lb" command allows you to set up and manage HAProxy load balancers for RKE2.
-	
+	Short: "Manage K3s load balancer",
+	Long: `The "lb" command allows you to set up and manage HAProxy load balancers for K3s.
+
 Examples:
-  edgectl rke2 lb create --cluster-id my-cluster --vip 192.168.10.100  # Create a new load balancer
-  edgectl rke2 lb status --cluster-id my-cluster                       # Check load balancer status
+  edgectl k3s lb create --cluster-id my-cluster --vip 192.168.10.100  # Create a new load balancer
+  edgectl k3s lb status --cluster-id my-cluster                       # Check load balancer status
 `,
 }
 
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a load balancer for RKE2",
+	Short: "Create a load balancer for K3s",
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Debug("lb create command executed")
+		logger.Debug("k3s lb create command executed")
 
 		if common.CheckRoot() != nil {
 			os.Exit(1)
@@ -45,21 +46,21 @@ var createCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		err := lb.CreateLoadBalancer(store, clusterID, vip, "rke2")
+		err := lb.CreateLoadBalancer(store, clusterID, vip, "k3s")
 		if err != nil {
 			fmt.Printf("❌ Failed to create load balancer: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Println("✅ RKE2 load balancer created successfully")
+		fmt.Println("✅ K3s load balancer created successfully")
 	},
 }
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Show status of RKE2 load balancer",
+	Short: "Show status of K3s load balancer",
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Debug("lb status command executed")
+		logger.Debug("k3s lb status command executed")
 
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 
@@ -74,7 +75,7 @@ var statusCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("ℹ️ RKE2 Load balancer VIP: %s\n", vip)
+		fmt.Printf("ℹ️ K3s Load balancer VIP: %s\n", vip)
 		fmt.Println("ℹ️ Load balancer nodes:")
 
 		for _, node := range nodes {
@@ -89,15 +90,15 @@ var statusCmd = &cobra.Command{
 
 var cleanupCmd = &cobra.Command{
 	Use:   "cleanup",
-	Short: "Clean up a load balancer for RKE2",
-	Long: `The "cleanup" command removes the load balancer configuration for an RKE2 cluster.
+	Short: "Clean up a load balancer for K3s",
+	Long: `The "cleanup" command removes the load balancer configuration for a K3s cluster.
 This includes disabling services (which also stops them) and removing configuration files.
 The HAProxy and Keepalived packages will remain installed.
 
 Example:
-  edgectl rke2 lb cleanup --cluster-id my-cluster  # Clean up LB and remove from secret store`,
+  edgectl k3s lb cleanup --cluster-id my-cluster  # Clean up LB and remove from secret store`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Debug("lb cleanup command executed")
+		logger.Debug("k3s lb cleanup command executed")
 
 		if common.CheckRoot() != nil {
 			os.Exit(1)
