@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package lb
 
@@ -14,6 +14,33 @@ import (
 	vault "github.com/michielvha/edgectl/pkg/vault"
 )
 
+// lookupIP is a package-level variable wrapping net.LookupIP so tests can inject a stub.
+var lookupIP = net.LookupIP
+
+// LBNode represents a load balancer node with its role
+type LBNode struct {
+	Hostname string
+	IsMain   bool
+}
+
+// GetStatus retrieves the load balancer status for a cluster from the secret store
+func GetStatus(store vault.SecretStore, clusterID string) (string, []LBNode, error) {
+	logger.Debug("executing RetrieveLBInfo function")
+	rawNodes, vip, err := store.RetrieveLBInfo(clusterID)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to retrieve load balancer info: %w", err)
+	}
+
+	nodes := make([]LBNode, 0, len(rawNodes))
+	for _, node := range rawNodes {
+		hostname, _ := node["hostname"].(string)
+		isMain, _ := node["is_main"].(bool)
+		nodes = append(nodes, LBNode{Hostname: hostname, IsMain: isMain})
+	}
+
+	return vip, nodes, nil
+}
+
 // LoadBalancerConfig struct defines the configuration for a load balancer
 type LoadBalancerConfig struct {
 	ClusterID string
@@ -27,7 +54,7 @@ type LoadBalancerConfig struct {
 // CreateLoadBalancer creates a new load balancer for the RKE2 cluster
 // It determines if this node should be the primary or backup LB node
 // and configures HAProxy and Keepalived accordingly
-func CreateLoadBalancer(clusterID, vip string) error {
+func CreateLoadBalancer(store vault.SecretStore, clusterID, vip string) error {
 	logger.Debug("Creating load balancer for RKE2 cluster")
 	fmt.Printf("Creating load balancer for RKE2 cluster %s\n", clusterID)
 
@@ -37,14 +64,8 @@ func CreateLoadBalancer(clusterID, vip string) error {
 		return fmt.Errorf("failed to get hostname: %w", err)
 	}
 
-	// Connect to Vault
-	client, err := vault.NewClient()
-	if err != nil {
-		return fmt.Errorf("failed to create Vault client: %w", err)
-	}
-
 	// First check if there are any existing load balancers
-	existingLBs, existingVIP, err := client.RetrieveLBInfo(clusterID)
+	existingLBs, existingVIP, err := store.RetrieveLBInfo(clusterID)
 
 	// isFirst is true if there are no existing load balancers
 	isFirst := err != nil || len(existingLBs) == 0
@@ -52,8 +73,8 @@ func CreateLoadBalancer(clusterID, vip string) error {
 	logger.Debug("Load balancer first node check: isFirst=%v, error=%v, existingLBCount=%d",
 		isFirst, err, len(existingLBs))
 
-	// Retrieve server nodes from Vault for HAProxy configuration
-	hosts, masterVIP, hostIPs, err := client.RetrieveMasterInfo(clusterID)
+	// Retrieve server nodes from the secret store for HAProxy configuration
+	hosts, masterVIP, hostIPs, err := store.RetrieveMasterInfo(clusterID)
 	if err != nil {
 		logger.Debug("No master nodes found, this might be a new cluster: %v", err)
 	}
@@ -68,7 +89,7 @@ func CreateLoadBalancer(clusterID, vip string) error {
 
 	// If no VIP was determined, error out
 	if effectiveVIP == "" {
-		return fmt.Errorf("no VIP provided and no existing VIP found in Vault")
+		return fmt.Errorf("no VIP provided and no existing VIP found in secret store")
 	}
 
 	// Determine network interface for VIP
@@ -80,14 +101,14 @@ func CreateLoadBalancer(clusterID, vip string) error {
 	// Configure this node as the main LB if it's the first one
 	isMain := isFirst
 
-	// Store the current LB info in Vault
-	err = client.StoreLBInfo(clusterID, hostname, effectiveVIP, isMain)
+	// Store the current LB info in the secret store
+	err = store.StoreLBInfo(clusterID, hostname, effectiveVIP, isMain)
 	if err != nil {
-		return fmt.Errorf("failed to store load balancer info in Vault: %w", err)
+		return fmt.Errorf("failed to store load balancer info in secret store: %w", err)
 	}
 
 	// Bootstrap the load balancer
-	return BootstrapLB(LoadBalancerConfig{
+	return BootstrapLB(&LoadBalancerConfig{
 		ClusterID: clusterID,
 		IsMain:    isMain,
 		Interface: iface,
@@ -97,15 +118,10 @@ func CreateLoadBalancer(clusterID, vip string) error {
 	})
 }
 
-func BootstrapLBFromVault(clusterID string, isMain bool) error {
-	client, err := vault.NewClient()
+func BootstrapLBFromSecretStore(store vault.SecretStore, clusterID string, isMain bool) error {
+	hosts, vip, hostIPs, err := store.RetrieveMasterInfo(clusterID)
 	if err != nil {
-		return fmt.Errorf("failed to create Vault client: %w", err)
-	}
-
-	hosts, vip, hostIPs, err := client.RetrieveMasterInfo(clusterID)
-	if err != nil {
-		return fmt.Errorf("failed to fetch master info from Vault: %w", err)
+		return fmt.Errorf("failed to fetch master info from secret store: %w", err)
 	}
 
 	iface, err := detectInterfaceForVIP(vip)
@@ -113,7 +129,7 @@ func BootstrapLBFromVault(clusterID string, isMain bool) error {
 		return fmt.Errorf("could not detect network interface for VIP %s: %w", vip, err)
 	}
 
-	return BootstrapLB(LoadBalancerConfig{
+	return BootstrapLB(&LoadBalancerConfig{
 		ClusterID: clusterID,
 		IsMain:    isMain,
 		Interface: iface,
@@ -123,7 +139,7 @@ func BootstrapLBFromVault(clusterID string, isMain bool) error {
 	})
 }
 
-func BootstrapLB(cfg LoadBalancerConfig) error {
+func BootstrapLB(cfg *LoadBalancerConfig) error {
 	priority := "100"
 	state := "BACKUP"
 	if cfg.IsMain {
@@ -141,13 +157,13 @@ func BootstrapLB(cfg LoadBalancerConfig) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile("/etc/haproxy/haproxy.cfg", []byte(haproxyConfig), 0o644); err != nil {
+	if err := os.WriteFile("/etc/haproxy/haproxy.cfg", []byte(haproxyConfig), 0o644); err != nil { //nolint:gosec // config must be readable by the haproxy service user
 		return fmt.Errorf("failed to write haproxy config: %w", err)
 	}
 
 	fmt.Print("📄 Generating Keepalived config... \n")
 	keepalivedConfig := generateKeepalivedConfig(cfg.Interface, cfg.VIP, state, priority)
-	if err := os.WriteFile("/etc/keepalived/keepalived.conf", []byte(keepalivedConfig), 0o644); err != nil {
+	if err := os.WriteFile("/etc/keepalived/keepalived.conf", []byte(keepalivedConfig), 0o644); err != nil { //nolint:gosec // config must be readable by the keepalived service user
 		return fmt.Errorf("failed to write keepalived config: %w", err)
 	}
 
@@ -235,15 +251,15 @@ backend k3s-backend
 // Helper function to add servers to a HAProxy backend
 func addServersToBackend(b *strings.Builder, hostnames []string, hostIPs map[string]string, port int) {
 	for _, host := range hostnames {
-		// First try to get IP from the hostIPs map (cached IPs from Vault)
+		// First try to get IP from the hostIPs map (cached IPs from the secret store)
 		if ip, ok := hostIPs[host]; ok {
 			fmt.Fprintf(b, "    server %s %s:%d check\n", host, ip, port)
-			logger.Debug("Using IP %s from Vault for host %s", ip, host)
+			logger.Debug("Using IP %s from secret store for host %s", ip, host)
 			continue
 		}
 
-		// Fallback to DNS lookup if IP not found in Vault
-		ipAddrs, err := net.LookupIP(host)
+		// Fallback to DNS lookup if IP not found in the secret store
+		ipAddrs, err := lookupIP(host)
 		if err != nil || len(ipAddrs) == 0 {
 			logger.Warn("Could not resolve IP for host %s via DNS, skipping: %v", host, err)
 			// Instead of failing, skip this host and continue
@@ -284,7 +300,7 @@ vrrp_instance haproxy-vip {
 }
 
 func restartService(name string) error {
-	cmd := exec.Command("systemctl", "restart", name)
+	cmd := exec.Command("systemctl", "restart", name) //nolint:gosec // service name is trusted internal value
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -292,7 +308,7 @@ func restartService(name string) error {
 
 func detectInterfaceForVIP(vip string) (string, error) {
 	// Try to find the interface that would be used to reach the VIP
-	out, err := exec.Command("bash", "-c", fmt.Sprintf("ip route get %s | grep -o 'dev [^ ]*' | awk '{print $2}'", vip)).Output()
+	out, err := exec.Command("bash", "-c", fmt.Sprintf("ip route get %s | grep -o 'dev [^ ]*' | awk '{print $2}'", vip)).Output() //nolint:gosec // VIP is trusted CLI input
 	if err != nil {
 		// If that fails, try to find the primary interface
 		out, err = exec.Command("bash", "-c", "ip route | grep default | grep -o 'dev [^ ]*' | awk '{print $2}'").Output()
@@ -304,8 +320,8 @@ func detectInterfaceForVIP(vip string) (string, error) {
 }
 
 // CleanupLoadBalancer removes the load balancer configuration for a RKE2 cluster
-// It disables the services, removes configuration files, and cleans up the Vault entry
-func CleanupLoadBalancer(clusterID string) error {
+// It disables the services, removes configuration files, and cleans up the secret store entry
+func CleanupLoadBalancer(store vault.SecretStore, clusterID string) error {
 	logger.Debug("Cleaning up load balancer for RKE2 cluster %s", clusterID)
 	fmt.Printf("Cleaning up load balancer for RKE2 cluster %s\n", clusterID)
 
@@ -337,16 +353,10 @@ func CleanupLoadBalancer(clusterID string) error {
 		// Continue execution even if file removal fails
 	}
 
-	// Connect to Vault and remove the LB entry
-	client, err := vault.NewClient()
-	if err != nil {
-		return fmt.Errorf("failed to create Vault client: %w", err)
-	}
-
-	// Remove this node from the LB list in Vault
-	fmt.Print("🔄 Removing load balancer entry from Vault... \n")
-	if err := client.RemoveLBNode(clusterID, hostname); err != nil {
-		return fmt.Errorf("failed to remove load balancer info from Vault: %w", err)
+	// Remove this node from the LB list in the secret store
+	fmt.Print("🔄 Removing load balancer entry from secret store... \n")
+	if err := store.RemoveLBNode(clusterID, hostname); err != nil {
+		return fmt.Errorf("failed to remove load balancer info from secret store: %w", err)
 	}
 
 	fmt.Printf("✅ Load balancer for cluster %s has been cleaned up successfully\n", clusterID)
@@ -355,7 +365,7 @@ func CleanupLoadBalancer(clusterID string) error {
 
 // disableService disables a systemd service with --now flag to also stop it
 func disableService(name string) error {
-	cmd := exec.Command("systemctl", "disable", "--now", name)
+	cmd := exec.Command("systemctl", "disable", "--now", name) //nolint:gosec // service name is trusted internal value
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

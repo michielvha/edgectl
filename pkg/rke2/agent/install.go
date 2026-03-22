@@ -1,10 +1,11 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package agent
 
 import (
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/michielvha/edgectl/pkg/common"
@@ -12,31 +13,42 @@ import (
 	"github.com/michielvha/edgectl/pkg/vault"
 )
 
-// Install sets up the RKE2 agent on the host.
-// It fetches the join token from Vault using the supplied clusterID.
-func Install(clusterID string) error {
-	vaultClient, err := vault.NewClient()
-	if err != nil {
-		return fmt.Errorf("failed to initialize Vault client: %w", err)
-	}
+// lookupHost is a package-level variable wrapping net.LookupHost so tests can inject a stub.
+var lookupHost = net.LookupHost
 
-	if _, err := FetchToken(clusterID); err != nil {
+// Install sets up the RKE2 agent on the host.
+// It fetches the join token from the secret store using the supplied clusterID.
+// VIP resolution priority: secret store > --vip flag > --lb-hostname flag (DNS resolved).
+func Install(store vault.SecretStore, clusterID, vip, lbHostname string) error {
+	if _, err := FetchToken(store, clusterID); err != nil {
 		return err
 	}
 
-	// fetch the VIP from Master Info in Vault
-	_, storedVIP, _, err := vaultClient.RetrieveMasterInfo(clusterID)
+	// Priority 1: fetch the VIP from Master Info in the secret store
+	_, storedVIP, _, err := store.RetrieveMasterInfo(clusterID)
 	if err == nil && storedVIP != "" {
-		fmt.Printf("🔍 VIP fetched from Vault: %s\n", storedVIP)
+		vip = storedVIP
+		fmt.Printf("🔍 VIP fetched from secret store: %s\n", storedVIP)
+	}
+
+	// Priority 2: --vip flag is already set via the parameter
+
+	// Priority 3: resolve --lb-hostname to an IP as fallback
+	if vip == "" && lbHostname != "" {
+		addrs, err := lookupHost(lbHostname)
+		if err != nil || len(addrs) == 0 {
+			return fmt.Errorf("failed to resolve load balancer hostname %s: %w", lbHostname, err)
+		}
+		vip = addrs[0]
+		fmt.Printf("🔍 Resolved LB hostname %s to %s\n", lbHostname, vip)
 	}
 
 	installOptions := ""
-	if storedVIP != "" {
-		installOptions = fmt.Sprintf("-l %s", storedVIP)
-		fmt.Printf("🌐 Using VIP %s for load balancer TLS SANs\n", storedVIP)
+	if vip != "" {
+		installOptions = fmt.Sprintf("-l %s", vip)
+		fmt.Printf("🌐 Using VIP %s for load balancer TLS SANs\n", vip)
 	} else {
-		// TODO: add fallback ?
-		logger.Debug("No VIP found in Vault, using default settings")
+		logger.Debug("No VIP found via secret store, --vip, or --lb-hostname, using default settings")
 	}
 	// Run the installation script with options
 	common.RunBashFunction("rke2.sh", fmt.Sprintf("install_rke2_agent %s", installOptions))
@@ -44,22 +56,17 @@ func Install(clusterID string) error {
 	return nil
 }
 
-// Fetch token from Vault & set as env variable
-func FetchToken(clusterID string) (string, error) {
-	vaultClient, err := vault.NewClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to initialize Vault client: %w", err)
-	}
-
-	token, err := vaultClient.RetrieveJoinToken(clusterID)
+// FetchToken fetches token from the secret store & sets as env variable
+func FetchToken(store vault.SecretStore, clusterID string) (string, error) {
+	token, err := store.RetrieveJoinToken(clusterID)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve join token: %w", err)
 	}
 
 	// ensure edgectl main directory exists
-	_ = os.MkdirAll("/etc/edgectl", 0o755)
+	_ = os.MkdirAll("/etc/edgectl", 0o750)
 
-	if err := os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o644); err != nil {
+	if err := os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o600); err != nil {
 		return "", fmt.Errorf("failed to write cluster-id: %w", err)
 	}
 

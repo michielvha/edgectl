@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package agent
 
@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/michielvha/edgectl/pkg/rke2/agent"
-	"github.com/spf13/cobra"
+	"github.com/michielvha/edgectl/pkg/vault"
 )
 
 var Cmd = &cobra.Command{
@@ -36,8 +38,15 @@ var installCmd = &cobra.Command{
 
 		logger.Debug("Extracting values from command line arguments")
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
+		vip, _ := cmd.Flags().GetString("vip")
+		lbHostname, _ := cmd.Flags().GetString("lb-hostname")
 
-		err := agent.Install(clusterID)
+		store := vault.InitVaultClient()
+		if store == nil {
+			os.Exit(1)
+		}
+
+		err := agent.Install(store, clusterID, vip, lbHostname)
 		if err != nil {
 			fmt.Printf("❌ RKE2 agent install failed: %v\n", err)
 			os.Exit(1)
@@ -51,7 +60,8 @@ var installCmd = &cobra.Command{
 func init() {
 	// Install command flags
 	installCmd.Flags().String("cluster-id", "", "The ID of the cluster you want to join")
-	installCmd.Flags().String("lb-hostname", "", "The hostname of the load balancer to use if VIP is not found")
+	installCmd.Flags().String("vip", "", "Virtual IP fallback if VIP is not found in Vault")
+	installCmd.Flags().String("lb-hostname", "", "Load balancer hostname to resolve as VIP fallback (last resort)")
 	_ = installCmd.MarkFlagRequired("cluster-id")
 
 	// Register subcommands

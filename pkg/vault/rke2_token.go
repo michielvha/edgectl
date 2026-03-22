@@ -1,10 +1,10 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 
 Package vault provides specialized handlers for RKE2 cluster secrets management.
 
 This file handles the token management functionality for RKE2 clusters:
-- StoreJoinToken: Saves a cluster join token in Vault under a specific cluster ID
+- StoreJoinToken: Saves a cluster join token in the secret store under a specific cluster ID
 - RetrieveJoinToken: Retrieves the join token for a given cluster ID
 
 These functions are critical for the RKE2 cluster bootstrapping process, allowing

@@ -1,16 +1,17 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 
 Only supported on linux because bash dependencies and containers on windows.. yeah, nope.
 */
 package cmd
 
 import (
+	"github.com/spf13/cobra"
+
 	agentcmd "github.com/michielvha/edgectl/cmd/rke2/agent"
 	lbcmd "github.com/michielvha/edgectl/cmd/rke2/lb"
 	servercmd "github.com/michielvha/edgectl/cmd/rke2/server"
 	systemcmd "github.com/michielvha/edgectl/cmd/rke2/system"
-	"github.com/spf13/cobra"
 )
 
 // rke2Cmd represents the "rke2" command
@@ -24,7 +25,7 @@ Examples:
   edgectl rke2 agent install         # Install RKE2 Agent
   edgectl rke2 lb create             # Create a load balancer for RKE2
   edgectl rke2 system purge          # Uninstall RKE2
-  edgectl rke2 system kubeconfig     # Fetch kubeconfig from Vault
+  edgectl rke2 system kubeconfig     # Fetch kubeconfig from secret store
   edgectl rke2 system bash           # Configure bash environment
 `,
 }

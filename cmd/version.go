@@ -1,13 +1,14 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package cmd
 
 import (
 	"fmt"
 
-	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/spf13/cobra"
+
+	"github.com/michielvha/edgectl/pkg/logger"
 )
 
 // Version is now set in `main.go`

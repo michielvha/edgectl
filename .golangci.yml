@@ -1,4 +1,3 @@
-# TODO: Look into properly implementing this. Currently using a basic config.
 version: "2"
 
 run:
@@ -6,11 +5,50 @@ run:
 
 linters:
   enable:
-    - govet
-    - errcheck
-    - staticcheck
-    - unused
-    - gocritic
+    # Bug detection
+    - govet          # Reports suspicious constructs (e.g. Printf calls with wrong args)
+    - errcheck       # Checks for unchecked errors
+    - staticcheck    # Advanced static analysis
+    - unused         # Finds unused code
+    - gosec          # Security-oriented linting (e.g. hardcoded creds, weak crypto)
+    - bodyclose      # Checks whether HTTP response bodies are closed
+    - nilerr         # Finds code that returns nil even if error is not nil
+    - reassign       # Checks that package variables are not reassigned
+
+    # Style & consistency
+    - gocritic       # Opinionated linter with many useful checks
+    - goconst        # Finds repeated strings that could be constants
+    - unconvert      # Removes unnecessary type conversions
+    - whitespace     # Detects leading/trailing whitespace issues
+    - mirror         # Reports wrong mirror patterns of bytes/strings usage
+
+    # Complexity & maintainability
+    - gocyclo        # Cyclomatic complexity checker
+    - nestif         # Reports deeply nested if blocks
+    - funlen         # Reports long functions
+
+    # Error handling
+    - errorlint      # Finds issues with error wrapping (Go 1.13+)
+
+    # Performance
+    - prealloc       # Finds slice declarations that could be preallocated
+
+  settings:
+    gocyclo:
+      min-complexity: 20
+    funlen:
+      lines: 120
+      statements: 60
+    nestif:
+      min-complexity: 6
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
 
 formatters:
   enable:
@@ -19,5 +57,16 @@ formatters:
     - gci
     - gofmt
     # - golines
+
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/michielvha/edgectl)
+
+output:
+  sort-order:
+    - file
 
 # Reference: https://golangci-lint.run/usage/configuration/

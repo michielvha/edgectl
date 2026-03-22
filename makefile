@@ -3,9 +3,10 @@ GO_RUN=go run .
 CLI=edgectl
 
 # Default target
-.PHONY: help
+.PHONY: help build server server-join agent lb-create lb-status purge config test test-cover test-integration test-func clean lint
 help:
 	@echo "Usage:"
+	@echo "  make build                 Build the edgectl binary"
 	@echo "  make server      		    Run 'rke2 server install'"
 	@echo "  make server-join           Run 'rke2 server install --cluster-id rke2-03db202f'"
 	@echo "  make agent       			Run 'rke2 agent --cluster-id rke2-03db202f'"
@@ -13,8 +14,18 @@ help:
 	@echo "  make lb-status             Run 'rke2 lb status --cluster-id rke2-03db202f'"
 	@echo "  make purge        		    Run 'rke2 purge'"
 	@echo "  make config                Run 'rke2 config'"
-	@echo "  make test func             Test a Go function with a sample input"
+	@echo "  make test                  Run all unit tests"
+	@echo "  make test-cover            Run unit tests with coverage report"
+	@echo "  make test-integration      Run integration tests (requires Docker)"
+	@echo "  make test-func             Test a Go function with a sample input"
 	@echo "  make clean                 Remove temporary files (optional)"
+	@echo "  make lint            		Run linter with auto-fix"
+
+
+# Build
+.PHONY: build
+build:
+	go build -o $(CLI) .
 
 # Commands
 .PHONY: server
@@ -25,7 +36,7 @@ server:
 server-join:
 	$(GO_RUN) rke2 server install --cluster-id $(CLUSTER_ID)
 
-.PHONY: server-test
+.PHONY: server-verify
 server-verify:
 	sudo cat /etc/rancher/rke2/config.yaml # | grep 'token:'
 
@@ -51,16 +62,40 @@ purge:
 config:
 	$(GO_RUN) rke2 system kubeconfig --cluster-id $(CLUSTER_ID)
 
-.PHONY: config
+.PHONY: status
 status:
 	$(GO_RUN) rke2 system status
 
 .PHONY: test-func
-test func:
+test-func:
 	@echo "🔍 Testing individual function..."
 	go run ./cmd/debug/test.go
+
+# Test targets
+.PHONY: test
+test:
+	@echo "🧪 Running unit tests..."
+	go test ./... -v
+
+.PHONY: test-cover
+test-cover:
+	@echo "🧪 Running unit tests with coverage..."
+	go test ./... -v -coverprofile=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "📊 Coverage report written to coverage.html"
+
+.PHONY: test-integration
+test-integration:
+	@echo "🧪 Running integration tests (requires Docker)..."
+	go test ./pkg/vault/ -tags=integration -v -count=1
 
 .PHONY: clean
 clean:
 	@echo "🧹 Cleaning up..."
 	rm -rf output.log temp/
+
+.PHONY: lint
+lint:
+	@echo "Running golangci-lint with auto-fix on backend..."
+	@export PATH="$$(go env GOPATH)/bin:$$PATH" && \
+	golangci-lint run --fix

@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package server
 
@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/michielvha/edgectl/pkg/common"
 	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/michielvha/edgectl/pkg/rke2/server"
-	"github.com/spf13/cobra"
+	"github.com/michielvha/edgectl/pkg/vault"
 )
 
 var Cmd = &cobra.Command{
@@ -41,7 +43,12 @@ var installCmd = &cobra.Command{
 		isExisting := cmd.Flags().Changed("cluster-id")
 		vip, _ := cmd.Flags().GetString("vip")
 
-		err := server.Install(clusterID, isExisting, vip)
+		store := vault.InitVaultClient()
+		if store == nil {
+			os.Exit(1)
+		}
+
+		err := server.Install(store, clusterID, isExisting, vip)
 		if err != nil {
 			fmt.Printf("❌ RKE2 server install failed: %v\n", err)
 			os.Exit(1)

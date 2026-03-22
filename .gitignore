@@ -1,2 +1,4 @@
 **.idea**
 .env
+coverage.out
+coverage.html

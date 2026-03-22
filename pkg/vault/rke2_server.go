@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 
 Package vault provides specialized handlers for RKE2 cluster secrets management.
 
@@ -19,6 +19,9 @@ import (
 	"fmt"
 	"net"
 )
+
+// lookupHost is a package-level variable wrapping net.LookupHost so tests can inject a stub.
+var lookupHost = net.LookupHost
 
 // StoreMasterInfo stores information about RKE2 master nodes and their configuration
 func (c *Client) StoreMasterInfo(clusterID, hostname string, hosts []string, vip string) error {
@@ -83,7 +86,7 @@ func getFirstMasterIP(hosts []string, hostIPs map[string]string, currentIP strin
 
 // Helper function to get the IP address of a hostname
 func getHostIP(hostname string) (string, error) {
-	addrs, err := net.LookupHost(hostname)
+	addrs, err := lookupHost(hostname)
 	if err != nil {
 		return "", err
 	}
@@ -94,7 +97,7 @@ func getHostIP(hostname string) (string, error) {
 }
 
 // RetrieveMasterInfo retrieves RKE2 master nodes information
-func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, map[string]string, error) {
+func (c *Client) RetrieveMasterInfo(clusterID string) (hosts []string, vip string, hostIPs map[string]string, err error) {
 	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/masters", clusterID))
 	if err != nil {
 		return nil, "", nil, err
@@ -106,7 +109,7 @@ func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, map[str
 	}
 
 	// Convert interface{} to string slice
-	hosts := []string{}
+	hosts = []string{}
 	if hostsArray, ok := hostsRaw.([]interface{}); ok {
 		for _, h := range hostsArray {
 			if hostStr, ok := h.(string); ok {
@@ -115,10 +118,10 @@ func (c *Client) RetrieveMasterInfo(clusterID string) ([]string, string, map[str
 		}
 	}
 
-	vip, _ := data["vip"].(string)
+	vip, _ = data["vip"].(string)
 
 	// Extract host_ips map if available
-	hostIPs := make(map[string]string)
+	hostIPs = make(map[string]string)
 	if hostIPsRaw, ok := data["host_ips"].(map[string]interface{}); ok {
 		for hostname, ipRaw := range hostIPsRaw {
 			if ip, ok := ipRaw.(string); ok {
@@ -143,17 +146,22 @@ func (c *Client) RetrieveFirstMasterIP(clusterID string) (string, error) {
 	}
 
 	// Fallback: Try to get the first host's IP from host_ips map
-	if hosts, ok := data["hosts"].([]interface{}); ok && len(hosts) > 0 {
-		if firstHost, ok := hosts[0].(string); ok {
-			if hostIPs, ok := data["host_ips"].(map[string]interface{}); ok {
-				if ip, ok := hostIPs[firstHost].(string); ok {
-					return ip, nil
-				}
-			}
-			// If we have a hostname but no IP, return the hostname as fallback
-			return firstHost, nil
+	hosts, ok := data["hosts"].([]interface{})
+	if !ok || len(hosts) == 0 {
+		return "", fmt.Errorf("no master IP information found for cluster %s", clusterID)
+	}
+
+	firstHost, ok := hosts[0].(string)
+	if !ok {
+		return "", fmt.Errorf("no master IP information found for cluster %s", clusterID)
+	}
+
+	if hostIPs, ok := data["host_ips"].(map[string]interface{}); ok {
+		if ip, ok := hostIPs[firstHost].(string); ok {
+			return ip, nil
 		}
 	}
 
-	return "", fmt.Errorf("no master IP information found for cluster %s", clusterID)
+	// If we have a hostname but no IP, return the hostname as fallback
+	return firstHost, nil
 }

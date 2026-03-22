@@ -1,18 +1,18 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 
-Package vault provides a client for interacting with HashiCorp Vault.
+Package vault provides a client for interacting with OpenBao (Vault-compatible secret store).
 
-This file implements the generic Vault client that provides basic CRUD operations
-for secrets management. It offers a clean abstraction over the Vault API for:
-- Creating and initializing a Vault client
+This file implements the generic secret store client that provides basic CRUD operations
+for secrets management. It offers a clean abstraction over the OpenBao API for:
+- Creating and initializing a secret store client
 - Storing secrets at specific paths
 - Retrieving secrets from paths
 - Listing keys under a path
 - Deleting a secret under a given path
 
 This generic implementation serves as the foundation for more specialized
-Vault interactions defined elsewhere in the package.
+secret store interactions defined elsewhere in the package.
 */
 package vault
 
@@ -20,7 +20,8 @@ import (
 	"fmt"
 	"os"
 
-	vault "github.com/hashicorp/vault/api"
+	vault "github.com/openbao/openbao/api/v2"
+
 	"github.com/michielvha/edgectl/pkg/logger"
 )
 
@@ -29,33 +30,34 @@ type Client struct {
 }
 
 func NewClient() (*Client, error) {
+	// The OpenBao SDK reads VAULT_ADDR from the environment automatically.
 	config := vault.DefaultConfig()
 	client, err := vault.NewClient(config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Vault client: %w", err)
+		return nil, fmt.Errorf("failed to create secret store client: %w", err)
 	}
-	token := os.Getenv("VAULT_TOKEN")
+	token := os.Getenv("BAO_TOKEN")
 	if token == "" {
-		return nil, fmt.Errorf("VAULT_TOKEN not set")
+		return nil, fmt.Errorf("BAO_TOKEN not set")
 	}
 	client.SetToken(token)
 	return &Client{VaultClient: client}, nil
 }
 
-// InitVaultClient centralizes Vault client creation and error handling
-// Returns nil if the client initialization failed
-// TODO: implement this everywhere we create vault client, example call in cmd/vault.go on line 48
+// InitVaultClient centralizes secret store client creation and error handling.
+// Returns nil if the client initialization failed.
+// Use this in cmd/ handlers; use NewClient() in pkg/ code that propagates errors.
 func InitVaultClient() *Client {
-	logger.Debug("initializing Vault client")
+	logger.Debug("initializing secret store client")
 	vaultClient, err := NewClient()
 	if err != nil {
-		fmt.Printf("❌ failed to initialize Vault client: %v\n", err)
+		fmt.Printf("❌ failed to initialize secret store client: %v\n", err)
 		return nil
 	}
 	return vaultClient
 }
 
-// StoreSecret stores any secret (key-value map) under a Vault path
+// StoreSecret stores any secret (key-value map) under a given path
 func (c *Client) StoreSecret(fullVaultPath string, data map[string]interface{}) error {
 	_, err := c.VaultClient.Logical().Write(fullVaultPath, map[string]interface{}{
 		"data": data,
@@ -66,7 +68,7 @@ func (c *Client) StoreSecret(fullVaultPath string, data map[string]interface{}) 
 	return nil
 }
 
-// RetrieveSecret retrieves a key-value map from a Vault path
+// RetrieveSecret retrieves a key-value map from a given path
 func (c *Client) RetrieveSecret(fullVaultPath string) (map[string]interface{}, error) {
 	secret, err := c.VaultClient.Logical().Read(fullVaultPath)
 	if err != nil {
@@ -112,7 +114,7 @@ func (c *Client) ListKeys(fullVaultPath string) ([]string, error) {
 	return keys, nil
 }
 
-// DeleteSecret deletes a secret at a specific Vault path
+// DeleteSecret deletes a secret at a specific path
 func (c *Client) DeleteSecret(fullVaultPath string) error {
 	_, err := c.VaultClient.Logical().Delete(fullVaultPath)
 	if err != nil {

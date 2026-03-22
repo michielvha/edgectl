@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 EDGEFORGE contact@edgeforge.eu
+Copyright © 2025 VH & Co - contact@vhco.pro
 */
 package cmd
 
@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/michielvha/edgectl/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/michielvha/edgectl/pkg/logger"
 )
 
 var (
