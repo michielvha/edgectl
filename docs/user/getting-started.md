@@ -2,10 +2,11 @@
 
 ## Prerequisites
 
-- Linux host (Debian/Ubuntu-based)
-- Root access (required for RKE2 installation)
+- Linux host (Debian/Ubuntu or Fedora/RHEL-based)
+- Root access (required for cluster installation)
 - Go 1.24+ (for installing from source)
 - An [OpenBao](https://openbao.org/) instance for secret management
+- A supported firewall: UFW, firewalld, or iptables (see [Firewall Configuration](firewall.md))
 
 ## Install edgectl
 
@@ -84,5 +85,7 @@ edgectl rke2 system kubeconfig --cluster-id rke2-abc12345
 ## Next steps
 
 - [RKE2 Cluster Management](rke2.md) — full command reference and architecture
+- [K3s Cluster Management](k3s.md) — lightweight Kubernetes alternative
+- [Firewall Configuration](firewall.md) — supported backends and port requirements
 - [Load Balancer Setup](loadbalancer.md) — HA load balancing with HAProxy + Keepalived
 - [Secret Management](secret-management.md) — OpenBao integration details

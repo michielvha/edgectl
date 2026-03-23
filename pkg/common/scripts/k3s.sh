@@ -5,6 +5,10 @@
 # ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/edgectl/main/pkg/common/scripts/k3s.sh) `
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
+# Source shared functions
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
+
 # bootstrap a K3s server node
 install_k3s_server() {
   # usage: install_k3s_server [-l <loadbalancer-hostname>]
@@ -41,7 +45,7 @@ install_k3s_server() {
   HOST=$(hostname -s)
   local PURPOSE=${PURPOSE:-"server"}
 
-  configure_k3s_host   # perform default bootstrap configurations required on each K3s node.
+  configure_host   # shared host configuration from common.sh
 
   # Install K3s
   echo "⬇️  Downloading and installing K3s..."
@@ -94,9 +98,9 @@ spec:
       replicas: 1
 EOF
 
-  enable_k3s_addons_reloader   # enabling the reloader addon by default
+  enable_addon_reloader "/var/lib/rancher/k3s/server/manifests/"   # shared from common.sh
 
-  configure_ufw_k3s_server     # Configure UFW for K3s server
+  configure_firewall_k3s_server     # K3s-specific server firewall rules
 
   echo "✅ K3s Server node bootstrapped."
 }
@@ -140,7 +144,7 @@ install_k3s_agent() {
   FQDN=$(hostname -f)
   local PURPOSE=${PURPOSE:-"worker"}
 
-  configure_k3s_host         # perform common bootstrap configurations.
+  configure_host         # shared host configuration from common.sh
 
   # Install K3s agent
   echo "⬇️  Downloading and installing K3s agent..."
@@ -150,75 +154,13 @@ install_k3s_agent() {
     --node-label "purpose=$PURPOSE" \
     || { echo "❌ Failed to install K3s agent. Exiting."; return 1; }
 
-  configure_ufw_k3s_agent    # Configure UFW for K3s agent
+  firewall_configure_agent "K3s"    # shared agent firewall from common.sh
 
   echo "✅ K3s Agent node bootstrapped."
 }
 
-enable_k3s_addons_reloader(){
-  echo "📦 Enabling K3s Addon: Stakater's Reloader"
-  cat <<EOF | sudo tee /var/lib/rancher/k3s/server/manifests/reloader.yaml
-# Reference: https://docs.k3s.io/helm
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: reloader
-  namespace: kube-system
-spec:
-  chart: reloader
-  repo: https://stakater.github.io/stakater-charts
-  targetNamespace: kube-system
-  valuesContent: |-
-    reloader:
-      autoReloadAll: true
-EOF
-}
-
-# perform default bootstrap configurations required on each K3s node.
-configure_k3s_host() {
-  echo "🔧 Default K3s Node Config..."
-
-  # Disable swap if not already disabled
-  if free | awk '/^Swap:/ {exit !$2}'; then
-    echo "⚙️  Disabling swap..."
-    sudo swapoff -a
-    sudo sed -i '/swapfile/s/^/#/' /etc/fstab
-  else
-    echo "✅ Swap is already disabled."
-  fi
-
-  local sysctl_file="/etc/sysctl.d/k8s.conf"
-
-  # Load br_netfilter kernel module
-  echo "🛠️  Loading br_netfilter kernel module..."
-  sudo modprobe br_netfilter || { echo "❌ Failed to load br_netfilter kernel module. Exiting."; return 1; }
-  lsmod | grep br_netfilter
-  echo "br_netfilter" | sudo tee /etc/modules-load.d/br_netfilter.conf
-
-  echo "🛠️  Applying sysctl settings for Kubernetes networking..."
-  cat <<EOF | sudo tee "$sysctl_file" > /dev/null
-net.bridge.bridge-nf-call-iptables = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward = 1
-EOF
-
-  sudo sysctl --system > /dev/null && echo "✅ Sysctl settings applied successfully."
-
-  sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
-}
-
-# Function: ufw_allow_ports - Helper function to configure UFW rules
-ufw_allow_ports() {
-  local ports=("$@")
-  for port_info in "${ports[@]}"; do
-    local port="${port_info%% *}"
-    local comment="${port_info#* }"
-    sudo ufw allow proto tcp from any to any port "$port" comment "$comment" || { echo "❌ Failed to create rule for $port"; return 1;}
-  done
-}
-
-# configure the firewall for a K3s server node
-configure_ufw_k3s_server() {
+# configure the firewall for a K3s server node (K3s-specific port list)
+configure_firewall_k3s_server() {
   local server_ports=(
     "22 SSH server access"
     "6443 K3s API Server"
@@ -227,23 +169,9 @@ configure_ufw_k3s_server() {
     "2380 etcd peer port"
     "30000:32767 Kubernetes NodePort range"
   )
-  ufw_allow_ports "${server_ports[@]}"
-
-  sudo ufw enable || { echo "❌ Failed to enable UFW."; return 1; }
-  echo "✅ UFW rules configured for K3s Server Node."
-}
-
-# configure the firewall for a K3s agent node
-configure_ufw_k3s_agent() {
-  local agent_ports=(
-    "22 SSH server access"
-    "10250 kubelet metrics"
-    "30000:32767 Kubernetes NodePort range"
-  )
-  ufw_allow_ports "${agent_ports[@]}"
-
-  sudo ufw enable || { echo "❌ Failed to enable UFW."; return 1; }
-  echo "✅ UFW rules configured for K3s Agent Node."
+  firewall_allow_ports "${server_ports[@]}" || return 1
+  firewall_enable || return 1
+  echo "✅ Firewall rules configured for K3s Server Node."
 }
 
 # Required or `RunBashFunction` will not be able to call the function by name

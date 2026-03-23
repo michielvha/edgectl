@@ -17,13 +17,23 @@ A CLI tool to manage the edge cloud. Comparable to `awscli` or `azure-cli`.
 
 - **RKE2 Cluster Management** — Bootstrap, join, and manage Kubernetes clusters powered by RKE2
   - Automated server and agent installation with embedded bash scripts
+  - CIS hardening, Cilium CNI with eBPF, Hubble observability
   - Cluster ID-based node joining (no manual token handling)
   - Fetch & merge kubeconfig into your local context
+- **K3s Cluster Management** — Lightweight Kubernetes alternative for edge and IoT
+  - Same workflow as RKE2: server install, agent join, kubeconfig fetch
+  - Cilium CNI with eBPF, Hubble observability
+  - Automatic addon deployment (Stakater Reloader)
+- **Cross-Distribution Firewall** — Automatic firewall configuration across Linux distributions
+  - UFW (Ubuntu/Debian), firewalld (Fedora/RHEL/CentOS/Rocky), iptables (fallback)
+  - Auto-detection of available firewall backend
+  - Distribution-aware port rules for server and agent nodes
 - **Secret Management** — Powered by [OpenBao](https://openbao.org/) (Linux Foundation fork of HashiCorp Vault, MPL-2.0)
   - Automatic token storage and retrieval for cluster operations
   - Generic `get`/`set` commands for ad-hoc secret management
 - **Load Balancer** — Automated HAProxy + Keepalived setup for HA clusters
   - Primary/backup node configuration with VIP failover
+  - Distribution-aware config (RKE2 supervisor port, K3s API-only)
   - Status monitoring and cleanup commands
 - **Logging** — Structured logging with `zerolog`, `--verbose` flag for debug output
 - **Cross-platform releases** — GoReleaser with Homebrew tap support
@@ -61,7 +71,6 @@ See [docs/README.md](docs/README.md) for full documentation including architectu
 ## Roadmap
 
 - [ ] Enable [encryption at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) for secrets
-- [ ] [#31](https://github.com/michielvha/edgectl/issues/31) — Add support for Fedora-based architectures
 - [ ] [#35](https://github.com/michielvha/edgectl/issues/35) — Create unit/integration tests
 - [ ] Auto-bootstrap ArgoCD for automated dev setup
 - [ ] Add `--dry-run` support to all commands
