@@ -1,6 +1,7 @@
 # Variables
 GO_RUN=go run .
 CLI=edgectl
+VIP=100.111.180.80
 
 # Default target
 .PHONY: help build server server-join agent lb-create lb-status purge config status test test-cover test-integration test-func clean lint
@@ -48,7 +49,7 @@ build:
 # Commands
 .PHONY: server
 server:
-	$(GO_RUN) rke2 server install --vip 172.16.12.232
+	$(GO_RUN) rke2 server install --vip $(VIP)
 
 .PHONY: server-join
 server-join:
@@ -66,7 +67,7 @@ agent:
 # Load balancer commands
 .PHONY: lb-create
 lb-create:
-	$(GO_RUN) rke2 lb create --cluster-id $(CLUSTER_ID) --vip 100.111.180.80
+	$(GO_RUN) rke2 lb create --cluster-id $(CLUSTER_ID) --vip $(VIP)
 
 .PHONY: lb-status
 lb-status:
