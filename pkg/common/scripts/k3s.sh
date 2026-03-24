@@ -1,4 +1,5 @@
 #!/bin/bash
+set -o pipefail
 # K3s module for K3s installation and configuration
 # purpose: bootstrap K3s nodes.
 # usage: quickly source this module with the following command:
@@ -49,7 +50,7 @@ install_k3s_server() {
 
   # Install K3s
   echo "⬇️  Downloading and installing K3s..."
-  curl -sfL https://get.k3s.io | sudo sh -s - server \
+  curl -sfL https://get.k3s.io | K3S_TOKEN="$K3S_TOKEN" K3S_URL="$K3S_URL" sudo -E sh -s - server \
     --write-kubeconfig-mode "0644" \
     --node-label "environment=production" \
     --node-label "arch=$ARCH" \
