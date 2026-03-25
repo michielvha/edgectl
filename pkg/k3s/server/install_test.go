@@ -16,9 +16,7 @@ const (
 // TestFetchTokenFromSecretStore_SetsEnvVars verifies that FetchTokenFromSecretStore
 // retrieves the token and first master IP, setting the expected env vars.
 func TestFetchTokenFromSecretStore_SetsEnvVars(t *testing.T) {
-	if err := os.MkdirAll("/etc/edgectl", 0o750); err != nil {
-		t.Skip("skipping: cannot write to /etc/edgectl (requires root)")
-	}
+	clusterIDDir = t.TempDir()
 
 	mock := &vault.MockStore{
 		RetrieveJoinTokenFunc: func(clusterID string) (string, error) {
@@ -57,9 +55,7 @@ func TestFetchTokenFromSecretStore_SetsEnvVars(t *testing.T) {
 // TestFetchTokenFromSecretStore_NoMasterIP verifies graceful handling
 // when no first master IP is available.
 func TestFetchTokenFromSecretStore_NoMasterIP(t *testing.T) {
-	if err := os.MkdirAll("/etc/edgectl", 0o750); err != nil {
-		t.Skip("skipping: cannot write to /etc/edgectl (requires root)")
-	}
+	clusterIDDir = t.TempDir()
 
 	mock := &vault.MockStore{
 		RetrieveJoinTokenFunc: func(clusterID string) (string, error) {
