@@ -15,7 +15,6 @@ const (
 
 // TestFetchTokenFromSecretStore_SetsEnvVars verifies that FetchTokenFromSecretStore
 // retrieves the token and first master IP, setting the expected env vars.
-// Note: This test requires write access to /etc/edgectl (root or writable path).
 func TestFetchTokenFromSecretStore_SetsEnvVars(t *testing.T) {
 	clusterIDDir = t.TempDir()
 
@@ -31,10 +30,6 @@ func TestFetchTokenFromSecretStore_SetsEnvVars(t *testing.T) {
 		},
 	}
 
-	// Use a temp dir to avoid writing to /etc/edgectl in tests
-	// Note: FetchTokenFromSecretStore writes to /etc/edgectl which needs root;
-	// in CI this test may need to run as root or the write can be skipped.
-
 	token, err := FetchTokenFromSecretStore(mock, testClusterID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -43,18 +38,17 @@ func TestFetchTokenFromSecretStore_SetsEnvVars(t *testing.T) {
 		t.Errorf("expected token %q, got %q", testSecretToken, token)
 	}
 
-	// Check env vars were set
-	if got := os.Getenv("RKE2_TOKEN"); got != testSecretToken {
-		t.Errorf("expected RKE2_TOKEN=%q, got %q", testSecretToken, got)
+	// Check env vars were set (K3s uses K3S_TOKEN and K3S_URL)
+	if got := os.Getenv("K3S_TOKEN"); got != testSecretToken {
+		t.Errorf("expected K3S_TOKEN=%q, got %q", testSecretToken, got)
 	}
-	if got := os.Getenv("RKE2_SERVER_IP"); got != "10.0.0.1" {
-		t.Errorf("expected RKE2_SERVER_IP='10.0.0.1', got %q", got)
+	if got := os.Getenv("K3S_URL"); got != "https://10.0.0.1:6443" {
+		t.Errorf("expected K3S_URL='https://10.0.0.1:6443', got %q", got)
 	}
 
-	// Cleanup
 	t.Cleanup(func() {
-		os.Unsetenv("RKE2_TOKEN")     //nolint:errcheck // error irrelevant in test cleanup
-		os.Unsetenv("RKE2_SERVER_IP") //nolint:errcheck // error irrelevant in test cleanup
+		os.Unsetenv("K3S_TOKEN") //nolint:errcheck // error irrelevant in test cleanup
+		os.Unsetenv("K3S_URL")   //nolint:errcheck // error irrelevant in test cleanup
 	})
 }
 
@@ -80,12 +74,10 @@ func TestFetchTokenFromSecretStore_NoMasterIP(t *testing.T) {
 		t.Errorf("expected token 'token-abc', got %q", token)
 	}
 
-	// RKE2_SERVER_IP should not be set when master IP retrieval fails
-	t.Cleanup(func() { os.Unsetenv("RKE2_TOKEN") }) //nolint:errcheck // error irrelevant in test cleanup
+	t.Cleanup(func() { os.Unsetenv("K3S_TOKEN") }) //nolint:errcheck // error irrelevant in test cleanup
 }
 
 // TestHostDeduplication verifies that adding an existing host doesn't duplicate it.
-// This tests the dedup logic extracted from Install().
 func TestHostDeduplication(t *testing.T) {
 	hosts := []string{"master1", "master2"}
 	hostname := "master1"

@@ -24,9 +24,9 @@ type LBNode struct {
 }
 
 // GetStatus retrieves the load balancer status for a cluster from the secret store
-func GetStatus(store vault.SecretStore, clusterID string) (string, []LBNode, error) {
+func GetStatus(store vault.SecretStore, distro, clusterID string) (string, []LBNode, error) {
 	logger.Debug("executing RetrieveLBInfo function")
-	rawNodes, vip, err := store.RetrieveLBInfo(clusterID)
+	rawNodes, vip, err := store.RetrieveLBInfo(distro, clusterID)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to retrieve load balancer info: %w", err)
 	}
@@ -49,14 +49,16 @@ type LoadBalancerConfig struct {
 	VIP       string
 	Hostnames []string
 	HostIPs   map[string]string
+	Distro    string // "rke2" or "k3s" — controls HAProxy config (e.g. supervisor port)
 }
 
-// CreateLoadBalancer creates a new load balancer for the RKE2 cluster
+// CreateLoadBalancer creates a new load balancer for a Kubernetes cluster.
 // It determines if this node should be the primary or backup LB node
-// and configures HAProxy and Keepalived accordingly
-func CreateLoadBalancer(store vault.SecretStore, clusterID, vip string) error {
-	logger.Debug("Creating load balancer for RKE2 cluster")
-	fmt.Printf("Creating load balancer for RKE2 cluster %s\n", clusterID)
+// and configures HAProxy and Keepalived accordingly.
+// The distro parameter ("rke2" or "k3s") controls the HAProxy config.
+func CreateLoadBalancer(store vault.SecretStore, clusterID, vip, distro string) error {
+	logger.Debug("Creating load balancer for %s cluster", distro)
+	fmt.Printf("Creating load balancer for %s cluster %s\n", distro, clusterID)
 
 	// Get the current hostname
 	hostname, err := os.Hostname()
@@ -65,7 +67,7 @@ func CreateLoadBalancer(store vault.SecretStore, clusterID, vip string) error {
 	}
 
 	// First check if there are any existing load balancers
-	existingLBs, existingVIP, err := store.RetrieveLBInfo(clusterID)
+	existingLBs, existingVIP, err := store.RetrieveLBInfo(distro, clusterID)
 
 	// isFirst is true if there are no existing load balancers
 	isFirst := err != nil || len(existingLBs) == 0
@@ -74,7 +76,7 @@ func CreateLoadBalancer(store vault.SecretStore, clusterID, vip string) error {
 		isFirst, err, len(existingLBs))
 
 	// Retrieve server nodes from the secret store for HAProxy configuration
-	hosts, masterVIP, hostIPs, err := store.RetrieveMasterInfo(clusterID)
+	hosts, masterVIP, hostIPs, err := store.RetrieveMasterInfo(distro, clusterID)
 	if err != nil {
 		logger.Debug("No master nodes found, this might be a new cluster: %v", err)
 	}
@@ -102,7 +104,7 @@ func CreateLoadBalancer(store vault.SecretStore, clusterID, vip string) error {
 	isMain := isFirst
 
 	// Store the current LB info in the secret store
-	err = store.StoreLBInfo(clusterID, hostname, effectiveVIP, isMain)
+	err = store.StoreLBInfo(distro, clusterID, hostname, effectiveVIP, isMain)
 	if err != nil {
 		return fmt.Errorf("failed to store load balancer info in secret store: %w", err)
 	}
@@ -115,11 +117,12 @@ func CreateLoadBalancer(store vault.SecretStore, clusterID, vip string) error {
 		VIP:       effectiveVIP,
 		Hostnames: hosts,
 		HostIPs:   hostIPs,
+		Distro:    distro,
 	})
 }
 
-func BootstrapLBFromSecretStore(store vault.SecretStore, clusterID string, isMain bool) error {
-	hosts, vip, hostIPs, err := store.RetrieveMasterInfo(clusterID)
+func BootstrapLBFromSecretStore(store vault.SecretStore, clusterID string, isMain bool, distro string) error {
+	hosts, vip, hostIPs, err := store.RetrieveMasterInfo(distro, clusterID)
 	if err != nil {
 		return fmt.Errorf("failed to fetch master info from secret store: %w", err)
 	}
@@ -136,6 +139,7 @@ func BootstrapLBFromSecretStore(store vault.SecretStore, clusterID string, isMai
 		VIP:       vip,
 		Hostnames: hosts,
 		HostIPs:   hostIPs,
+		Distro:    distro,
 	})
 }
 
@@ -153,7 +157,7 @@ func BootstrapLB(cfg *LoadBalancerConfig) error {
 	}
 
 	fmt.Print("📄 Generating HAProxy config... \n")
-	haproxyConfig, err := generateHAProxyConfig(cfg.Hostnames, cfg.HostIPs)
+	haproxyConfig, err := generateHAProxyConfig(cfg.Hostnames, cfg.HostIPs, cfg.Distro)
 	if err != nil {
 		return err
 	}
@@ -186,9 +190,9 @@ func installPackages() error {
 	return cmd.Run()
 }
 
-func generateHAProxyConfig(hostnames []string, hostIPs map[string]string) (string, error) {
+func generateHAProxyConfig(hostnames []string, hostIPs map[string]string, distro string) (string, error) {
 	var b strings.Builder
-	b.WriteString(`# HAProxy Configuration for RKE2 Load Balancing
+	fmt.Fprintf(&b, `# HAProxy Configuration for %s Load Balancing
 global
     log /dev/log local0
     log /dev/log local1 notice
@@ -215,20 +219,27 @@ defaults
     errorfile 503 /etc/haproxy/errors/503.http
     errorfile 504 /etc/haproxy/errors/504.http
 
-frontend k3s-frontend
+frontend k8s-api-frontend
     bind *:6443
     mode tcp
     option tcplog
-    default_backend k3s-backend
+    default_backend k8s-api-backend
+`, strings.ToUpper(distro))
 
+	// RKE2 uses a separate supervisor port (9345); K3s does not
+	if distro == "rke2" {
+		b.WriteString(`
 # Frontend for RKE2 supervisor API
 frontend rke2-supervisor-frontend
     bind *:9345
     mode tcp
     option tcplog
     default_backend rke2-supervisor-backend
+`)
+	}
 
-backend k3s-backend
+	b.WriteString(`
+backend k8s-api-backend
     mode tcp
     option tcp-check
     balance roundrobin
@@ -236,14 +247,14 @@ backend k3s-backend
 
 `)
 
-	// Add servers to the k3s backend (port 6443)
+	// Add servers to the API backend (port 6443)
 	addServersToBackend(&b, hostnames, hostIPs, 6443)
 
-	// Add supervisor API backend
-	b.WriteString("\nbackend rke2-supervisor-backend\n    mode tcp\n    option tcp-check\n    balance roundrobin\n    default-server inter 10s downinter 5s rise 3 fall 3\n")
-
-	// Add servers to the supervisor backend (port 9345)
-	addServersToBackend(&b, hostnames, hostIPs, 9345)
+	// Add supervisor API backend only for RKE2
+	if distro == "rke2" {
+		b.WriteString("\nbackend rke2-supervisor-backend\n    mode tcp\n    option tcp-check\n    balance roundrobin\n    default-server inter 10s downinter 5s rise 3 fall 3\n")
+		addServersToBackend(&b, hostnames, hostIPs, 9345)
+	}
 
 	return b.String(), nil
 }
@@ -271,7 +282,7 @@ func addServersToBackend(b *strings.Builder, hostnames []string, hostIPs map[str
 }
 
 func generateKeepalivedConfig(iface, vip, state, priority string) string {
-	return fmt.Sprintf(`# Keepalived configuration for RKE2 VIP
+	return fmt.Sprintf(`# Keepalived configuration for VIP
 global_defs {
   enable_script_security
   script_user root
@@ -319,11 +330,11 @@ func detectInterfaceForVIP(vip string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-// CleanupLoadBalancer removes the load balancer configuration for a RKE2 cluster
-// It disables the services, removes configuration files, and cleans up the secret store entry
-func CleanupLoadBalancer(store vault.SecretStore, clusterID string) error {
-	logger.Debug("Cleaning up load balancer for RKE2 cluster %s", clusterID)
-	fmt.Printf("Cleaning up load balancer for RKE2 cluster %s\n", clusterID)
+// CleanupLoadBalancer removes the load balancer configuration for a cluster.
+// It disables the services, removes configuration files, and cleans up the secret store entry.
+func CleanupLoadBalancer(store vault.SecretStore, distro, clusterID string) error {
+	logger.Debug("Cleaning up load balancer for cluster %s", clusterID)
+	fmt.Printf("Cleaning up load balancer for cluster %s\n", clusterID)
 
 	// Get the current hostname
 	hostname, err := os.Hostname()
@@ -355,7 +366,7 @@ func CleanupLoadBalancer(store vault.SecretStore, clusterID string) error {
 
 	// Remove this node from the LB list in the secret store
 	fmt.Print("🔄 Removing load balancer entry from secret store... \n")
-	if err := store.RemoveLBNode(clusterID, hostname); err != nil {
+	if err := store.RemoveLBNode(distro, clusterID, hostname); err != nil {
 		return fmt.Errorf("failed to remove load balancer info from secret store: %w", err)
 	}
 

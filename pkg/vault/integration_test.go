@@ -162,12 +162,12 @@ func TestIntegration_TokenStoreRetrieve(t *testing.T) {
 	clusterID := "integration-test-cluster"
 	token := "K10abc123def456::server:xyz789"
 
-	err := client.StoreJoinToken(clusterID, token)
+	err := client.StoreJoinToken("rke2", clusterID, token)
 	if err != nil {
 		t.Fatalf("StoreJoinToken failed: %v", err)
 	}
 
-	got, err := client.RetrieveJoinToken(clusterID)
+	got, err := client.RetrieveJoinToken("rke2", clusterID)
 	if err != nil {
 		t.Fatalf("RetrieveJoinToken failed: %v", err)
 	}
@@ -184,12 +184,12 @@ func TestIntegration_MasterInfoAccumulation(t *testing.T) {
 	clusterID := "master-test-cluster"
 
 	// First master
-	err := client.StoreMasterInfo(clusterID, "master1", []string{"master1"}, "10.0.0.100")
+	err := client.StoreMasterInfo("rke2", clusterID, "master1", []string{"master1"}, "10.0.0.100")
 	if err != nil {
 		t.Fatalf("StoreMasterInfo (1st) failed: %v", err)
 	}
 
-	hosts, vip, hostIPs, err := client.RetrieveMasterInfo(clusterID)
+	hosts, vip, hostIPs, err := client.RetrieveMasterInfo("rke2", clusterID)
 	if err != nil {
 		t.Fatalf("RetrieveMasterInfo (1st) failed: %v", err)
 	}
@@ -201,12 +201,12 @@ func TestIntegration_MasterInfoAccumulation(t *testing.T) {
 	}
 
 	// Second master
-	err = client.StoreMasterInfo(clusterID, "master2", []string{"master1", "master2"}, "10.0.0.100")
+	err = client.StoreMasterInfo("rke2", clusterID, "master2", []string{"master1", "master2"}, "10.0.0.100")
 	if err != nil {
 		t.Fatalf("StoreMasterInfo (2nd) failed: %v", err)
 	}
 
-	hosts, _, hostIPs, err = client.RetrieveMasterInfo(clusterID)
+	hosts, _, hostIPs, err = client.RetrieveMasterInfo("rke2", clusterID)
 	if err != nil {
 		t.Fatalf("RetrieveMasterInfo (2nd) failed: %v", err)
 	}
@@ -219,7 +219,7 @@ func TestIntegration_MasterInfoAccumulation(t *testing.T) {
 	}
 
 	// First master IP should be retrievable
-	firstIP, err := client.RetrieveFirstMasterIP(clusterID)
+	firstIP, err := client.RetrieveFirstMasterIP("rke2", clusterID)
 	if err != nil {
 		t.Fatalf("RetrieveFirstMasterIP failed: %v", err)
 	}
@@ -252,14 +252,14 @@ clusters:
 	tmpFile.Close()
 
 	// Store with VIP replacement
-	err = client.StoreKubeConfig(clusterID, tmpFile.Name(), "10.0.0.100")
+	err = client.StoreKubeConfig("rke2", clusterID, tmpFile.Name(), "10.0.0.100")
 	if err != nil {
 		t.Fatalf("StoreKubeConfig failed: %v", err)
 	}
 
 	// Retrieve to a new file
 	outPath := fmt.Sprintf("%s/kubeconfig-out.yaml", t.TempDir())
-	err = client.RetrieveKubeConfig(clusterID, outPath)
+	err = client.RetrieveKubeConfig("rke2", clusterID, outPath)
 	if err != nil {
 		t.Fatalf("RetrieveKubeConfig failed: %v", err)
 	}
@@ -291,18 +291,18 @@ func TestIntegration_LBInfoMainBackup(t *testing.T) {
 	clusterID := "lb-test-cluster"
 
 	// Store main LB
-	err := client.StoreLBInfo(clusterID, "lb-main", "10.0.0.200", true)
+	err := client.StoreLBInfo("rke2", clusterID, "lb-main", "10.0.0.200", true)
 	if err != nil {
 		t.Fatalf("StoreLBInfo (main) failed: %v", err)
 	}
 
 	// Store backup LB
-	err = client.StoreLBInfo(clusterID, "lb-backup", "10.0.0.200", false)
+	err = client.StoreLBInfo("rke2", clusterID, "lb-backup", "10.0.0.200", false)
 	if err != nil {
 		t.Fatalf("StoreLBInfo (backup) failed: %v", err)
 	}
 
-	nodes, vip, err := client.RetrieveLBInfo(clusterID)
+	nodes, vip, err := client.RetrieveLBInfo("rke2", clusterID)
 	if err != nil {
 		t.Fatalf("RetrieveLBInfo failed: %v", err)
 	}
@@ -331,12 +331,12 @@ func TestIntegration_LBInfoMainBackup(t *testing.T) {
 	}
 
 	// Remove a node
-	err = client.RemoveLBNode(clusterID, "lb-backup")
+	err = client.RemoveLBNode("rke2", clusterID, "lb-backup")
 	if err != nil {
 		t.Fatalf("RemoveLBNode failed: %v", err)
 	}
 
-	nodes, _, err = client.RetrieveLBInfo(clusterID)
+	nodes, _, err = client.RetrieveLBInfo("rke2", clusterID)
 	if err != nil {
 		t.Fatalf("RetrieveLBInfo after removal failed: %v", err)
 	}
@@ -353,9 +353,9 @@ func TestIntegration_DeleteClusterData(t *testing.T) {
 	clusterID := "cleanup-test-cluster"
 
 	// Store all types of data
-	_ = client.StoreJoinToken(clusterID, "test-token")
-	_ = client.StoreMasterInfo(clusterID, "master1", []string{"master1"}, "10.0.0.1")
-	_ = client.StoreLBInfo(clusterID, "lb1", "10.0.0.1", true)
+	_ = client.StoreJoinToken("rke2", clusterID, "test-token")
+	_ = client.StoreMasterInfo("rke2", clusterID, "master1", []string{"master1"}, "10.0.0.1")
+	_ = client.StoreLBInfo("rke2", clusterID, "lb1", "10.0.0.1", true)
 
 	// Create temp kubeconfig
 	tmpFile, err := os.CreateTemp(t.TempDir(), "kubeconfig-*.yaml")
@@ -364,27 +364,27 @@ func TestIntegration_DeleteClusterData(t *testing.T) {
 	}
 	tmpFile.WriteString("apiVersion: v1\nclusters: []\n")
 	tmpFile.Close()
-	_ = client.StoreKubeConfig(clusterID, tmpFile.Name(), "")
+	_ = client.StoreKubeConfig("rke2", clusterID, tmpFile.Name(), "")
 
 	// Verify data exists
-	_, err = client.RetrieveJoinToken(clusterID)
+	_, err = client.RetrieveJoinToken("rke2", clusterID)
 	if err != nil {
 		t.Fatalf("expected token to exist before cleanup: %v", err)
 	}
 
 	// Delete all
-	err = client.DeleteClusterData(clusterID)
+	err = client.DeleteClusterData("rke2", clusterID)
 	if err != nil {
 		t.Fatalf("DeleteClusterData failed: %v", err)
 	}
 
 	// Verify everything is gone
-	_, err = client.RetrieveJoinToken(clusterID)
+	_, err = client.RetrieveJoinToken("rke2", clusterID)
 	if err == nil {
 		t.Error("expected token retrieval to fail after cleanup")
 	}
 
-	_, _, _, err = client.RetrieveMasterInfo(clusterID)
+	_, _, _, err = client.RetrieveMasterInfo("rke2", clusterID)
 	if err == nil {
 		t.Error("expected master info retrieval to fail after cleanup")
 	}

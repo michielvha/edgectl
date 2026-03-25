@@ -14,7 +14,7 @@ import (
 
 // --- generateHAProxyConfig tests ---
 
-func TestGenerateHAProxyConfig_MultipleHosts(t *testing.T) {
+func TestGenerateHAProxyConfig_RKE2_MultipleHosts(t *testing.T) {
 	hostIPs := map[string]string{
 		"master1": "10.0.0.1",
 		"master2": "10.0.0.2",
@@ -22,7 +22,7 @@ func TestGenerateHAProxyConfig_MultipleHosts(t *testing.T) {
 	}
 	hostnames := []string{"master1", "master2", "master3"}
 
-	config, err := generateHAProxyConfig(hostnames, hostIPs)
+	config, err := generateHAProxyConfig(hostnames, hostIPs, "rke2")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -38,20 +38,28 @@ func TestGenerateHAProxyConfig_MultipleHosts(t *testing.T) {
 			t.Errorf("missing 9345 backend entry for %s; want %q in config", h, expected9345)
 		}
 	}
+
+	// RKE2 should include supervisor frontend/backend
+	if !strings.Contains(config, "rke2-supervisor-frontend") {
+		t.Error("missing rke2-supervisor-frontend for rke2 distro")
+	}
+	if !strings.Contains(config, "rke2-supervisor-backend") {
+		t.Error("missing rke2-supervisor-backend for rke2 distro")
+	}
 }
 
-func TestGenerateHAProxyConfig_EmptyHosts(t *testing.T) {
-	config, err := generateHAProxyConfig(nil, nil)
+func TestGenerateHAProxyConfig_RKE2_EmptyHosts(t *testing.T) {
+	config, err := generateHAProxyConfig(nil, nil, "rke2")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	// Should still have the frontend/backend structure, just no server lines
-	if !strings.Contains(config, "frontend k3s-frontend") {
-		t.Error("missing k3s-frontend section")
+	if !strings.Contains(config, "frontend k8s-api-frontend") {
+		t.Error("missing k8s-api-frontend section")
 	}
-	if !strings.Contains(config, "backend k3s-backend") {
-		t.Error("missing k3s-backend section")
+	if !strings.Contains(config, "backend k8s-api-backend") {
+		t.Error("missing k8s-api-backend section")
 	}
 	if !strings.Contains(config, "backend rke2-supervisor-backend") {
 		t.Error("missing rke2-supervisor-backend section")
@@ -66,9 +74,9 @@ func TestGenerateHAProxyConfig_EmptyHosts(t *testing.T) {
 	}
 }
 
-func TestGenerateHAProxyConfig_SingleHost(t *testing.T) {
+func TestGenerateHAProxyConfig_RKE2_SingleHost(t *testing.T) {
 	hostIPs := map[string]string{"node1": "192.168.1.10"}
-	config, err := generateHAProxyConfig([]string{"node1"}, hostIPs)
+	config, err := generateHAProxyConfig([]string{"node1"}, hostIPs, "rke2")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -76,6 +84,54 @@ func TestGenerateHAProxyConfig_SingleHost(t *testing.T) {
 	count := strings.Count(config, "server node1")
 	if count != 2 {
 		t.Errorf("expected 2 server lines (6443+9345), got %d", count)
+	}
+}
+
+// --- K3s-specific HAProxy tests ---
+
+func TestGenerateHAProxyConfig_K3s_NoSupervisorPort(t *testing.T) {
+	hostIPs := map[string]string{
+		"master1": "10.0.0.1",
+		"master2": "10.0.0.2",
+	}
+	hostnames := []string{"master1", "master2"}
+
+	config, err := generateHAProxyConfig(hostnames, hostIPs, "k3s")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// K3s should NOT have supervisor frontend/backend
+	if strings.Contains(config, "rke2-supervisor-frontend") {
+		t.Error("k3s config should not contain rke2-supervisor-frontend")
+	}
+	if strings.Contains(config, "rke2-supervisor-backend") {
+		t.Error("k3s config should not contain rke2-supervisor-backend")
+	}
+	if strings.Contains(config, ":9345") {
+		t.Error("k3s config should not contain port 9345")
+	}
+
+	// Should have 6443 entries
+	for _, h := range hostnames {
+		expected6443 := "server " + h + " " + hostIPs[h] + ":6443 check"
+		if !strings.Contains(config, expected6443) {
+			t.Errorf("missing 6443 backend entry for %s; want %q in config", h, expected6443)
+		}
+	}
+}
+
+func TestGenerateHAProxyConfig_K3s_SingleHost(t *testing.T) {
+	hostIPs := map[string]string{"node1": "192.168.1.10"}
+	config, err := generateHAProxyConfig([]string{"node1"}, hostIPs, "k3s")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// K3s: only 1 server line (6443 only, no 9345)
+	count := strings.Count(config, "server node1")
+	if count != 1 {
+		t.Errorf("expected 1 server line (6443 only for k3s), got %d", count)
 	}
 }
 
@@ -223,7 +279,7 @@ func TestGenerateKeepalivedConfig_ContainsHealthCheck(t *testing.T) {
 
 func TestGetStatus_ReturnsNodesAndVIP(t *testing.T) {
 	mock := &vault.MockStore{
-		RetrieveLBInfoFunc: func(clusterID string) ([]map[string]interface{}, string, error) {
+		RetrieveLBInfoFunc: func(distro, clusterID string) ([]map[string]interface{}, string, error) {
 			return []map[string]interface{}{
 				{"hostname": "lb1", "is_main": true},
 				{"hostname": "lb2", "is_main": false},
@@ -231,7 +287,7 @@ func TestGetStatus_ReturnsNodesAndVIP(t *testing.T) {
 		},
 	}
 
-	vip, nodes, err := GetStatus(mock, "test-cluster")
+	vip, nodes, err := GetStatus(mock, "rke2", "test-cluster")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -251,12 +307,12 @@ func TestGetStatus_ReturnsNodesAndVIP(t *testing.T) {
 
 func TestGetStatus_EmptyNodes(t *testing.T) {
 	mock := &vault.MockStore{
-		RetrieveLBInfoFunc: func(clusterID string) ([]map[string]interface{}, string, error) {
+		RetrieveLBInfoFunc: func(distro, clusterID string) ([]map[string]interface{}, string, error) {
 			return []map[string]interface{}{}, "", nil
 		},
 	}
 
-	vip, nodes, err := GetStatus(mock, "empty-cluster")
+	vip, nodes, err := GetStatus(mock, "rke2", "empty-cluster")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -48,9 +48,15 @@ func ExtractEmbeddedScript(scriptName string) string {
 	return scriptPath
 }
 
-// Runs a function from the sourced script
+// Runs a function from the sourced script.
+// Always extracts common.sh alongside the target script so distro scripts can source it.
 func RunBashFunction(scriptName, commandString string) {
 	scriptPath := ExtractEmbeddedScript(scriptName)
+
+	// Ensure common.sh is always available for sourcing
+	if scriptName != "common.sh" {
+		ExtractEmbeddedScript("common.sh")
+	}
 
 	// Split the command into function name and arguments
 	parts := strings.Fields(commandString)

@@ -114,13 +114,15 @@ export BAO_TOKEN="root"
 All cluster data is stored under the `kv/` KV v2 mount using the following path structure:
 
 ```
-kv/data/rke2/<cluster-id>/token         # Join token
-kv/data/rke2/<cluster-id>/kubeconfig    # Kubeconfig
-kv/data/rke2/<cluster-id>/masters       # Master node list
-kv/data/rke2/<cluster-id>/lb/<hostname> # Load balancer node info
+kv/data/<distro>/<cluster-id>/token         # Join token
+kv/data/<distro>/<cluster-id>/kubeconfig    # Kubeconfig
+kv/data/<distro>/<cluster-id>/masters       # Master node list
+kv/data/<distro>/<cluster-id>/lb/<hostname> # Load balancer node info
 ```
 
-The `kv/metadata/` prefix is used for permanent deletion (all versions) during cluster cleanup (`edgectl rke2 system purge --cluster-id`).
+Where `<distro>` is `rke2` or `k3s` depending on the cluster type.
+
+The `kv/metadata/` prefix is used for permanent deletion (all versions) during cluster cleanup (`edgectl rke2 system purge --cluster-id` or `edgectl k3s system purge --cluster-id`).
 
 ### CLI commands
 

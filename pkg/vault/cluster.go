@@ -1,7 +1,7 @@
 /*
 Copyright © 2025 VH & Co - contact@vhco.pro
 
-Package vault provides specialized handlers for RKE2 cluster secrets management.
+Package vault provides specialized handlers for cluster secrets management.
 
 This file handles cluster-level operations:
 - DeleteClusterData: Removes all secret store data for a given cluster (token, kubeconfig, masters, LB entries)
@@ -17,8 +17,8 @@ import (
 // DeleteClusterData permanently removes all secret store data for a cluster.
 // Uses kv/metadata/ prefix for permanent deletion of all KV v2 versions.
 // Errors are logged as warnings and do not stop the cleanup — best-effort deletion.
-func (c *Client) DeleteClusterData(clusterID string) error {
-	basePath := fmt.Sprintf("kv/metadata/rke2/%s", clusterID)
+func (c *Client) DeleteClusterData(distro, clusterID string) error {
+	basePath := fmt.Sprintf("kv/metadata/%s/%s", distro, clusterID)
 	var lastErr error
 
 	// Delete known fixed paths

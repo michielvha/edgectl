@@ -32,11 +32,11 @@ func TestFetchToken_SetsEnvVars(t *testing.T) {
 	if token != testAgentToken {
 		t.Errorf("expected %q, got %q", testAgentToken, token)
 	}
-	if got := os.Getenv("RKE2_TOKEN"); got != testAgentToken {
-		t.Errorf("expected RKE2_TOKEN=%q, got %q", testAgentToken, got)
+	if got := os.Getenv("K3S_TOKEN"); got != testAgentToken {
+		t.Errorf("expected K3S_TOKEN=%q, got %q", testAgentToken, got)
 	}
 
-	t.Cleanup(func() { os.Unsetenv("RKE2_TOKEN") }) //nolint:errcheck // error irrelevant in test cleanup
+	t.Cleanup(func() { os.Unsetenv("K3S_TOKEN") }) //nolint:errcheck // error irrelevant in test cleanup
 }
 
 func TestVIPResolutionPriority_StoreWins(t *testing.T) {
@@ -95,7 +95,6 @@ func TestLBHostnameDNS_Resolves(t *testing.T) {
 	}
 	t.Cleanup(func() { lookupHost = original })
 
-	// Simulate the VIP resolution logic from Install()
 	vip := ""
 	lbHostname := "lb.example.com"
 	if vip == "" && lbHostname != "" {
@@ -125,7 +124,6 @@ func TestLBHostnameDNS_Error(t *testing.T) {
 		if err == nil && len(addrs) > 0 {
 			t.Fatal("expected DNS failure, but got result")
 		}
-		// In Install(), this returns an error — here we just verify the lookup fails
 	}
 
 	if vip != "" {

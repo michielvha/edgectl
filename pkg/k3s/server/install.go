@@ -19,10 +19,10 @@ import (
 // Tests can override this to use a temporary directory.
 var clusterIDDir = "/etc/edgectl"
 
-// Install sets up the RKE2 server on the host.
+// Install sets up the K3s server on the host.
 // If `isExisting` is true, it pulls the token from the secret store using the supplied clusterID.
 // Otherwise, it generates a new clusterID and saves token + kubeconfig to the secret store.
-// If `vip` is provided, it will be used in the TLS SANs for the server. if a cluster id is provided, it will fetch VIP from the secret store.
+// If `vip` is provided, it will be used in the TLS SANs for the server.
 func Install(store vault.SecretStore, clusterID string, isExisting bool, vip string) error {
 	// Get current hostname
 	hostname, err := os.Hostname()
@@ -38,7 +38,7 @@ func Install(store vault.SecretStore, clusterID string, isExisting bool, vip str
 
 		// For existing clusters, try to fetch the VIP from the secret store if none was provided
 		if vip == "" {
-			_, storedVIP, _, err := store.RetrieveMasterInfo("rke2", clusterID)
+			_, storedVIP, _, err := store.RetrieveMasterInfo("k3s", clusterID)
 			if err == nil && storedVIP != "" {
 				fmt.Printf("🔍 VIP fetched from secret store: %s\n", storedVIP)
 				vip = storedVIP
@@ -46,7 +46,7 @@ func Install(store vault.SecretStore, clusterID string, isExisting bool, vip str
 		}
 	} else {
 		// Generate a new cluster ID
-		clusterID = fmt.Sprintf("rke2-%s", uuid.New().String()[:8])
+		clusterID = fmt.Sprintf("k3s-%s", uuid.New().String()[:8])
 		_ = os.MkdirAll(clusterIDDir, 0o750)
 		_ = os.WriteFile(clusterIDDir+"/cluster-id", []byte(clusterID), 0o600)
 		fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
@@ -60,27 +60,27 @@ func Install(store vault.SecretStore, clusterID string, isExisting bool, vip str
 	}
 
 	// Run the installation script with options
-	common.RunBashFunction("rke2.sh", fmt.Sprintf("install_rke2_server %s", installOptions))
+	common.RunBashFunction("k3s.sh", fmt.Sprintf("install_k3s_server %s", installOptions))
 
 	// If this is a new cluster, store token and kubeconfig in the secret store
 	if !isExisting {
-		tokenBytes, err := os.ReadFile("/var/lib/rancher/rke2/server/node-token")
+		tokenBytes, err := os.ReadFile("/var/lib/rancher/k3s/server/node-token")
 		if err != nil {
 			return fmt.Errorf("failed to read generated node token: %w", err)
 		}
 
 		token := strings.TrimSpace(string(tokenBytes))
-		if err := store.StoreJoinToken("rke2", clusterID, token); err != nil {
+		if err := store.StoreJoinToken("k3s", clusterID, token); err != nil {
 			return fmt.Errorf("failed to store token in secret store: %w", err)
 		}
 		fmt.Printf("🔐 Token successfully stored in secret store for cluster %s\n", clusterID)
 
-		kubeconfigPath := "/etc/rancher/rke2/rke2.yaml"
+		kubeconfigPath := "/etc/rancher/k3s/k3s.yaml"
 		if _, statErr := os.Stat(kubeconfigPath); os.IsNotExist(statErr) {
 			return fmt.Errorf("kubeconfig file not found at path: %s", kubeconfigPath)
 		}
 
-		err = store.StoreKubeConfig("rke2", clusterID, kubeconfigPath, vip)
+		err = store.StoreKubeConfig("k3s", clusterID, kubeconfigPath, vip)
 		if err != nil {
 			return fmt.Errorf("failed to store kubeconfig in secret store: %w", err)
 		}
@@ -94,16 +94,14 @@ func Install(store vault.SecretStore, clusterID string, isExisting bool, vip str
 	var hosts []string
 	existingVIP := vip // Use provided VIP as default
 
-	existingHosts, storedVIP, _, err := store.RetrieveMasterInfo("rke2", clusterID)
+	existingHosts, storedVIP, _, err := store.RetrieveMasterInfo("k3s", clusterID)
 	if err == nil {
-		// Successfully retrieved existing master info
 		hosts = existingHosts
 		if storedVIP != "" {
-			existingVIP = storedVIP // Use the stored VIP if it exists
+			existingVIP = storedVIP
 		}
 		logger.Debug("%s", fmt.Sprintf("Found existing master nodes: %v", hosts))
 	} else {
-		// First master node in this cluster
 		hosts = []string{}
 		logger.Debug("No existing master nodes found, initializing new master list")
 	}
@@ -125,7 +123,7 @@ func Install(store vault.SecretStore, clusterID string, isExisting bool, vip str
 	}
 
 	// Store updated master info with the VIP
-	err = store.StoreMasterInfo("rke2", clusterID, hostname, hosts, existingVIP)
+	err = store.StoreMasterInfo("k3s", clusterID, hostname, hosts, existingVIP)
 	if err != nil {
 		return fmt.Errorf("failed to store master node info in secret store: %w", err)
 	}
@@ -141,7 +139,7 @@ func Install(store vault.SecretStore, clusterID string, isExisting bool, vip str
 // FetchTokenFromSecretStore fetches token from the secret store & sets as env var.
 // Also retrieves the first master's IP if joining an existing cluster.
 func FetchTokenFromSecretStore(store vault.SecretStore, clusterID string) (string, error) {
-	token, err := store.RetrieveJoinToken("rke2", clusterID)
+	token, err := store.RetrieveJoinToken("k3s", clusterID)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve join token: %w", err)
 	}
@@ -154,17 +152,15 @@ func FetchTokenFromSecretStore(store vault.SecretStore, clusterID string) (strin
 	}
 
 	// Set token as environment variable for the bash script to use
-	_ = os.Setenv("RKE2_TOKEN", token)
-	fmt.Println("✅ Set RKE2_TOKEN environment variable")
+	_ = os.Setenv("K3S_TOKEN", token)
+	fmt.Println("✅ Set K3S_TOKEN environment variable")
 
 	// For additional master nodes, get the first master's IP
-	firstMasterIP, ipErr := store.RetrieveFirstMasterIP("rke2", clusterID)
+	firstMasterIP, ipErr := store.RetrieveFirstMasterIP("k3s", clusterID)
 	if ipErr == nil && firstMasterIP != "" {
-		// Set server IP as environment variable if available
-		_ = os.Setenv("RKE2_SERVER_IP", firstMasterIP)
-		fmt.Printf("✅ Set RKE2_SERVER_IP environment variable: %s\n", firstMasterIP)
+		_ = os.Setenv("K3S_URL", fmt.Sprintf("https://%s:6443", firstMasterIP))
+		fmt.Printf("✅ Set K3S_URL environment variable: https://%s:6443\n", firstMasterIP)
 	} else if ipErr != nil {
-		// Log the error but continue since it's not critical (could be first server)
 		logger.Debug("Could not find first master IP: %v", ipErr)
 	}
 

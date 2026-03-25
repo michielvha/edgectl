@@ -20,7 +20,7 @@ var lookupHost = net.LookupHost
 // Tests can override this to use a temporary directory.
 var clusterIDDir = "/etc/edgectl"
 
-// Install sets up the RKE2 agent on the host.
+// Install sets up the K3s agent on the host.
 // It fetches the join token from the secret store using the supplied clusterID.
 // VIP resolution priority: secret store > --vip flag > --lb-hostname flag (DNS resolved).
 func Install(store vault.SecretStore, clusterID, vip, lbHostname string) error {
@@ -29,7 +29,7 @@ func Install(store vault.SecretStore, clusterID, vip, lbHostname string) error {
 	}
 
 	// Priority 1: fetch the VIP from Master Info in the secret store
-	_, storedVIP, _, err := store.RetrieveMasterInfo("rke2", clusterID)
+	_, storedVIP, _, err := store.RetrieveMasterInfo("k3s", clusterID)
 	if err == nil && storedVIP != "" {
 		vip = storedVIP
 		fmt.Printf("🔍 VIP fetched from secret store: %s\n", storedVIP)
@@ -55,14 +55,14 @@ func Install(store vault.SecretStore, clusterID, vip, lbHostname string) error {
 		logger.Debug("No VIP found via secret store, --vip, or --lb-hostname, using default settings")
 	}
 	// Run the installation script with options
-	common.RunBashFunction("rke2.sh", fmt.Sprintf("install_rke2_agent %s", installOptions))
+	common.RunBashFunction("k3s.sh", fmt.Sprintf("install_k3s_agent %s", installOptions))
 
 	return nil
 }
 
 // FetchToken fetches token from the secret store & sets as env variable
 func FetchToken(store vault.SecretStore, clusterID string) (string, error) {
-	token, err := store.RetrieveJoinToken("rke2", clusterID)
+	token, err := store.RetrieveJoinToken("k3s", clusterID)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve join token: %w", err)
 	}
@@ -75,8 +75,8 @@ func FetchToken(store vault.SecretStore, clusterID string) (string, error) {
 	}
 
 	// Set token as environment variable for the bash script to use
-	_ = os.Setenv("RKE2_TOKEN", token)
-	fmt.Println("✅ Set RKE2_TOKEN environment variable")
+	_ = os.Setenv("K3S_TOKEN", token)
+	fmt.Println("✅ Set K3S_TOKEN environment variable")
 
 	return token, nil
 }

@@ -1,25 +1,44 @@
 # Variables
 GO_RUN=go run .
 CLI=edgectl
+VIP=100.111.180.80
 
 # Default target
-.PHONY: help build server server-join agent lb-create lb-status purge config test test-cover test-integration test-func clean lint
+.PHONY: help build server server-join agent lb-create lb-status purge config status test test-cover test-integration test-func clean lint
+.PHONY: k3s-server k3s-server-join k3s-agent k3s-lb-create k3s-lb-status k3s-lb-cleanup k3s-purge k3s-config k3s-status k3s-bash
 help:
 	@echo "Usage:"
 	@echo "  make build                 Build the edgectl binary"
-	@echo "  make server      		    Run 'rke2 server install'"
-	@echo "  make server-join           Run 'rke2 server install --cluster-id rke2-03db202f'"
-	@echo "  make agent       			Run 'rke2 agent --cluster-id rke2-03db202f'"
-	@echo "  make lb-create             Run 'rke2 lb create --cluster-id rke2-03db202f'"
-	@echo "  make lb-status             Run 'rke2 lb status --cluster-id rke2-03db202f'"
-	@echo "  make purge        		    Run 'rke2 purge'"
-	@echo "  make config                Run 'rke2 config'"
+	@echo ""
+	@echo "  RKE2 Commands:"
+	@echo "  make server                Run 'rke2 server install'"
+	@echo "  make server-join           Run 'rke2 server install --cluster-id <id>'"
+	@echo "  make agent                 Run 'rke2 agent install --cluster-id <id>'"
+	@echo "  make lb-create             Run 'rke2 lb create --cluster-id <id>'"
+	@echo "  make lb-status             Run 'rke2 lb status --cluster-id <id>'"
+	@echo "  make purge                 Run 'rke2 system purge'"
+	@echo "  make config                Run 'rke2 system kubeconfig --cluster-id <id>'"
+	@echo "  make status                Run 'rke2 system status'"
+	@echo ""
+	@echo "  K3s Commands:"
+	@echo "  make k3s-server            Run 'k3s server install'"
+	@echo "  make k3s-server-join       Run 'k3s server install --cluster-id <id>'"
+	@echo "  make k3s-agent             Run 'k3s agent install --cluster-id <id>'"
+	@echo "  make k3s-lb-create         Run 'k3s lb create --cluster-id <id>'"
+	@echo "  make k3s-lb-status         Run 'k3s lb status --cluster-id <id>'"
+	@echo "  make k3s-lb-cleanup        Run 'k3s lb cleanup --cluster-id <id>'"
+	@echo "  make k3s-purge             Run 'k3s system purge'"
+	@echo "  make k3s-config            Run 'k3s system kubeconfig --cluster-id <id>'"
+	@echo "  make k3s-status            Run 'k3s system status'"
+	@echo "  make k3s-bash              Run 'k3s system bash'"
+	@echo ""
+	@echo "  Testing & Tooling:"
 	@echo "  make test                  Run all unit tests"
 	@echo "  make test-cover            Run unit tests with coverage report"
 	@echo "  make test-integration      Run integration tests (requires Docker)"
 	@echo "  make test-func             Test a Go function with a sample input"
 	@echo "  make clean                 Remove temporary files (optional)"
-	@echo "  make lint            		Run linter with auto-fix"
+	@echo "  make lint                  Run linter with auto-fix"
 
 
 # Build
@@ -30,7 +49,7 @@ build:
 # Commands
 .PHONY: server
 server:
-	$(GO_RUN) rke2 server install --vip 172.16.12.232
+	$(GO_RUN) rke2 server install --vip $(VIP)
 
 .PHONY: server-join
 server-join:
@@ -48,7 +67,7 @@ agent:
 # Load balancer commands
 .PHONY: lb-create
 lb-create:
-	$(GO_RUN) rke2 lb create --cluster-id $(CLUSTER_ID) --vip 172.16.12.232
+	$(GO_RUN) rke2 lb create --cluster-id $(CLUSTER_ID) --vip $(VIP)
 
 .PHONY: lb-status
 lb-status:
@@ -65,6 +84,47 @@ config:
 .PHONY: status
 status:
 	$(GO_RUN) rke2 system status
+
+# K3s Commands
+.PHONY: k3s-server
+k3s-server:
+	$(GO_RUN) k3s server install --vip $(VIP)
+
+.PHONY: k3s-server-join
+k3s-server-join:
+	$(GO_RUN) k3s server install --cluster-id $(CLUSTER_ID)
+
+.PHONY: k3s-agent
+k3s-agent:
+	$(GO_RUN) k3s agent install --cluster-id $(CLUSTER_ID)
+
+.PHONY: k3s-lb-create
+k3s-lb-create:
+	$(GO_RUN) k3s lb create --cluster-id $(CLUSTER_ID) --vip $(VIP)
+
+.PHONY: k3s-lb-status
+k3s-lb-status:
+	$(GO_RUN) k3s lb status --cluster-id $(CLUSTER_ID)
+
+.PHONY: k3s-lb-cleanup
+k3s-lb-cleanup:
+	$(GO_RUN) k3s lb cleanup --cluster-id $(CLUSTER_ID)
+
+.PHONY: k3s-purge
+k3s-purge:
+	$(GO_RUN) k3s system purge
+
+.PHONY: k3s-config
+k3s-config:
+	$(GO_RUN) k3s system kubeconfig --cluster-id $(CLUSTER_ID)
+
+.PHONY: k3s-status
+k3s-status:
+	$(GO_RUN) k3s system status
+
+.PHONY: k3s-bash
+k3s-bash:
+	$(GO_RUN) k3s system bash
 
 .PHONY: test-func
 test-func:

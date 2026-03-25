@@ -2,12 +2,22 @@
 # manually verify with `gitversion (/showconfig)`
 workflow: GitHubFlow/v1
 
-# Custom strategies - this differs from default
+next-version: 0.0.0
+tag-prefix: ''
+semantic-version-format: Loose
+
+major-version-bump-message: '(BREAKING CHANGE|^.+!:)'
+minor-version-bump-message: '^feat(\([^)]+\))?:\s'
+patch-version-bump-message: '^(fix|enhancement|perf|refactor|revert)(\([^)]+\))?:\s'
+no-bump-message: '^(chore|docs|style|test|ci)(\([^)]+\))?:\s'
+commit-message-incrementing: Enabled
+
 strategies:
-- MergeMessage
-- TaggedCommit
-- TrackReleaseBranches   # this ensures that commits from release branches are tracked and included in the versioning process.
-- VersionInBranchName
+  - Fallback
+  - MergeMessage
+  - TaggedCommit
+  - TrackReleaseBranches   # this ensures that commits from release branches are tracked and included in the versioning process.
+  - VersionInBranchName
 
 branches:
   main:

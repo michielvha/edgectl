@@ -20,38 +20,39 @@ var (
 	userHomeDir, _ = os.UserHomeDir()
 )
 
+// Cmd is the top-level "k3s system" command.
 var Cmd = &cobra.Command{
 	Use:   "system",
-	Short: "Manage RKE2 system operations",
-	Long: `The "system" command provides operations for RKE2 system management.
+	Short: "Manage K3s system operations",
+	Long: `The "system" command provides operations for K3s system management.
 
 Examples:
-  edgectl rke2 system status      # Check status of RKE2
-  edgectl rke2 system purge       # Uninstall RKE2 from the host
-  edgectl rke2 system kubeconfig  # Fetch kubeconfig from secret store
-  edgectl rke2 system bash        # Configure bash environment for RKE2
+  edgectl k3s system status      # Check status of K3s
+  edgectl k3s system purge       # Uninstall K3s from the host
+  edgectl k3s system kubeconfig  # Fetch kubeconfig from secret store
+  edgectl k3s system bash        # Configure bash environment for K3s
 `,
 }
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Show status of RKE2",
+	Short: "Show status of K3s",
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Debug("system status command executed")
-		common.RunBashFunction("rke2-status.sh", "rke2_status")
+		logger.Debug("k3s system status command executed")
+		common.RunBashFunction("k3s-status.sh", "k3s_status")
 	},
 }
 
 var purgeCmd = &cobra.Command{
 	Use:   "purge",
-	Short: "Purge RKE2 install from host",
-	Long: `Completely removes RKE2 installation from the host.
+	Short: "Purge K3s install from host",
+	Long: `Completely removes K3s installation from the host.
 If --cluster-id is provided, also removes all cluster data from the secret store.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Debug("system purge command executed")
-		fmt.Println("🗑️  Purging RKE2 from the host...")
-		common.RunBashFunction("rke2-purge.sh", "rke2_purge")
-		fmt.Println("✅ RKE2 purged successfully")
+		logger.Debug("k3s system purge command executed")
+		fmt.Println("🗑️  Purging K3s from the host...")
+		common.RunBashFunction("k3s-purge.sh", "k3s_purge")
+		fmt.Println("✅ K3s purged successfully")
 
 		// If cluster-id is provided, also clean up secret store data
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
@@ -62,7 +63,7 @@ If --cluster-id is provided, also removes all cluster data from the secret store
 				fmt.Println("⚠️  Could not connect to secret store — skipping remote cleanup")
 				return
 			}
-			if err := vaultClient.DeleteClusterData("rke2", clusterID); err != nil {
+			if err := vaultClient.DeleteClusterData("k3s", clusterID); err != nil {
 				fmt.Printf("⚠️  Secret store cleanup completed with warnings: %v\n", err)
 			} else {
 				fmt.Println("✅ Cluster data removed from secret store")
@@ -75,7 +76,7 @@ var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig",
 	Short: "Fetch kubeconfig from the secret store and store it on the host",
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Debug("system kubeconfig command executed")
+		logger.Debug("k3s system kubeconfig command executed")
 
 		logger.Debug("Extracting values from command line arguments")
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
@@ -86,7 +87,7 @@ var kubeconfigCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		err := vaultClient.RetrieveKubeConfig("rke2", clusterID, outputPath)
+		err := vaultClient.RetrieveKubeConfig("k3s", clusterID, outputPath)
 		if err != nil {
 			fmt.Printf("❌ Failed to retrieve kubeconfig: %v\n", err)
 			os.Exit(1)
@@ -95,20 +96,20 @@ var kubeconfigCmd = &cobra.Command{
 		fmt.Printf("✅ Kubeconfig successfully written to: %s\n", outputPath)
 
 		// Configure bash shell to use the kubeconfig
-		common.RunBashFunction("rke2-bash.sh", "setup_kubectl_bash_env")
+		common.RunBashFunction("k3s-bash.sh", "setup_kubectl_bash_env")
 	},
 }
 
 var bashCmd = &cobra.Command{
 	Use:   "bash",
-	Short: "Configure the bash environment for RKE2",
-	Long:  `Configures the bash environment to use RKE2 binaries and kubeconfig.`,
+	Short: "Configure the bash environment for K3s",
+	Long:  `Configures the bash environment to use K3s kubeconfig.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Debug("system bash command executed")
+		logger.Debug("k3s system bash command executed")
 
-		fmt.Println("🔧 Configuring bash environment for RKE2...")
-		common.RunBashFunction("rke2-bash.sh", "setup_rke2_node_bash_env")
-		fmt.Println("✅ Bash environment configured for RKE2")
+		fmt.Println("🔧 Configuring bash environment for K3s...")
+		common.RunBashFunction("k3s-bash.sh", "setup_k3s_node_bash_env")
+		fmt.Println("✅ Bash environment configured for K3s")
 	},
 }
 
@@ -116,7 +117,6 @@ var bashCmd = &cobra.Command{
 func init() {
 	// Kubeconfig command flags
 	kubeconfigCmd.Flags().String("cluster-id", "", "The ID of the cluster to fetch the kubeconfig for")
-	// Set default output path for kubeconfig generated from userHomeDir
 	homeBasedKubeconfig := filepath.Join(userHomeDir, ".kube", "config")
 	kubeconfigCmd.Flags().String("output", homeBasedKubeconfig, "Destination path to store the kubeconfig")
 

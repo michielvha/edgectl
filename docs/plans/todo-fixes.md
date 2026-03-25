@@ -47,10 +47,10 @@ These wrap `StoreSecret` and `RetrieveSecret` directly, enabling ad-hoc interact
 **Fix:**
 1. Add optional `--cluster-id` flag to `purgeCmd`
 2. Add a `DeleteClusterData(clusterID string) error` method to `pkg/vault/generic.go` (or a new `rke2_cluster.go`) that deletes:
-   - `kv/metadata/rke2/{clusterID}/token`
-   - `kv/metadata/rke2/{clusterID}/kubeconfig`
-   - `kv/metadata/rke2/{clusterID}/masters`
-   - All LB entries under `kv/metadata/rke2/{clusterID}/lb/` (list then delete each)
+   - `kv/metadata/{distro}/{clusterID}/token`
+   - `kv/metadata/{distro}/{clusterID}/kubeconfig`
+   - `kv/metadata/{distro}/{clusterID}/masters`
+   - All LB entries under `kv/metadata/{distro}/{clusterID}/lb/` (list then delete each)
 3. In `purgeCmd`: if `--cluster-id` is provided, call `InitVaultClient()` and `DeleteClusterData()` after the bash script
 
 The flag should be optional so purge still works without Vault access (e.g. Vault is down or was already wiped). Vault cleanup errors should be warn-and-continue, not fatal — the local purge is the primary operation.
