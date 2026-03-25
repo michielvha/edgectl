@@ -15,6 +15,10 @@ import (
 	"github.com/michielvha/edgectl/pkg/vault"
 )
 
+// clusterIDDir is the directory where the cluster-id file is written.
+// Tests can override this to use a temporary directory.
+var clusterIDDir = "/etc/edgectl"
+
 // Install sets up the K3s server on the host.
 // If `isExisting` is true, it pulls the token from the secret store using the supplied clusterID.
 // Otherwise, it generates a new clusterID and saves token + kubeconfig to the secret store.
@@ -43,8 +47,8 @@ func Install(store vault.SecretStore, clusterID string, isExisting bool, vip str
 	} else {
 		// Generate a new cluster ID
 		clusterID = fmt.Sprintf("k3s-%s", uuid.New().String()[:8])
-		_ = os.MkdirAll("/etc/edgectl", 0o750)
-		_ = os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o600)
+		_ = os.MkdirAll(clusterIDDir, 0o750)
+		_ = os.WriteFile(clusterIDDir+"/cluster-id", []byte(clusterID), 0o600)
 		fmt.Printf("🆔 Generated cluster ID: %s\n", clusterID)
 	}
 
@@ -141,9 +145,9 @@ func FetchTokenFromSecretStore(store vault.SecretStore, clusterID string) (strin
 	}
 
 	// ensure edgectl main directory exists
-	_ = os.MkdirAll("/etc/edgectl", 0o750)
+	_ = os.MkdirAll(clusterIDDir, 0o750)
 
-	if err := os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o600); err != nil {
+	if err := os.WriteFile(clusterIDDir+"/cluster-id", []byte(clusterID), 0o600); err != nil {
 		return "", fmt.Errorf("failed to write cluster-id: %w", err)
 	}
 

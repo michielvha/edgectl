@@ -14,10 +14,7 @@ const (
 )
 
 func TestFetchToken_SetsEnvVars(t *testing.T) {
-	// Skip if we can't write to /etc/edgectl (non-root in CI)
-	if err := os.MkdirAll("/etc/edgectl", 0o750); err != nil {
-		t.Skip("skipping: cannot write to /etc/edgectl (requires root)")
-	}
+	clusterIDDir = t.TempDir()
 
 	mock := &vault.MockStore{
 		RetrieveJoinTokenFunc: func(distro, clusterID string) (string, error) {

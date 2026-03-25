@@ -16,6 +16,10 @@ import (
 // lookupHost is a package-level variable wrapping net.LookupHost so tests can inject a stub.
 var lookupHost = net.LookupHost
 
+// clusterIDDir is the directory where the cluster-id file is written.
+// Tests can override this to use a temporary directory.
+var clusterIDDir = "/etc/edgectl"
+
 // Install sets up the RKE2 agent on the host.
 // It fetches the join token from the secret store using the supplied clusterID.
 // VIP resolution priority: secret store > --vip flag > --lb-hostname flag (DNS resolved).
@@ -64,9 +68,9 @@ func FetchToken(store vault.SecretStore, clusterID string) (string, error) {
 	}
 
 	// ensure edgectl main directory exists
-	_ = os.MkdirAll("/etc/edgectl", 0o750)
+	_ = os.MkdirAll(clusterIDDir, 0o750)
 
-	if err := os.WriteFile("/etc/edgectl/cluster-id", []byte(clusterID), 0o600); err != nil {
+	if err := os.WriteFile(clusterIDDir+"/cluster-id", []byte(clusterID), 0o600); err != nil {
 		return "", fmt.Errorf("failed to write cluster-id: %w", err)
 	}
 
