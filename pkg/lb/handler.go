@@ -192,7 +192,7 @@ func installPackages() error {
 
 func generateHAProxyConfig(hostnames []string, hostIPs map[string]string, distro string) (string, error) {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf(`# HAProxy Configuration for %s Load Balancing
+	fmt.Fprintf(&b, `# HAProxy Configuration for %s Load Balancing
 global
     log /dev/log local0
     log /dev/log local1 notice
@@ -224,7 +224,7 @@ frontend k8s-api-frontend
     mode tcp
     option tcplog
     default_backend k8s-api-backend
-`, strings.ToUpper(distro)))
+`, strings.ToUpper(distro))
 
 	// RKE2 uses a separate supervisor port (9345); K3s does not
 	if distro == "rke2" {
