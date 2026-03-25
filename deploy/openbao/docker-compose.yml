@@ -1,6 +1,6 @@
 services:
   openbao:
-    image: openbao/openbao:2.3.1
+    image: openbao/openbao:2.5.2
     container_name: openbao
     command: ["server", "-config=/openbao/config/bao.hcl"]
     cap_add:
