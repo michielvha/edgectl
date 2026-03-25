@@ -1,14 +1,6 @@
 name: Test
 
 on:
-  push:
-    branches:
-      - feat/**
-    paths-ignore:
-      - 'docs/**'
-      - 'readme.md'
-      - '.gitignore'
-      - 'manifests/**'
   pull_request:
     branches:
       - main
