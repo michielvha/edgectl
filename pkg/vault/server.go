@@ -1,9 +1,9 @@
 /*
 Copyright © 2025 VH & Co - contact@vhco.pro
 
-Package vault provides specialized handlers for RKE2 cluster secrets management.
+Package vault provides specialized handlers for cluster secrets management.
 
-This file handles master node management for RKE2 clusters:
+This file handles master node management for Kubernetes clusters:
 - StoreMasterInfo: Records metadata about master nodes, including their hostnames, IPs, and VIPs
 - RetrieveMasterInfo: Gets the list of master nodes, their IPs, and associated VIP
 - RetrieveFirstMasterIP: Gets the IP of the first (initial) master node for joining operations
@@ -23,8 +23,8 @@ import (
 // lookupHost is a package-level variable wrapping net.LookupHost so tests can inject a stub.
 var lookupHost = net.LookupHost
 
-// StoreMasterInfo stores information about RKE2 master nodes and their configuration
-func (c *Client) StoreMasterInfo(clusterID, hostname string, hosts []string, vip string) error {
+// StoreMasterInfo stores information about master nodes and their configuration
+func (c *Client) StoreMasterInfo(distro, clusterID, hostname string, hosts []string, vip string) error {
 	// Get the IP address of this host
 	ipAddr, err := getHostIP(hostname)
 	if err != nil {
@@ -34,7 +34,7 @@ func (c *Client) StoreMasterInfo(clusterID, hostname string, hosts []string, vip
 
 	// Check if we already have master IPs stored
 	var hostIPs map[string]string
-	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/masters", clusterID))
+	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/%s/%s/masters", distro, clusterID))
 	if err == nil && data["host_ips"] != nil {
 		// Try to retrieve existing host_ips map
 		if ipsData, ok := data["host_ips"].(map[string]interface{}); ok {
@@ -55,7 +55,7 @@ func (c *Client) StoreMasterInfo(clusterID, hostname string, hosts []string, vip
 	// Add/update this host's IP
 	hostIPs[hostname] = ipAddr
 
-	path := fmt.Sprintf("kv/data/rke2/%s/masters", clusterID)
+	path := fmt.Sprintf("kv/data/%s/%s/masters", distro, clusterID)
 	return c.StoreSecret(path, map[string]interface{}{
 		"hosts":      hosts,
 		"vip":        vip,
@@ -96,9 +96,9 @@ func getHostIP(hostname string) (string, error) {
 	return addrs[0], nil
 }
 
-// RetrieveMasterInfo retrieves RKE2 master nodes information
-func (c *Client) RetrieveMasterInfo(clusterID string) (hosts []string, vip string, hostIPs map[string]string, err error) {
-	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/masters", clusterID))
+// RetrieveMasterInfo retrieves master nodes information
+func (c *Client) RetrieveMasterInfo(distro, clusterID string) (hosts []string, vip string, hostIPs map[string]string, err error) {
+	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/%s/%s/masters", distro, clusterID))
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -134,8 +134,8 @@ func (c *Client) RetrieveMasterInfo(clusterID string) (hosts []string, vip strin
 }
 
 // RetrieveFirstMasterIP retrieves the IP address of the first master node in the cluster
-func (c *Client) RetrieveFirstMasterIP(clusterID string) (string, error) {
-	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/masters", clusterID))
+func (c *Client) RetrieveFirstMasterIP(distro, clusterID string) (string, error) {
+	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/%s/%s/masters", distro, clusterID))
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve master info: %w", err)
 	}

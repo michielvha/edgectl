@@ -85,17 +85,15 @@ The LB handler needs a **distribution-aware** HAProxy config. Two options:
 
 **Implemented Option A:** Added `distro` parameter to `generateHAProxyConfig()`, `CreateLoadBalancer()`, and `BootstrapLBFromSecretStore()`. The `LoadBalancerConfig` struct has a `Distro string` field. HAProxy config conditionally includes supervisor frontend/backend on port 9345 only for RKE2. Frontend/backend names use generic `k8s-api-frontend`/`k8s-api-backend`.
 
-### Step 5 — Vault paths (no change needed) ✅
+### Step 5 — Vault paths (distro-aware prefix) ✅
 
-The vault paths already use a `clusterID` parameter:
+Vault paths now use a `distro` parameter for clean path separation:
 ```
-kv/data/rke2/{clusterID}/token
-kv/data/k3s/{clusterID}/token    ← automatically namespaced via cluster ID prefix
+kv/data/rke2/{clusterID}/token    ← RKE2 clusters
+kv/data/k3s/{clusterID}/token     ← K3s clusters
 ```
 
-Since cluster IDs will be prefixed `k3s-` vs `rke2-`, the same `SecretStore` methods work without modification. The `kv/data/rke2/...` path is technically a naming artifact, but has no functional impact since `clusterID` is the actual key. 
-
-If you want cleaner paths (`kv/data/k3s/...`), the vault path functions would need a distro parameter. This is optional and can be done later.
+All `SecretStore` interface methods accept `distro` as the first parameter. The `rke2_*.go` vault files were renamed to distro-agnostic names (`token.go`, `server.go`, etc.). See `docs/plans/vault-path-distro-prefix.md` for the full implementation report.
 
 ### Step 6 — Root command registration (`cmd/root.go`) ✅
 

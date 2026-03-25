@@ -20,7 +20,7 @@ var secretsGetCmd = &cobra.Command{
 	Long: `Retrieve a specific key from a KV v2 path.
 
 Example:
-  edgectl secrets get --path kv/data/rke2/my-cluster/token --key token`,
+  edgectl secrets get --path kv/data/<distro>/my-cluster/token --key token`,
 	Run: func(cmd *cobra.Command, args []string) {
 		vaultClient := vault.InitVaultClient()
 		if vaultClient == nil {
@@ -97,8 +97,9 @@ var secretsUploadCmd = &cobra.Command{
 
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
 		token, _ := cmd.Flags().GetString("token")
+		distro, _ := cmd.Flags().GetString("distro")
 
-		err := vaultClient.StoreJoinToken(clusterID, token)
+		err := vaultClient.StoreJoinToken(distro, clusterID, token)
 		if err != nil {
 			fmt.Printf("❌ Failed to store token: %v\n", err)
 			return
@@ -120,7 +121,8 @@ var secretsFetchCmd = &cobra.Command{
 		}
 
 		clusterID, _ := cmd.Flags().GetString("cluster-id")
-		token, err := vaultClient.RetrieveJoinToken(clusterID)
+		distro, _ := cmd.Flags().GetString("distro")
+		token, err := vaultClient.RetrieveJoinToken(distro, clusterID)
 		if err != nil {
 			fmt.Printf("❌ Failed to retrieve token: %v\n", err)
 			return
@@ -150,12 +152,14 @@ func init() {
 	_ = secretsSetCmd.MarkFlagRequired("key")
 	_ = secretsSetCmd.MarkFlagRequired("value")
 
-	// upload flags (RKE2 convenience)
+	// upload flags
 	secretsUploadCmd.Flags().String("cluster-id", "test-cluster", "Cluster ID to store the token under")
 	secretsUploadCmd.Flags().String("token", "dummy-token", "The token to upload")
+	secretsUploadCmd.Flags().String("distro", "rke2", "Cluster distribution (rke2 or k3s)")
 
-	// fetch flags (RKE2 convenience)
+	// fetch flags
 	secretsFetchCmd.Flags().String("cluster-id", "test-cluster", "Cluster ID to fetch the token from")
+	secretsFetchCmd.Flags().String("distro", "rke2", "Cluster distribution (rke2 or k3s)")
 
 	secretsCmd.AddCommand(secretsGetCmd)
 	secretsCmd.AddCommand(secretsSetCmd)

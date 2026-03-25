@@ -1,9 +1,9 @@
 /*
 Copyright © 2025 VH & Co - contact@vhco.pro
 
-Package vault provides specialized handlers for RKE2 cluster secrets management.
+Package vault provides specialized handlers for cluster secrets management.
 
-This file handles the kubeconfig management for RKE2 clusters:
+This file handles the kubeconfig management for Kubernetes clusters:
   - StoreKubeConfig: Reads the kubeconfig from a server, updates the API endpoint with VIP if provided,
     and stores it in the secret store
   - RetrieveKubeConfig: Fetches a kubeconfig from the secret store and writes it to a specified path on the host
@@ -21,7 +21,7 @@ import (
 )
 
 // StoreKubeConfig reads the kubeconfig from the host, modifies it to use VIP if provided, and uploads it to the secret store
-func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath, vip string) error {
+func (c *Client) StoreKubeConfig(distro, clusterID, kubeconfigPath, vip string) error {
 	kubeconfig, err := os.ReadFile(kubeconfigPath) //nolint:gosec // path comes from trusted CLI input
 	if err != nil {
 		return fmt.Errorf("failed to read kubeconfig from path '%s': %w", kubeconfigPath, err)
@@ -38,14 +38,14 @@ func (c *Client) StoreKubeConfig(clusterID, kubeconfigPath, vip string) error {
 		fmt.Printf("🔄 Updated kubeconfig to use VIP: %s\n", vip)
 	}
 
-	return c.StoreSecret(fmt.Sprintf("kv/data/rke2/%s/kubeconfig", clusterID), map[string]interface{}{
+	return c.StoreSecret(fmt.Sprintf("kv/data/%s/%s/kubeconfig", distro, clusterID), map[string]interface{}{
 		"kubeconfig": kubeconfigStr,
 	})
 }
 
 // RetrieveKubeConfig fetches the kubeconfig from the secret store and saves it to the host
-func (c *Client) RetrieveKubeConfig(clusterID, destinationPath string) error {
-	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/rke2/%s/kubeconfig", clusterID))
+func (c *Client) RetrieveKubeConfig(distro, clusterID, destinationPath string) error {
+	data, err := c.RetrieveSecret(fmt.Sprintf("kv/data/%s/%s/kubeconfig", distro, clusterID))
 	if err != nil {
 		return fmt.Errorf("failed to retrieve kubeconfig for cluster %s: %w", clusterID, err)
 	}

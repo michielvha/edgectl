@@ -11,17 +11,17 @@ type MockStore struct {
 	RetrieveSecretFunc        func(fullVaultPath string) (map[string]interface{}, error)
 	ListKeysFunc              func(fullVaultPath string) ([]string, error)
 	DeleteSecretFunc          func(fullVaultPath string) error
-	StoreJoinTokenFunc        func(clusterID, token string) error
-	RetrieveJoinTokenFunc     func(clusterID string) (string, error)
-	StoreMasterInfoFunc       func(clusterID, hostname string, hosts []string, vip string) error
-	RetrieveMasterInfoFunc    func(clusterID string) ([]string, string, map[string]string, error)
-	RetrieveFirstMasterIPFunc func(clusterID string) (string, error)
-	StoreKubeConfigFunc       func(clusterID, kubeconfigPath, vip string) error
-	RetrieveKubeConfigFunc    func(clusterID, destinationPath string) error
-	StoreLBInfoFunc           func(clusterID, hostname, vip string, isMain bool) error
-	RetrieveLBInfoFunc        func(clusterID string) ([]map[string]interface{}, string, error)
-	RemoveLBNodeFunc          func(clusterID, hostname string) error
-	DeleteClusterDataFunc     func(clusterID string) error
+	StoreJoinTokenFunc        func(distro, clusterID, token string) error
+	RetrieveJoinTokenFunc     func(distro, clusterID string) (string, error)
+	StoreMasterInfoFunc       func(distro, clusterID, hostname string, hosts []string, vip string) error
+	RetrieveMasterInfoFunc    func(distro, clusterID string) ([]string, string, map[string]string, error)
+	RetrieveFirstMasterIPFunc func(distro, clusterID string) (string, error)
+	StoreKubeConfigFunc       func(distro, clusterID, kubeconfigPath, vip string) error
+	RetrieveKubeConfigFunc    func(distro, clusterID, destinationPath string) error
+	StoreLBInfoFunc           func(distro, clusterID, hostname, vip string, isMain bool) error
+	RetrieveLBInfoFunc        func(distro, clusterID string) ([]map[string]interface{}, string, error)
+	RemoveLBNodeFunc          func(distro, clusterID, hostname string) error
+	DeleteClusterDataFunc     func(distro, clusterID string) error
 }
 
 // Compile-time check: *MockStore must satisfy SecretStore.
@@ -55,79 +55,79 @@ func (m *MockStore) DeleteSecret(fullVaultPath string) error {
 	panic("MockStore.DeleteSecret not set")
 }
 
-func (m *MockStore) StoreJoinToken(clusterID, token string) error {
+func (m *MockStore) StoreJoinToken(distro, clusterID, token string) error {
 	if m.StoreJoinTokenFunc != nil {
-		return m.StoreJoinTokenFunc(clusterID, token)
+		return m.StoreJoinTokenFunc(distro, clusterID, token)
 	}
 	panic("MockStore.StoreJoinToken not set")
 }
 
-func (m *MockStore) RetrieveJoinToken(clusterID string) (string, error) {
+func (m *MockStore) RetrieveJoinToken(distro, clusterID string) (string, error) {
 	if m.RetrieveJoinTokenFunc != nil {
-		return m.RetrieveJoinTokenFunc(clusterID)
+		return m.RetrieveJoinTokenFunc(distro, clusterID)
 	}
 	panic("MockStore.RetrieveJoinToken not set")
 }
 
-func (m *MockStore) StoreMasterInfo(clusterID, hostname string, hosts []string, vip string) error {
+func (m *MockStore) StoreMasterInfo(distro, clusterID, hostname string, hosts []string, vip string) error {
 	if m.StoreMasterInfoFunc != nil {
-		return m.StoreMasterInfoFunc(clusterID, hostname, hosts, vip)
+		return m.StoreMasterInfoFunc(distro, clusterID, hostname, hosts, vip)
 	}
 	panic("MockStore.StoreMasterInfo not set")
 }
 
-func (m *MockStore) RetrieveMasterInfo(clusterID string) (hosts []string, vip string, hostIPs map[string]string, err error) {
+func (m *MockStore) RetrieveMasterInfo(distro, clusterID string) (hosts []string, vip string, hostIPs map[string]string, err error) {
 	if m.RetrieveMasterInfoFunc != nil {
-		return m.RetrieveMasterInfoFunc(clusterID)
+		return m.RetrieveMasterInfoFunc(distro, clusterID)
 	}
 	panic("MockStore.RetrieveMasterInfo not set")
 }
 
-func (m *MockStore) RetrieveFirstMasterIP(clusterID string) (string, error) {
+func (m *MockStore) RetrieveFirstMasterIP(distro, clusterID string) (string, error) {
 	if m.RetrieveFirstMasterIPFunc != nil {
-		return m.RetrieveFirstMasterIPFunc(clusterID)
+		return m.RetrieveFirstMasterIPFunc(distro, clusterID)
 	}
 	panic("MockStore.RetrieveFirstMasterIP not set")
 }
 
-func (m *MockStore) StoreKubeConfig(clusterID, kubeconfigPath, vip string) error {
+func (m *MockStore) StoreKubeConfig(distro, clusterID, kubeconfigPath, vip string) error {
 	if m.StoreKubeConfigFunc != nil {
-		return m.StoreKubeConfigFunc(clusterID, kubeconfigPath, vip)
+		return m.StoreKubeConfigFunc(distro, clusterID, kubeconfigPath, vip)
 	}
 	panic("MockStore.StoreKubeConfig not set")
 }
 
-func (m *MockStore) RetrieveKubeConfig(clusterID, destinationPath string) error {
+func (m *MockStore) RetrieveKubeConfig(distro, clusterID, destinationPath string) error {
 	if m.RetrieveKubeConfigFunc != nil {
-		return m.RetrieveKubeConfigFunc(clusterID, destinationPath)
+		return m.RetrieveKubeConfigFunc(distro, clusterID, destinationPath)
 	}
 	panic("MockStore.RetrieveKubeConfig not set")
 }
 
-func (m *MockStore) StoreLBInfo(clusterID, hostname, vip string, isMain bool) error {
+func (m *MockStore) StoreLBInfo(distro, clusterID, hostname, vip string, isMain bool) error {
 	if m.StoreLBInfoFunc != nil {
-		return m.StoreLBInfoFunc(clusterID, hostname, vip, isMain)
+		return m.StoreLBInfoFunc(distro, clusterID, hostname, vip, isMain)
 	}
 	panic("MockStore.StoreLBInfo not set")
 }
 
-func (m *MockStore) RetrieveLBInfo(clusterID string) (nodes []map[string]interface{}, vip string, err error) {
+func (m *MockStore) RetrieveLBInfo(distro, clusterID string) (nodes []map[string]interface{}, vip string, err error) {
 	if m.RetrieveLBInfoFunc != nil {
-		return m.RetrieveLBInfoFunc(clusterID)
+		return m.RetrieveLBInfoFunc(distro, clusterID)
 	}
 	panic("MockStore.RetrieveLBInfo not set")
 }
 
-func (m *MockStore) RemoveLBNode(clusterID, hostname string) error {
+func (m *MockStore) RemoveLBNode(distro, clusterID, hostname string) error {
 	if m.RemoveLBNodeFunc != nil {
-		return m.RemoveLBNodeFunc(clusterID, hostname)
+		return m.RemoveLBNodeFunc(distro, clusterID, hostname)
 	}
 	panic("MockStore.RemoveLBNode not set")
 }
 
-func (m *MockStore) DeleteClusterData(clusterID string) error {
+func (m *MockStore) DeleteClusterData(distro, clusterID string) error {
 	if m.DeleteClusterDataFunc != nil {
-		return m.DeleteClusterDataFunc(clusterID)
+		return m.DeleteClusterDataFunc(distro, clusterID)
 	}
 	panic("MockStore.DeleteClusterData not set")
 }

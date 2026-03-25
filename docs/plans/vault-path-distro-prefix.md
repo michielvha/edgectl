@@ -340,11 +340,11 @@ Options:
 ## Verification Checklist
 
 After implementation:
-- [ ] `go build ./...` compiles cleanly
-- [ ] `go vet ./...` passes
-- [ ] Unit tests pass: `go test ./pkg/vault/... ./pkg/rke2/... ./pkg/k3s/... ./pkg/lb/...`
-- [ ] Integration tests pass: `go test -tags integration ./pkg/vault/...`
-- [ ] New integration test confirms K3s secrets land at `kv/data/k3s/...`
-- [ ] New integration test confirms RKE2 secrets still land at `kv/data/rke2/...`
-- [ ] `rg 'kv/data/rke2|kv/metadata/rke2' --type go` returns 0 matches (all hardcoded paths replaced)
-- [ ] Docs updated
+- [x] `go build ./...` compiles cleanly
+- [x] `go vet ./...` passes
+- [x] Unit tests pass: `go test ./pkg/vault/... ./pkg/rke2/... ./pkg/k3s/... ./pkg/lb/...`
+- [ ] Integration tests pass: `go test -tags integration ./pkg/vault/...` (requires Docker / OpenBao container)
+- [ ] New integration test confirms K3s secrets land at `kv/data/k3s/...` (deferred — existing tests use `"rke2"` distro param; path separation is guaranteed by the `distro` parameter in `fmt.Sprintf`)
+- [ ] New integration test confirms RKE2 secrets still land at `kv/data/rke2/...` (deferred — same as above)
+- [x] `rg 'kv/data/rke2|kv/metadata/rke2' --type go` returns 0 matches (all hardcoded paths replaced)
+- [x] Docs updated

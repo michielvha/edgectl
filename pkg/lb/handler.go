@@ -24,9 +24,9 @@ type LBNode struct {
 }
 
 // GetStatus retrieves the load balancer status for a cluster from the secret store
-func GetStatus(store vault.SecretStore, clusterID string) (string, []LBNode, error) {
+func GetStatus(store vault.SecretStore, distro, clusterID string) (string, []LBNode, error) {
 	logger.Debug("executing RetrieveLBInfo function")
-	rawNodes, vip, err := store.RetrieveLBInfo(clusterID)
+	rawNodes, vip, err := store.RetrieveLBInfo(distro, clusterID)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to retrieve load balancer info: %w", err)
 	}
@@ -67,7 +67,7 @@ func CreateLoadBalancer(store vault.SecretStore, clusterID, vip, distro string) 
 	}
 
 	// First check if there are any existing load balancers
-	existingLBs, existingVIP, err := store.RetrieveLBInfo(clusterID)
+	existingLBs, existingVIP, err := store.RetrieveLBInfo(distro, clusterID)
 
 	// isFirst is true if there are no existing load balancers
 	isFirst := err != nil || len(existingLBs) == 0
@@ -76,7 +76,7 @@ func CreateLoadBalancer(store vault.SecretStore, clusterID, vip, distro string) 
 		isFirst, err, len(existingLBs))
 
 	// Retrieve server nodes from the secret store for HAProxy configuration
-	hosts, masterVIP, hostIPs, err := store.RetrieveMasterInfo(clusterID)
+	hosts, masterVIP, hostIPs, err := store.RetrieveMasterInfo(distro, clusterID)
 	if err != nil {
 		logger.Debug("No master nodes found, this might be a new cluster: %v", err)
 	}
@@ -104,7 +104,7 @@ func CreateLoadBalancer(store vault.SecretStore, clusterID, vip, distro string) 
 	isMain := isFirst
 
 	// Store the current LB info in the secret store
-	err = store.StoreLBInfo(clusterID, hostname, effectiveVIP, isMain)
+	err = store.StoreLBInfo(distro, clusterID, hostname, effectiveVIP, isMain)
 	if err != nil {
 		return fmt.Errorf("failed to store load balancer info in secret store: %w", err)
 	}
@@ -122,7 +122,7 @@ func CreateLoadBalancer(store vault.SecretStore, clusterID, vip, distro string) 
 }
 
 func BootstrapLBFromSecretStore(store vault.SecretStore, clusterID string, isMain bool, distro string) error {
-	hosts, vip, hostIPs, err := store.RetrieveMasterInfo(clusterID)
+	hosts, vip, hostIPs, err := store.RetrieveMasterInfo(distro, clusterID)
 	if err != nil {
 		return fmt.Errorf("failed to fetch master info from secret store: %w", err)
 	}
@@ -332,7 +332,7 @@ func detectInterfaceForVIP(vip string) (string, error) {
 
 // CleanupLoadBalancer removes the load balancer configuration for a cluster.
 // It disables the services, removes configuration files, and cleans up the secret store entry.
-func CleanupLoadBalancer(store vault.SecretStore, clusterID string) error {
+func CleanupLoadBalancer(store vault.SecretStore, distro, clusterID string) error {
 	logger.Debug("Cleaning up load balancer for cluster %s", clusterID)
 	fmt.Printf("Cleaning up load balancer for cluster %s\n", clusterID)
 
@@ -366,7 +366,7 @@ func CleanupLoadBalancer(store vault.SecretStore, clusterID string) error {
 
 	// Remove this node from the LB list in the secret store
 	fmt.Print("🔄 Removing load balancer entry from secret store... \n")
-	if err := store.RemoveLBNode(clusterID, hostname); err != nil {
+	if err := store.RemoveLBNode(distro, clusterID, hostname); err != nil {
 		return fmt.Errorf("failed to remove load balancer info from secret store: %w", err)
 	}
 

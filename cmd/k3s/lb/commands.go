@@ -69,7 +69,7 @@ var statusCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		vip, nodes, err := lb.GetStatus(store, clusterID)
+		vip, nodes, err := lb.GetStatus(store, "k3s", clusterID)
 		if err != nil {
 			fmt.Printf("❌ Failed to retrieve load balancer info: %v\n", err)
 			os.Exit(1)
@@ -112,7 +112,7 @@ Example:
 			os.Exit(1)
 		}
 
-		err := lb.CleanupLoadBalancer(store, clusterID)
+		err := lb.CleanupLoadBalancer(store, "k3s", clusterID)
 		if err != nil {
 			fmt.Printf("❌ Failed to clean up load balancer: %v\n", err)
 			os.Exit(1)

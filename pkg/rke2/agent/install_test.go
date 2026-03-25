@@ -20,7 +20,7 @@ func TestFetchToken_SetsEnvVars(t *testing.T) {
 	}
 
 	mock := &vault.MockStore{
-		RetrieveJoinTokenFunc: func(clusterID string) (string, error) {
+		RetrieveJoinTokenFunc: func(distro, clusterID string) (string, error) {
 			if clusterID != "agent-cluster" {
 				t.Errorf("unexpected clusterID: %s", clusterID)
 			}

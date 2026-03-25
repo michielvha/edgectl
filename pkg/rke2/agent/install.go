@@ -25,7 +25,7 @@ func Install(store vault.SecretStore, clusterID, vip, lbHostname string) error {
 	}
 
 	// Priority 1: fetch the VIP from Master Info in the secret store
-	_, storedVIP, _, err := store.RetrieveMasterInfo(clusterID)
+	_, storedVIP, _, err := store.RetrieveMasterInfo("rke2", clusterID)
 	if err == nil && storedVIP != "" {
 		vip = storedVIP
 		fmt.Printf("🔍 VIP fetched from secret store: %s\n", storedVIP)
@@ -58,7 +58,7 @@ func Install(store vault.SecretStore, clusterID, vip, lbHostname string) error {
 
 // FetchToken fetches token from the secret store & sets as env variable
 func FetchToken(store vault.SecretStore, clusterID string) (string, error) {
-	token, err := store.RetrieveJoinToken(clusterID)
+	token, err := store.RetrieveJoinToken("rke2", clusterID)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve join token: %w", err)
 	}

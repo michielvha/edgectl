@@ -23,13 +23,13 @@ func TestFetchTokenFromSecretStore_SetsEnvVars(t *testing.T) {
 	}
 
 	mock := &vault.MockStore{
-		RetrieveJoinTokenFunc: func(clusterID string) (string, error) {
+		RetrieveJoinTokenFunc: func(distro, clusterID string) (string, error) {
 			if clusterID != testClusterID {
 				t.Errorf("unexpected clusterID: %s", clusterID)
 			}
 			return testSecretToken, nil
 		},
-		RetrieveFirstMasterIPFunc: func(clusterID string) (string, error) {
+		RetrieveFirstMasterIPFunc: func(distro, clusterID string) (string, error) {
 			return "10.0.0.1", nil
 		},
 	}
@@ -69,10 +69,10 @@ func TestFetchTokenFromSecretStore_NoMasterIP(t *testing.T) {
 	}
 
 	mock := &vault.MockStore{
-		RetrieveJoinTokenFunc: func(clusterID string) (string, error) {
+		RetrieveJoinTokenFunc: func(distro, clusterID string) (string, error) {
 			return "token-abc", nil
 		},
-		RetrieveFirstMasterIPFunc: func(clusterID string) (string, error) {
+		RetrieveFirstMasterIPFunc: func(distro, clusterID string) (string, error) {
 			return "", fmt.Errorf("no master IP found")
 		},
 	}

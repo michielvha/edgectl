@@ -34,7 +34,7 @@ Go 1.24.1 — current. Most dependencies are up to date.
 All Vault code lives in `pkg/vault/` (5 files). The SDK is used for KV v2 operations only:
 - `StoreSecret` / `RetrieveSecret` / `ListKeys` / `DeleteSecret` via `.Logical().Read/Write/List/Delete()`
 - No auth method complexity — token auth only via env vars
-- Paths: `kv/data/rke2/{clusterID}/{token,kubeconfig,masters,lb/hostname}`
+- Paths: `kv/data/{distro}/{clusterID}/{token,kubeconfig,masters,lb/hostname}`
 
 ---
 
@@ -155,7 +155,7 @@ This is a UX decision. Recommend option 3 if an interface pattern is planned, op
 
 ## What does NOT change
 
-- All KV v2 paths (`kv/data/rke2/...`) stay the same — OpenBao is wire-compatible with Vault on the server side
+- All KV v2 paths (`kv/data/{distro}/...`) stay the same — OpenBao is wire-compatible with Vault on the server side
 - Token auth method unchanged
 - `.goreleaser.yml` and `makefile` have no Vault references
 - All business logic in `pkg/rke2/` and `pkg/lb/` unchanged (code logic stays the same, only strings/comments change)

@@ -63,7 +63,7 @@ If --cluster-id is provided, also removes all cluster data from the secret store
 				fmt.Println("⚠️  Could not connect to secret store — skipping remote cleanup")
 				return
 			}
-			if err := vaultClient.DeleteClusterData(clusterID); err != nil {
+			if err := vaultClient.DeleteClusterData("k3s", clusterID); err != nil {
 				fmt.Printf("⚠️  Secret store cleanup completed with warnings: %v\n", err)
 			} else {
 				fmt.Println("✅ Cluster data removed from secret store")
@@ -87,7 +87,7 @@ var kubeconfigCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		err := vaultClient.RetrieveKubeConfig(clusterID, outputPath)
+		err := vaultClient.RetrieveKubeConfig("k3s", clusterID, outputPath)
 		if err != nil {
 			fmt.Printf("❌ Failed to retrieve kubeconfig: %v\n", err)
 			os.Exit(1)

@@ -279,7 +279,7 @@ func TestGenerateKeepalivedConfig_ContainsHealthCheck(t *testing.T) {
 
 func TestGetStatus_ReturnsNodesAndVIP(t *testing.T) {
 	mock := &vault.MockStore{
-		RetrieveLBInfoFunc: func(clusterID string) ([]map[string]interface{}, string, error) {
+		RetrieveLBInfoFunc: func(distro, clusterID string) ([]map[string]interface{}, string, error) {
 			return []map[string]interface{}{
 				{"hostname": "lb1", "is_main": true},
 				{"hostname": "lb2", "is_main": false},
@@ -287,7 +287,7 @@ func TestGetStatus_ReturnsNodesAndVIP(t *testing.T) {
 		},
 	}
 
-	vip, nodes, err := GetStatus(mock, "test-cluster")
+	vip, nodes, err := GetStatus(mock, "rke2", "test-cluster")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -307,12 +307,12 @@ func TestGetStatus_ReturnsNodesAndVIP(t *testing.T) {
 
 func TestGetStatus_EmptyNodes(t *testing.T) {
 	mock := &vault.MockStore{
-		RetrieveLBInfoFunc: func(clusterID string) ([]map[string]interface{}, string, error) {
+		RetrieveLBInfoFunc: func(distro, clusterID string) ([]map[string]interface{}, string, error) {
 			return []map[string]interface{}{}, "", nil
 		},
 	}
 
-	vip, nodes, err := GetStatus(mock, "empty-cluster")
+	vip, nodes, err := GetStatus(mock, "rke2", "empty-cluster")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

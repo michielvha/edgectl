@@ -13,26 +13,26 @@ type SecretStore interface {
 	ListKeys(fullVaultPath string) ([]string, error)
 	DeleteSecret(fullVaultPath string) error
 
-	// RKE2 token management
-	StoreJoinToken(clusterID, token string) error
-	RetrieveJoinToken(clusterID string) (string, error)
+	// Cluster token management
+	StoreJoinToken(distro, clusterID, token string) error
+	RetrieveJoinToken(distro, clusterID string) (string, error)
 
-	// RKE2 master/server management
-	StoreMasterInfo(clusterID, hostname string, hosts []string, vip string) error
-	RetrieveMasterInfo(clusterID string) (hosts []string, vip string, hostIPs map[string]string, err error)
-	RetrieveFirstMasterIP(clusterID string) (string, error)
+	// Cluster master/server management
+	StoreMasterInfo(distro, clusterID, hostname string, hosts []string, vip string) error
+	RetrieveMasterInfo(distro, clusterID string) (hosts []string, vip string, hostIPs map[string]string, err error)
+	RetrieveFirstMasterIP(distro, clusterID string) (string, error)
 
-	// RKE2 kubeconfig management
-	StoreKubeConfig(clusterID, kubeconfigPath, vip string) error
-	RetrieveKubeConfig(clusterID, destinationPath string) error
+	// Cluster kubeconfig management
+	StoreKubeConfig(distro, clusterID, kubeconfigPath, vip string) error
+	RetrieveKubeConfig(distro, clusterID, destinationPath string) error
 
-	// RKE2 load balancer management
-	StoreLBInfo(clusterID, hostname, vip string, isMain bool) error
-	RetrieveLBInfo(clusterID string) (nodes []map[string]interface{}, vip string, err error)
-	RemoveLBNode(clusterID, hostname string) error
+	// Cluster load balancer management
+	StoreLBInfo(distro, clusterID, hostname, vip string, isMain bool) error
+	RetrieveLBInfo(distro, clusterID string) (nodes []map[string]interface{}, vip string, err error)
+	RemoveLBNode(distro, clusterID, hostname string) error
 
-	// RKE2 cluster management
-	DeleteClusterData(clusterID string) error
+	// Cluster management
+	DeleteClusterData(distro, clusterID string) error
 }
 
 // Compile-time check: *Client must satisfy SecretStore.

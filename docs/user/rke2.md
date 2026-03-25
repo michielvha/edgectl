@@ -25,7 +25,7 @@ This CLI enables automated deployment of **RKE2 Kubernetes clusters** across bar
 
 - All tokens are stored/retrieved using the **Cluster ID** path:
   ```
-  kv/data/rke2/<cluster-id>
+  kv/data/rke2/<cluster-id>/token
   ```
 - Users never manually copy tokens
 - Tokens are only exposed during bootstrap and handled programmatically afterward
@@ -78,7 +78,7 @@ edgectl rke2 agent --cluster-id rke2-abc12345
 | Path                                | Purpose                                |
 |-------------------------------------|----------------------------------------|
 | `/etc/edgectl/cluster-id`          | Stores generated Cluster ID            |
-| `kv/data/rke2/<cluster-id>` (OpenBao) | Join token + metadata for that cluster |
+| `kv/data/rke2/<cluster-id>/` (OpenBao) | Join token, kubeconfig, masters, LB info for that cluster |
 | `scripts/rke2.sh` (embedded)        | Bash functions for RKE2 lifecycle      |
 
 ---
