@@ -45,7 +45,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.26.1'  # Specify the Go version
+          go-version: '1.26.3'  # Specify the Go version
 
       # 4: Install Linter (golangci-lint)
       # https://github.com/golangci/golangci-lint-action
