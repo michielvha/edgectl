@@ -26,7 +26,7 @@ jobs:
     steps:
       # 1: Checkout code
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Fetch all history to use GitVersion
           persist-credentials: true
@@ -43,7 +43,7 @@ jobs:
 
       # 3: Build and release binaries using GoReleaser, maybe move to seperate workflow
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.26.1'  # Specify the Go version
 
@@ -59,7 +59,7 @@ jobs:
       # 6: Cache GoReleaser installation
       - name: Cache GoReleaser
         id: goreleaser-cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.goreleaser
           key: goreleaser-${{ runner.os }}-latest
