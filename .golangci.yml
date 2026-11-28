@@ -49,6 +49,11 @@ linters:
         - diagnostic
         - style
         - performance
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - goconst
 
 formatters:
   enable:
